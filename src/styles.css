@@ -142,6 +142,13 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .progression-staff-loading { height: 225px; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
 .progression-fretboard-section { padding-top: 20px; }
 .progression-fretboard-title { display: flex; align-items: center; gap: 28px; }
+.path-legend { display: flex; align-items: center; gap: 20px; color: var(--ink); font-size: 12px; }
+.path-legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.path-legend i { position: relative; width: 21px; height: 21px; display: inline-block; flex: 0 0 21px; border-radius: 50%; }
+.path-legend-ring { background: conic-gradient(#22685b 0 14%, #b45a3c 14% 28%, #675aa3 28% 42%, #a47718 42% 57%, #34729a 57% 71%, #a24768 71% 85%, #5f7b38 85% 100%); }
+.path-legend-ring::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: #faf9f6; }
+.path-legend-dot { border: 1px solid #8c9289; }
+.path-legend-dot::after { content: ''; position: absolute; width: 6px; height: 6px; left: 7px; top: -3px; border: 1px solid #faf9f6; border-radius: 50%; background: var(--root); }
 .fretboard-mode-switch { display: flex; align-items: center; }
 .fretboard-mode-switch > span { color: var(--muted); font-size: 12px; margin-right: 9px; }
 .fretboard-mode-switch label { min-height: 38px; padding: 0 13px; border: 1px solid #b9bdb3; display: inline-flex; align-items: center; color: var(--muted); font-size: 12px; cursor: pointer; }
@@ -158,6 +165,11 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .progression-strip button > span { width: 22px; height: 22px; grid-row: 1 / 3; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; }
 .progression-strip button > strong { font: 17px/1 Georgia, 'Times New Roman', serif; }
 .progression-strip button > small { color: var(--muted); font-size: 9px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progression-strip.is-path button { padding-top: 5px; border-top: 3px solid var(--step-color); }
+.progression-strip.is-path button > span { color: white; border-color: var(--step-color); background: var(--step-color); }
+.progression-strip.is-path button > strong { color: var(--step-color); }
+.progression-strip.is-path button:hover { background: color-mix(in srgb, var(--step-color) 7%, #faf9f6); }
+.progression-strip.is-path button.is-active { color: var(--ink); border-color: var(--step-color); background: color-mix(in srgb, var(--step-color) 11%, #faf9f6); box-shadow: inset 0 0 0 1px var(--step-color); }
 .active-step-summary { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
 .active-step-summary strong { color: var(--root); }
 .progression-map-controls { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 4px 0 12px; }

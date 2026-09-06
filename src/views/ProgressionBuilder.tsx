@@ -1,8 +1,9 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { TheoryControls } from '../components/TheoryControls'
 import { ProgressionStepSelector } from '../components/ProgressionStepSelector'
 import { FretboardView, RoleLegend } from '../components/FretboardView'
-import { ProgressionPathView } from '../components/ProgressionPathView'
+import { ProgressionPathView, PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
 import { createProgressionFretboards, createScaleFretboard } from '../music/fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from '../music/progressions'
 import { createScale } from '../music/scales'
@@ -83,7 +84,13 @@ export function ProgressionBuilder() {
 
     <section className="progression-fretboard-section" aria-labelledby="progression-fretboard-heading">
       <div className="section-heading progression-section-heading">
-        <div className="progression-fretboard-title"><h2 id="progression-fretboard-heading">Across the progression</h2><RoleLegend /></div>
+        <div className="progression-fretboard-title">
+          <h2 id="progression-fretboard-heading">Across the progression</h2>
+          {fretboardMode === 'chord' ? <RoleLegend /> : <div className="path-legend" role="list" aria-label="Progression path symbols">
+            <span role="listitem"><i className="path-legend-ring" aria-hidden="true" />Steps 1–7 clockwise</span>
+            <span role="listitem"><i className="path-legend-dot" aria-hidden="true" />Top note</span>
+          </div>}
+        </div>
         <div className="fretboard-mode-switch" role="radiogroup" aria-label="Fretboard view">
           <span>View</span>
           <label>
@@ -96,12 +103,13 @@ export function ProgressionBuilder() {
           </label>
         </div>
       </div>
-      <div className="progression-strip" role="group" aria-label="Choose a progression step for the fretboard">
+      <div className={`progression-strip${fretboardMode === 'progression' ? ' is-path' : ''}`} role="group" aria-label="Choose a progression step for the fretboard">
         {progression.steps.map(step => <button
           type="button"
           className={step.index === activeStep ? 'is-active' : ''}
           aria-pressed={step.index === activeStep}
           onClick={() => selectProgressionStep(step.index)}
+          style={fretboardMode === 'progression' ? { '--step-color': PROGRESSION_STEP_COLORS[step.index] } as CSSProperties : undefined}
           key={`${step.index}-${step.triad.id}`}
         >
           <span>{step.index + 1}</span>
@@ -117,7 +125,7 @@ export function ProgressionBuilder() {
         <div className="fretboard-caption"><p>Chord tones for the selected progression step</p><p>Standard tuning: E A D G B E</p></div>
       </> : <>
         <div className="progression-map-controls">
-          <p role="status">Step {activeStep + 1} is selected. Top note <strong>{displayNote(activeProgressionStep.topNote.name)}</strong> is the dark-ring anchor; chord tones light up around it. Small numbers are top-note scale degrees.</p>
+          <p role="status">All seven chord colors stay visible. Step {activeStep + 1} is selected, so its notes are filled; dots mark each chord's top note. Small numbers are scale degrees.</p>
           <fieldset className="string-window-picker">
             <legend>Three-string view</legend>
             <div>
@@ -135,11 +143,12 @@ export function ProgressionBuilder() {
         </div>
         <ProgressionPathView
           model={progressionBoard}
+          steps={progression.steps}
           visibleStrings={visibleStrings}
           selectedStep={activeProgressionStep}
           progressionName={`${displayNote(tonic)} major progression`}
         />
-        <div className="fretboard-caption"><p>All seven top-note degrees stay visible · selected chord tones light up</p><p>Standard tuning: E A D G B E</p></div>
+        <div className="fretboard-caption"><p>Colored outline segments show every chord · selected chord tones are filled</p><p>Standard tuning: E A D G B E</p></div>
       </>}
     </section>
     <footer className="page-footer">Progression Builder<span>Shape a phrase. See every harmony.</span></footer>
