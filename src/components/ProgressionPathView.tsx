@@ -29,7 +29,14 @@ function pointOnCircle(radius: number, angle: number) {
   return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
 }
 
-function stepArc(stepIndex: number, radius = 16.5) {
+function noteNameParts(noteName: string) {
+  const match = /^([A-G])([#b]+)?$/.exec(noteName)
+  return match
+    ? { letter: match[1], accidental: match[2] ? displayNote(match[2]) : '' }
+    : { letter: displayNote(noteName), accidental: '' }
+}
+
+function stepArc(stepIndex: number, radius = 19.5) {
   const slot = FULL_CIRCLE / PROGRESSION_STEP_COLORS.length
   const start = -Math.PI / 2 + stepIndex * slot + ARC_GAP
   const end = -Math.PI / 2 + (stepIndex + 1) * slot - ARC_GAP
@@ -68,7 +75,7 @@ export function ProgressionPathView({
   const nut = 102
   const end = nut + model.fretCount * fretStep
   const boardTop = 42
-  const stringGap = 35
+  const stringGap = 40
   const allStrings = Array.from({ length: model.tuning.length }, (_, index) => index + 1)
   const selectedStringSet = new Set(model.strings)
   const boardBottom = boardTop + Math.max(0, allStrings.length - 1) * stringGap
@@ -175,13 +182,14 @@ export function ProgressionPathView({
       {[...coordinates.values()].map(coordinate => {
         const selectedEntry = coordinate.entries.find(entry => entry.stepIndex === selectedStep.index)
         const labelEntry = selectedEntry ?? coordinate.entries[0]
+        const noteName = noteNameParts(labelEntry.note.tone.pitch.name)
         const topNoteEntry = coordinate.entries.find(entry => entry.note.isTopNote)
         const x = fretX(coordinate.fret)
         const y = stringY.get(coordinate.string) ?? boardTop
         const secondaryLabel = labelMode === 'key'
           ? `${labelEntry.note.degree}`
           : selectedEntry ? chordIntervalLabel(selectedEntry.note.tone.role, selectedStep.triad.quality) : null
-        const badgeWidth = secondaryLabel && secondaryLabel.length > 1 ? 18 : 13
+        const noteBaseline = secondaryLabel ? 0.5 : 4.2
         return <g key={`${coordinate.string}-${coordinate.fret}`} transform={`translate(${x}, ${y})`}>
           {coordinate.entries.map(entry => <path
             key={entry.stepIndex}
@@ -192,23 +200,25 @@ export function ProgressionPathView({
             strokeLinecap="round"
           />)}
           <circle
-            r="12"
+            r="15"
             fill={selectedEntry ? selectedColor : '#faf9f6'}
             stroke={selectedEntry?.note.isTopNote ? '#252925' : selectedEntry ? selectedColor : '#8c9289'}
             strokeWidth={selectedEntry?.note.isTopNote ? 2.2 : 1}
           />
-          <text textAnchor="middle" y="4.2" fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note">
-            {displayNote(labelEntry.note.tone.pitch.name)}
+          <text x="0" textAnchor="middle" y={noteBaseline} fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note">
+            {noteName.letter}
           </text>
+          {noteName.accidental && <text x="4.75" textAnchor="start" y={noteBaseline - 3} fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note-accidental">
+            {noteName.accidental}
+          </text>}
           {secondaryLabel && <g className="progression-note-secondary" aria-hidden="true">
-            <rect x={10 - badgeWidth / 2} y="2.5" width={badgeWidth} height="13" rx="6.5" fill="#faf9f6" stroke="#8c9289" strokeWidth="0.8" />
-            <text x="10" y="12.1" textAnchor="middle" fill="#343a34" fontSize={secondaryLabel.length > 1 ? 8 : 9} fontWeight="700">
+            <text x="0" y="10.5" textAnchor="middle" fill={selectedEntry ? '#fff' : '#343a34'} fontSize="8.5" fontWeight="700">
               {secondaryLabel}
             </text>
           </g>}
           {topNoteEntry && <>
-            <circle cx="-11" cy="-11" r="7" fill={stepColor(topNoteEntry.stepIndex)} stroke="#faf9f6" strokeWidth="1.2" />
-            <text x="-11" y="-7.8" textAnchor="middle" fill="#fff" fontSize="8.5" fontWeight="700">
+            <circle cx="-13" cy="-13" r="7" fill={stepColor(topNoteEntry.stepIndex)} stroke="#faf9f6" strokeWidth="1.2" />
+            <text x="-13" y="-9.8" textAnchor="middle" fill="#fff" fontSize="8.5" fontWeight="700">
               {topNoteEntry.stepIndex + 1}
             </text>
           </>}
