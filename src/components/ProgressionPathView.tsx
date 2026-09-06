@@ -36,7 +36,12 @@ function noteNameParts(noteName: string) {
     : { letter: displayNote(noteName), accidental: '' }
 }
 
-function stepArc(stepIndex: number, radius = 19.5) {
+function degreeLabelParts(label: string) {
+  const match = /^([♭♯])(.+)$/.exec(label)
+  return match ? { accidental: match[1], value: match[2] } : { accidental: '', value: label }
+}
+
+function stepArc(stepIndex: number, radius = 22) {
   const slot = FULL_CIRCLE / PROGRESSION_STEP_COLORS.length
   const start = -Math.PI / 2 + stepIndex * slot + ARC_GAP
   const end = -Math.PI / 2 + (stepIndex + 1) * slot - ARC_GAP
@@ -75,7 +80,7 @@ export function ProgressionPathView({
   const nut = 102
   const end = nut + model.fretCount * fretStep
   const boardTop = 42
-  const stringGap = 40
+  const stringGap = 46
   const allStrings = Array.from({ length: model.tuning.length }, (_, index) => index + 1)
   const selectedStringSet = new Set(model.strings)
   const boardBottom = boardTop + Math.max(0, allStrings.length - 1) * stringGap
@@ -189,7 +194,7 @@ export function ProgressionPathView({
         const secondaryLabel = labelMode === 'key'
           ? `${labelEntry.note.degree}`
           : selectedEntry ? chordIntervalLabel(selectedEntry.note.tone.role, selectedStep.triad.quality) : null
-        const noteBaseline = secondaryLabel ? 0.5 : 4.2
+        const degreeLabel = secondaryLabel ? degreeLabelParts(secondaryLabel) : null
         return <g key={`${coordinate.string}-${coordinate.fret}`} transform={`translate(${x}, ${y})`}>
           {coordinate.entries.map(entry => <path
             key={entry.stepIndex}
@@ -200,25 +205,28 @@ export function ProgressionPathView({
             strokeLinecap="round"
           />)}
           <circle
-            r="15"
+            r="17"
             fill={selectedEntry ? selectedColor : '#faf9f6'}
             stroke={selectedEntry?.note.isTopNote ? '#252925' : selectedEntry ? selectedColor : '#8c9289'}
             strokeWidth={selectedEntry?.note.isTopNote ? 2.2 : 1}
           />
-          <text x="0" textAnchor="middle" y={noteBaseline} fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note">
+          <text x="0" y="0" textAnchor="middle" dominantBaseline="central" fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note">
             {noteName.letter}
           </text>
-          {noteName.accidental && <text x="4.75" textAnchor="start" y={noteBaseline - 3} fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note-accidental">
+          {noteName.accidental && <text x="4.25" y="-4" textAnchor="start" dominantBaseline="central" fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note-accidental">
             {noteName.accidental}
           </text>}
-          {secondaryLabel && <g className="progression-note-secondary" aria-hidden="true">
-            <text x="0" y="10.5" textAnchor="middle" fill={selectedEntry ? '#fff' : '#343a34'} fontSize="8.5" fontWeight="700">
-              {secondaryLabel}
+          {degreeLabel && <g className="progression-note-secondary" aria-hidden="true">
+            <text x="0" y="12.5" textAnchor="middle" fill={selectedEntry ? '#fff' : '#343a34'} fontSize="8.5" fontWeight="600" opacity="0.88">
+              {degreeLabel.value}
             </text>
+            {degreeLabel.accidental && <text x="-3" y="12.5" textAnchor="end" fill={selectedEntry ? '#fff' : '#343a34'} fontSize="8.5" fontWeight="600" opacity="0.88">
+              {degreeLabel.accidental}
+            </text>}
           </g>}
           {topNoteEntry && <>
-            <circle cx="-13" cy="-13" r="7" fill={stepColor(topNoteEntry.stepIndex)} stroke="#faf9f6" strokeWidth="1.2" />
-            <text x="-13" y="-9.8" textAnchor="middle" fill="#fff" fontSize="8.5" fontWeight="700">
+            <circle cx="-15" cy="-15" r="7" fill={stepColor(topNoteEntry.stepIndex)} stroke="#faf9f6" strokeWidth="1.2" />
+            <text x="-15" y="-11.8" textAnchor="middle" fill="#fff" fontSize="8.5" fontWeight="700">
               {topNoteEntry.stepIndex + 1}
             </text>
           </>}
