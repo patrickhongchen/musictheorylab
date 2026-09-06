@@ -4,7 +4,7 @@ import { TheoryControls } from '../components/TheoryControls'
 import { ProgressionStepSelector } from '../components/ProgressionStepSelector'
 import { FretboardView, RoleLegend } from '../components/FretboardView'
 import { ProgressionPathView, PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
-import { createProgressionFretboards, createScaleFretboard } from '../music/fretboard'
+import { createProgressionFretboards, createProgressionVoicingFretboard } from '../music/fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from '../music/progressions'
 import { createScale } from '../music/scales'
 import type { ProgressionChordDegrees, ScaleDegree } from '../music/types'
@@ -12,6 +12,7 @@ import { displayNote } from '../presentation/notes'
 
 const ProgressionStaffView = lazy(() => import('../components/ProgressionStaffView'))
 type FretboardMode = 'chord' | 'progression'
+const PROGRESSION_FRET_COUNT = 22
 const STRING_WINDOWS = [
   { start: 1, label: '1–3 High' },
   { start: 2, label: '2–4' },
@@ -34,11 +35,17 @@ export function ProgressionBuilder() {
   const scale = useMemo(() => createScale({ tonic, mode: 'major' }), [tonic])
   const progression = useMemo(() => createProgression(scale, selectedDegrees), [scale, selectedDegrees])
   const choices = useMemo(() => scale.notes.map((_, index) => harmonizationChoices(scale, (index + 1) as ScaleDegree)), [scale])
-  const frames = useMemo(() => createProgressionFretboards(progression), [progression])
-  const progressionBoard = useMemo(() => createScaleFretboard(scale), [scale])
+  const frames = useMemo(
+    () => createProgressionFretboards(progression, undefined, PROGRESSION_FRET_COUNT),
+    [progression],
+  )
   const visibleStrings = useMemo(
     () => new Set([stringWindowStart, stringWindowStart + 1, stringWindowStart + 2]),
     [stringWindowStart],
+  )
+  const progressionBoard = useMemo(
+    () => createProgressionVoicingFretboard(progression, [...visibleStrings], undefined, PROGRESSION_FRET_COUNT, true),
+    [progression, visibleStrings],
   )
   const activeFrame = frames[activeStep]
   const activeProgressionStep = progression.steps[activeStep]
@@ -87,8 +94,8 @@ export function ProgressionBuilder() {
         <div className="progression-fretboard-title">
           <h2 id="progression-fretboard-heading">Across the progression</h2>
           {fretboardMode === 'chord' ? <RoleLegend /> : <div className="path-legend" role="list" aria-label="Progression path symbols">
-            <span role="listitem"><i className="path-legend-ring" aria-hidden="true" />Steps 1–7 clockwise</span>
-            <span role="listitem"><i className="path-legend-dot" aria-hidden="true" />Top note</span>
+            <span role="listitem"><i className="path-legend-line" aria-hidden="true" />Selected inversion</span>
+            <span role="listitem"><i className="path-legend-dot" aria-hidden="true" />Top note + step</span>
           </div>}
         </div>
         <div className="fretboard-mode-switch" role="radiogroup" aria-label="Fretboard view">
@@ -125,7 +132,7 @@ export function ProgressionBuilder() {
         <div className="fretboard-caption"><p>Chord tones for the selected progression step</p><p>Standard tuning: E A D G B E</p></div>
       </> : <>
         <div className="progression-map-controls">
-          <p role="status">All seven chord colors stay visible. Step {activeStep + 1} is selected, so its notes are filled; dots mark each chord's top note. Small numbers are scale degrees.</p>
+          <p role="status">Each colored line is one selected chord inversion, repeated wherever it fits on the neck. Numbered markers show progression order and top notes. Step {activeStep + 1} is highlighted; small numbers are scale degrees.</p>
           <fieldset className="string-window-picker">
             <legend>Three-string view</legend>
             <div>
@@ -144,11 +151,10 @@ export function ProgressionBuilder() {
         <ProgressionPathView
           model={progressionBoard}
           steps={progression.steps}
-          visibleStrings={visibleStrings}
           selectedStep={activeProgressionStep}
           progressionName={`${displayNote(tonic)} major progression`}
         />
-        <div className="fretboard-caption"><p>Colored outline segments show every chord · selected chord tones are filled</p><p>Standard tuning: E A D G B E</p></div>
+        <div className="fretboard-caption"><p>The progression repeats toward the nut and fret 22 · follow the numbered top notes</p><p>Standard tuning: E A D G B E</p></div>
       </>}
     </section>
     <footer className="page-footer">Progression Builder<span>Shape a phrase. See every harmony.</span></footer>

@@ -1,5 +1,5 @@
 import type { PitchClass, ScaleDegree, TriadResult } from '../music/types'
-import { displayNote } from '../presentation/notes'
+import { displayNote, ROLE_STYLE } from '../presentation/notes'
 
 interface Props {
   readonly stepIndex: number
@@ -19,18 +19,22 @@ export function ProgressionStepSelector({ stepIndex, topNote, candidates, select
     <div className="progression-choices">
       {candidates.map(({ triad, voicing }) => {
         const selected = triad.scaleDegree === selectedDegree
+        const topNoteRole = triad.tones.find(tone => tone.pitchClass.chroma === topNote.chroma)?.role
+        const topNoteRoleLabel = topNoteRole ? `${ROLE_STYLE[topNoteRole].label} on top` : 'Top-note harmony'
         return <label className={`progression-choice ${selected ? 'is-selected' : ''}`} key={triad.id}>
           <input
             type="radio"
             name={`harmony-${stepIndex}`}
             checked={selected}
             onChange={() => onSelect(triad.scaleDegree)}
-            aria-label={`${triad.romanNumeral}, ${displayNote(triad.chordName)}, ${voicing.inversion.name}`}
+            aria-label={`${triad.romanNumeral}, ${displayNote(triad.chordName)}, ${topNoteRoleLabel}, ${voicing.inversion.name}`}
           />
           <span className="selection-dot" aria-hidden="true" />
           <span className="progression-choice-roman">{triad.romanNumeral}</span>
           <span className="progression-choice-name">{displayNote(triad.chordName)}</span>
-          <span className="progression-choice-inversion">{voicing.inversion.name}</span>
+          <span className="progression-choice-inversion">
+            <span>{topNoteRoleLabel}</span><span className="inversion-detail"> · {voicing.inversion.name}</span>
+          </span>
         </label>
       })}
     </div>

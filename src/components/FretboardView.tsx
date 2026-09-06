@@ -17,11 +17,11 @@ export function FretboardView({ model, chordName }: { model: FretboardModel; cho
   const end = nut + model.fretCount * step
   const fretX = (fret: number) => fret === 0 ? 73 : nut + (fret - 0.5) * step
   return <div className="fretboard-scroll" tabIndex={0} role="region" aria-label="Guitar fretboard, scroll horizontally on small screens">
-    <svg className="fretboard" viewBox={`0 0 ${end + 24} 260`} role="img" aria-labelledby={`${titleId} ${descriptionId}`}>
+    <svg className="fretboard" style={{ minWidth: end + 24 }} viewBox={`0 0 ${end + 24} 260`} role="img" aria-labelledby={`${titleId} ${descriptionId}`}>
       <title id={titleId}>{displayNote(chordName)} chord tones on a guitar fretboard</title>
       <desc id={descriptionId}>High E is at the top, low E at the bottom. Frets zero through {model.fretCount}. Root markers are solid with role 1, thirds outlined with role 3, fifths dashed with role 5. These are available tones, not one playable chord shape. {model.positions.map(p => `String ${p.string} fret ${p.fret}: ${displayNote(p.tone.pitchClass.name)}, ${p.tone.role}`).join('; ')}.</desc>
       <rect x={nut} y="40" width={end - nut} height="175" fill="#f3f1eb" />
-      {[3, 5, 7, 9, 12, 15].filter(fret => fret <= model.fretCount).map(fret => <g key={fret} fill="#d3d1c7">
+      {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret <= model.fretCount).map(fret => <g key={fret} fill="#d3d1c7">
         {fret === 12 ? <><circle cx={fretX(fret)} cy="92.5" r="4" /><circle cx={fretX(fret)} cy="162.5" r="4" /></> : <circle cx={fretX(fret)} cy="127.5" r="4" />}
       </g>)}
       {Array.from({ length: model.fretCount + 1 }, (_, fret) => <g key={fret}>

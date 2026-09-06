@@ -59,6 +59,25 @@ export interface ScaleFretboardModel {
   readonly fretCount: number
   readonly positions: readonly ScaleFretPosition[]
 }
+/** One note from a selected close-position inversion, placed on a guitar string. */
+export interface VoicingFretPosition {
+  readonly string: number
+  readonly fret: number
+  readonly degree: ScaleDegree
+  readonly tone: VoicedNote
+  readonly isTopNote: boolean
+}
+export interface ProgressionVoicingShape {
+  readonly stepIndex: number
+  readonly fretOffset: number
+  readonly notes: readonly VoicingFretPosition[]
+}
+export interface ProgressionVoicingFretboardModel {
+  readonly tuning: readonly Pitch[]
+  readonly fretCount: number
+  readonly strings: readonly number[]
+  readonly shapes: readonly ProgressionVoicingShape[]
+}
 export interface ProgressionFretboardFrame {
   readonly stepIndex: number
   readonly topDegree: ScaleDegree

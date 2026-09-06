@@ -3,7 +3,7 @@ import { createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
 import { ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import { createFretboard, createProgressionFretboard, createProgressionFretboards, createScaleFretboard } from './fretboard'
+import { createFretboard, createProgressionFretboard, createProgressionFretboards, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
 
@@ -140,6 +140,80 @@ describe('fretboard domain mapping', () => {
         .toEqual([[1, 0, 'D'], [1, 2, 'E'], [2, 0, 'A'], [2, 2, 'B'], [3, 0, 'D'], [3, 2, 'E']])
     })
   })
+
+  describe('progression inversion shapes', () => {
+    const cMajorProgression = createProgression(createScale({ tonic: 'C', mode: 'major' }), DEFAULT_PROGRESSION_DEGREES)
+
+    it('places one compact three-note shape per selected inversion', () => {
+      const board = createProgressionVoicingFretboard(cMajorProgression, [1, 2, 3])
+
+      expect(board.shapes.map(shape => shape.notes.map(note => note.fret))).toEqual([
+        [8, 8, 9], [10, 10, 10], [12, 12, 12], [13, 13, 14], [3, 3, 4], [5, 5, 5], [7, 6, 7],
+      ])
+      expect(board.shapes.every(shape => shape.notes.length === 3)).toBe(true)
+    })
+
+    it('continues the ascending staff register when a 22-fret neck can hold it', () => {
+      const board = createProgressionVoicingFretboard(cMajorProgression, [1, 2, 3], undefined, 22)
+
+      expect(board.fretCount).toBe(22)
+      expect(board.shapes.map(shape => shape.notes.map(note => note.fret))).toEqual([
+        [8, 8, 9], [10, 10, 10], [12, 12, 12], [13, 13, 14], [15, 15, 16], [17, 17, 17], [19, 18, 19],
+      ])
+    })
+
+    it('repeats complete inversion shapes toward the nut and the end of a 22-fret neck', () => {
+      const board = createProgressionVoicingFretboard(cMajorProgression, [1, 2, 3], undefined, 22, true)
+
+      expect(board.shapes.map(shape => [shape.stepIndex + 1, shape.notes[0].fret])).toEqual([
+        [3, 0], [4, 1], [5, 3], [6, 5], [7, 7], [1, 8], [2, 10],
+        [3, 12], [4, 13], [5, 15], [6, 17], [7, 19], [1, 20], [2, 22],
+      ])
+      expect(board.shapes.every(shape => shape.notes.every(note => note.fret >= 0 && note.fret <= 22))).toBe(true)
+    })
+
+    it('preserves each inversion from soprano on the highest string to bass on the lowest', () => {
+      const board = createProgressionVoicingFretboard(cMajorProgression, [1, 2, 3])
+
+      board.shapes.forEach((shape, stepIndex) => {
+        const expected = [...cMajorProgression.steps[stepIndex].voicing.notes].reverse()
+        expect(shape.notes.map(note => note.string)).toEqual([1, 2, 3])
+        expect(shape.notes.map(note => note.tone.role)).toEqual(expected.map(note => note.role))
+        expect(shape.notes.map(note => note.tone.pitch.chroma)).toEqual(expected.map(note => note.pitch.chroma))
+        expect(shape.notes.map(note => note.isTopNote)).toEqual([true, false, false])
+      })
+    })
+
+    it.each([[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]])('builds playable shapes on strings %s', (...strings) => {
+      const board = createProgressionVoicingFretboard(cMajorProgression, strings)
+
+      expect(board.shapes).toHaveLength(7)
+      board.shapes.forEach(shape => {
+        const soundingMidi = shape.notes.map(note => board.tuning[board.tuning.length - note.string].midi + note.fret)
+        expect(soundingMidi[0]).toBeGreaterThan(soundingMidi[1])
+        expect(soundingMidi[1]).toBeGreaterThan(soundingMidi[2])
+        expect(Math.max(...shape.notes.map(note => note.fret)) - Math.min(...shape.notes.map(note => note.fret))).toBeLessThanOrEqual(5)
+      })
+    })
+
+    it.each(MAJOR_KEYS)('maps all $tonic-major inversions across every three-string window', key => {
+      const progression = createProgression(createScale(key), DEFAULT_PROGRESSION_DEGREES)
+
+      for (const strings of [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]) {
+        const board = createProgressionVoicingFretboard(progression, strings)
+        expect(board.shapes).toHaveLength(7)
+        expect(board.shapes.every(shape => shape.notes.every(note => {
+          const open = board.tuning[board.tuning.length - note.string]
+          return (open.midi + note.fret) % 12 === note.tone.pitch.chroma && note.degree >= 1 && note.degree <= 7
+        }))).toBe(true)
+      }
+    })
+
+    it('requires exactly three distinct valid strings', () => {
+      expect(() => createProgressionVoicingFretboard(cMajorProgression, [1, 2])).toThrow('exactly three strings')
+      expect(() => createProgressionVoicingFretboard(cMajorProgression, [1, 1, 2])).toThrow('exactly three strings')
+    })
+  })
 })
 
 describe('seven-step harmonized progressions', () => {
@@ -150,9 +224,13 @@ describe('seven-step harmonized progressions', () => {
       .toEqual(['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5'])
   })
 
-  it('offers exactly three harmonizations for each top note', () => {
+  it('offers the diatonic root-on-top chord first, then fifth-on-top and third-on-top', () => {
     expect(cMajor.notes.map((_, index) => harmonizationChoices(cMajor, (index + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7).map(result => result.triad.scaleDegree)))
-      .toEqual([[1, 4, 6], [2, 5, 7], [1, 3, 6], [2, 4, 7], [1, 3, 5], [2, 4, 6], [3, 5, 7]])
+      .toEqual([[1, 4, 6], [2, 5, 7], [3, 6, 1], [4, 7, 2], [5, 1, 3], [6, 2, 4], [7, 3, 5]])
+
+    expect(cMajor.notes.map((note, index) => harmonizationChoices(cMajor, (index + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7).map(result => (
+      result.triad.tones.find(tone => tone.pitchClass.chroma === note.chroma)?.role
+    )))).toEqual(Array.from({ length: 7 }, () => ['root', 'fifth', 'third']))
   })
 
   it('builds an ordered progression with one complete voicing per top note', () => {
