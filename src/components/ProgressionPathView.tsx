@@ -4,7 +4,9 @@ import type {
   ProgressionVoicingFretboardModel,
   VoicingFretPosition,
 } from '../music/types'
-import { displayNote } from '../presentation/notes'
+import { chordIntervalLabel, displayNote } from '../presentation/notes'
+
+export type ProgressionLabelMode = 'key' | 'chord'
 
 export const PROGRESSION_STEP_COLORS = [
   '#22685b',
@@ -41,6 +43,7 @@ interface ProgressionPathViewProps {
   readonly steps: readonly ProgressionStep[]
   readonly selectedStep: ProgressionStep
   readonly progressionName: string
+  readonly labelMode: ProgressionLabelMode
 }
 
 interface CoordinateEntry {
@@ -57,6 +60,7 @@ export function ProgressionPathView({
   steps,
   selectedStep,
   progressionName,
+  labelMode,
 }: ProgressionPathViewProps) {
   const titleId = useId()
   const descriptionId = useId()
@@ -98,13 +102,16 @@ export function ProgressionPathView({
       viewBox={`0 0 ${end + 24} ${viewHeight}`}
       role="img"
       aria-labelledby={`${titleId} ${descriptionId}`}
+      data-label-mode={labelMode}
     >
       <title id={titleId}>{displayNote(progressionName)}, seven connected chord-inversion shapes</title>
       <desc id={descriptionId}>
         All {allStrings.length} guitar strings are shown. Each progression step is a colored line connecting
         the three notes of its selected close-position inversion on strings {model.strings.join(', ')}.
         The numbered badge marks that chord's top note. Step {selectedStep.index + 1}, {selectedChordName},
-        is selected, so its line is stronger and its three note circles are filled.
+        is selected, so its line is stronger and its three note circles are filled. {labelMode === 'key'
+          ? 'Small badges show each note degree relative to the major key.'
+          : 'Small badges appear only on the selected chord and show root, third, and fifth relative to that chord.'}
       </desc>
 
       <rect x={nut} y={boardTop} width={end - nut} height={Math.max(1, boardBottom - boardTop)} fill="#f3f1eb" />
@@ -171,6 +178,10 @@ export function ProgressionPathView({
         const topNoteEntry = coordinate.entries.find(entry => entry.note.isTopNote)
         const x = fretX(coordinate.fret)
         const y = stringY.get(coordinate.string) ?? boardTop
+        const secondaryLabel = labelMode === 'key'
+          ? `${labelEntry.note.degree}`
+          : selectedEntry ? chordIntervalLabel(selectedEntry.note.tone.role, selectedStep.triad.quality) : null
+        const badgeWidth = secondaryLabel && secondaryLabel.length > 1 ? 18 : 13
         return <g key={`${coordinate.string}-${coordinate.fret}`} transform={`translate(${x}, ${y})`}>
           {coordinate.entries.map(entry => <path
             key={entry.stepIndex}
@@ -189,10 +200,12 @@ export function ProgressionPathView({
           <text textAnchor="middle" y="4.2" fill={selectedEntry ? '#fff' : '#4e554e'} className="fret-note">
             {displayNote(labelEntry.note.tone.pitch.name)}
           </text>
-          <circle cx="10" cy="9" r="6" fill="#faf9f6" stroke="#8c9289" strokeWidth="0.8" />
-          <text x="10" y="12.2" textAnchor="middle" fill="#343a34" fontSize="9" fontWeight="700">
-            {labelEntry.note.degree}
-          </text>
+          {secondaryLabel && <g className="progression-note-secondary" aria-hidden="true">
+            <rect x={10 - badgeWidth / 2} y="2.5" width={badgeWidth} height="13" rx="6.5" fill="#faf9f6" stroke="#8c9289" strokeWidth="0.8" />
+            <text x="10" y="12.1" textAnchor="middle" fill="#343a34" fontSize={secondaryLabel.length > 1 ? 8 : 9} fontWeight="700">
+              {secondaryLabel}
+            </text>
+          </g>}
           {topNoteEntry && <>
             <circle cx="-11" cy="-11" r="7" fill={stepColor(topNoteEntry.stepIndex)} stroke="#faf9f6" strokeWidth="1.2" />
             <text x="-11" y="-7.8" textAnchor="middle" fill="#fff" fontSize="8.5" fontWeight="700">
@@ -207,7 +220,7 @@ export function ProgressionPathView({
       <summary>Detailed connected progression shapes</summary>
       <table>
         <caption>One selected inversion shape per progression step</caption>
-        <thead><tr><th>Step</th><th>Chord</th><th>Inversion</th><th>String</th><th>Fret</th><th>Note</th><th>Scale degree</th><th>Chord role</th><th>Top note</th></tr></thead>
+        <thead><tr><th>Step</th><th>Chord</th><th>Inversion</th><th>String</th><th>Fret</th><th>Note</th><th>Scale degree</th><th>Chord interval</th><th>Chord role</th><th>Top note</th></tr></thead>
         <tbody>{model.shapes.flatMap(shape => {
           const step = steps[shape.stepIndex]
           return shape.notes.map(note => <tr key={`${shape.stepIndex}-${shape.fretOffset}-${note.string}`}>
@@ -218,6 +231,7 @@ export function ProgressionPathView({
             <td>{note.fret}</td>
             <td>{displayNote(note.tone.pitch.name)}</td>
             <td>{note.degree}</td>
+            <td>{chordIntervalLabel(note.tone.role, step.triad.quality)}</td>
             <td>{note.tone.role}</td>
             <td>{note.isTopNote ? 'Yes' : 'No'}</td>
           </tr>)

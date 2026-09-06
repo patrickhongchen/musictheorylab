@@ -4,6 +4,7 @@ import { TheoryControls } from '../components/TheoryControls'
 import { ProgressionStepSelector } from '../components/ProgressionStepSelector'
 import { FretboardView, RoleLegend } from '../components/FretboardView'
 import { ProgressionPathView, PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
+import type { ProgressionLabelMode } from '../components/ProgressionPathView'
 import { createProgressionFretboards, createProgressionVoicingFretboard } from '../music/fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from '../music/progressions'
 import { createScale } from '../music/scales'
@@ -32,6 +33,7 @@ export function ProgressionBuilder() {
   const [activeStep, setActiveStep] = useState(0)
   const [fretboardMode, setFretboardMode] = useState<FretboardMode>('chord')
   const [stringWindowStart, setStringWindowStart] = useState(1)
+  const [progressionLabelMode, setProgressionLabelMode] = useState<ProgressionLabelMode>('key')
   const scale = useMemo(() => createScale({ tonic, mode: 'major' }), [tonic])
   const progression = useMemo(() => createProgression(scale, selectedDegrees), [scale, selectedDegrees])
   const choices = useMemo(() => scale.notes.map((_, index) => harmonizationChoices(scale, (index + 1) as ScaleDegree)), [scale])
@@ -98,17 +100,50 @@ export function ProgressionBuilder() {
             <span role="listitem"><i className="path-legend-dot" aria-hidden="true" />Top note + step</span>
           </div>}
         </div>
-        <div className="fretboard-mode-switch" role="radiogroup" aria-label="Fretboard view">
-          <span>View</span>
-          <label>
-            <input type="radio" name="fretboard-view" checked={fretboardMode === 'chord'} onChange={() => setFretboardMode('chord')} />
-            <span>Chord detail</span>
-          </label>
-          <label>
-            <input type="radio" name="fretboard-view" checked={fretboardMode === 'progression'} onChange={() => setFretboardMode('progression')} />
-            <span>Progression path</span>
-          </label>
-        </div>
+      </div>
+      <div className="progression-toolbar" aria-label="Fretboard display controls">
+        <fieldset className="fretboard-mode-switch">
+          <legend>View</legend>
+          <div>
+            <label>
+              <input type="radio" name="fretboard-view" checked={fretboardMode === 'chord'} onChange={() => setFretboardMode('chord')} />
+              <span>Chord detail</span>
+            </label>
+            <label>
+              <input type="radio" name="fretboard-view" checked={fretboardMode === 'progression'} onChange={() => setFretboardMode('progression')} />
+              <span>Progression path</span>
+            </label>
+          </div>
+        </fieldset>
+        {fretboardMode === 'progression' && <>
+          <fieldset className="label-mode-picker">
+            <legend>Note labels</legend>
+            <div>
+              <label>
+                <input type="radio" name="progression-label-mode" checked={progressionLabelMode === 'key'} onChange={() => setProgressionLabelMode('key')} />
+                <span>In key</span>
+              </label>
+              <label>
+                <input type="radio" name="progression-label-mode" checked={progressionLabelMode === 'chord'} onChange={() => setProgressionLabelMode('chord')} />
+                <span>In chord</span>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset className="string-window-picker">
+            <legend>Three-string view</legend>
+            <div>
+              {STRING_WINDOWS.map(window => <label key={window.start}>
+                <input
+                  type="radio"
+                  name="string-window"
+                  checked={stringWindowStart === window.start}
+                  onChange={() => setStringWindowStart(window.start)}
+                />
+                <span>{window.label}</span>
+              </label>)}
+            </div>
+          </fieldset>
+        </>}
       </div>
       <div className={`progression-strip${fretboardMode === 'progression' ? ' is-path' : ''}`} role="group" aria-label="Choose a progression step for the fretboard">
         {progression.steps.map(step => <button
@@ -131,28 +166,15 @@ export function ProgressionBuilder() {
         <FretboardView model={activeFrame.model} chordName={`${activeProgressionStep.triad.chordName}, progression step ${activeStep + 1}`} />
         <div className="fretboard-caption"><p>Chord tones for the selected progression step</p><p>Standard tuning: E A D G B E</p></div>
       </> : <>
-        <div className="progression-map-controls">
-          <p role="status">Each colored line is one selected chord inversion, repeated wherever it fits on the neck. Numbered markers show progression order and top notes. Step {activeStep + 1} is highlighted; small numbers are scale degrees.</p>
-          <fieldset className="string-window-picker">
-            <legend>Three-string view</legend>
-            <div>
-              {STRING_WINDOWS.map(window => <label key={window.start}>
-                <input
-                  type="radio"
-                  name="string-window"
-                  checked={stringWindowStart === window.start}
-                  onChange={() => setStringWindowStart(window.start)}
-                />
-                <span>{window.label}</span>
-              </label>)}
-            </div>
-          </fieldset>
-        </div>
+        <p className="progression-map-status" role="status">{progressionLabelMode === 'key'
+          ? <>Each colored line is one selected chord inversion, repeated wherever it fits on the neck. Step {activeStep + 1} is highlighted; small numbers are degrees in {displayNote(tonic)} major.</>
+          : <>Step {activeStep + 1}, <strong>{displayNote(activeProgressionStep.triad.chordName)}</strong>, is selected. Its notes are labeled relative to the chord; the other shapes keep note names only.</>}</p>
         <ProgressionPathView
           model={progressionBoard}
           steps={progression.steps}
           selectedStep={activeProgressionStep}
           progressionName={`${displayNote(tonic)} major progression`}
+          labelMode={progressionLabelMode}
         />
         <div className="fretboard-caption"><p>The progression repeats toward the nut and fret 22 · follow the numbered top notes</p><p>Standard tuning: E A D G B E</p></div>
       </>}
