@@ -8,6 +8,9 @@ import type {
   ProgressionFretboardMarker,
   ProgressionFretboardModel,
   ProgressionFretPosition,
+  Scale,
+  ScaleFretboardModel,
+  ScaleFretPosition,
 } from './types'
 
 export const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'].map(pitch)
@@ -20,6 +23,28 @@ export function createFretboard(tones: readonly ChordTone[], tuning = STANDARD_T
       if (tone) positions.push({ string: tuning.length - index, fret, tone })
     }
   })
+  return { tuning, fretCount, positions }
+}
+
+/** Maps every diatonic pitch-class occurrence, independent of selection and presentation state. */
+export function createScaleFretboard(scale: Scale, tuning = STANDARD_TUNING, fretCount = 15): ScaleFretboardModel {
+  const positions: ScaleFretPosition[] = []
+
+  tuning.forEach((open, index) => {
+    for (let fret = 0; fret <= fretCount; fret++) {
+      const noteIndex = scale.notes.findIndex(note => note.chroma === (open.midi + fret) % 12)
+      if (noteIndex >= 0) {
+        positions.push({
+          string: tuning.length - index,
+          fret,
+          degree: (noteIndex + 1) as ScaleFretPosition['degree'],
+          pitchClass: scale.notes[noteIndex],
+        })
+      }
+    }
+  })
+
+  positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
   return { tuning, fretCount, positions }
 }
 

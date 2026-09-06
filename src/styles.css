@@ -144,11 +144,13 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .progression-fretboard-title { display: flex; align-items: center; gap: 28px; }
 .fretboard-mode-switch { display: flex; align-items: center; }
 .fretboard-mode-switch > span { color: var(--muted); font-size: 12px; margin-right: 9px; }
-.fretboard-mode-switch button { min-height: 38px; padding: 0 13px; border: 1px solid #b9bdb3; background: transparent; color: var(--muted); font-size: 12px; }
-.fretboard-mode-switch button:first-of-type { border-radius: 5px 0 0 5px; }
-.fretboard-mode-switch button:last-of-type { border-radius: 0 5px 5px 0; margin-left: -1px; }
-.fretboard-mode-switch button:hover { color: var(--ink); background: #f0f1ea; }
-.fretboard-mode-switch button[aria-pressed='true'] { position: relative; z-index: 1; color: white; border-color: var(--root); background: var(--root); }
+.fretboard-mode-switch label { min-height: 38px; padding: 0 13px; border: 1px solid #b9bdb3; display: inline-flex; align-items: center; color: var(--muted); font-size: 12px; cursor: pointer; }
+.fretboard-mode-switch label:first-of-type { border-radius: 5px 0 0 5px; }
+.fretboard-mode-switch label:last-of-type { border-radius: 0 5px 5px 0; margin-left: -1px; }
+.fretboard-mode-switch label:hover { color: var(--ink); background: #f0f1ea; }
+.fretboard-mode-switch label:has(input:checked) { position: relative; z-index: 1; color: white; border-color: var(--root); background: var(--root); }
+.fretboard-mode-switch label:has(input:focus-visible), .string-window-picker label:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; }
+.fretboard-mode-switch input, .string-window-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .progression-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 14px 0 11px; }
 .progression-strip button { min-width: 0; padding: 7px 9px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); display: grid; grid-template-columns: 22px 1fr; grid-template-rows: auto auto; align-items: center; text-align: left; column-gap: 7px; }
 .progression-strip button:hover { background: #f0f1ea; }
@@ -159,17 +161,14 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .active-step-summary { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
 .active-step-summary strong { color: var(--root); }
 .progression-map-controls { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 4px 0 12px; }
-.progression-map-controls > p { color: var(--muted); font-size: 12px; padding-bottom: 10px; }
-.string-filters legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
-.string-filters > div { display: flex; flex-wrap: wrap; gap: 5px; }
-.string-filters label { min-height: 38px; padding: 0 9px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #b9bdb3; border-radius: 5px; color: var(--muted); font-size: 11px; cursor: pointer; }
-.string-filters label:hover { background: #f0f1ea; }
-.string-filters label:has(input:checked) { color: var(--root); border-color: #91aa9c; background: #edf3ef; }
-.string-filters input { margin: 0; accent-color: var(--root); }
-.string-filters button { min-height: 38px; padding: 0 10px; border: 1px solid #b9bdb3; background: transparent; color: var(--root); font-size: 11px; }
-.string-filters button:hover:not(:disabled) { background: #edf3ef; }
-.empty-string-filter { color: var(--third); font-size: 12px; margin: -2px 0 7px; }
-.progression-fretboard .fret-note { font-size: 11px; }
+.progression-map-controls > p { max-width: 590px; color: var(--muted); font-size: 12px; line-height: 1.45; padding-bottom: 10px; }
+.progression-map-controls > p strong { color: var(--root); }
+.string-window-picker legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+.string-window-picker > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.string-window-picker label { min-height: 38px; padding: 0 10px; border: 1px solid #b9bdb3; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; cursor: pointer; }
+.string-window-picker label:hover { color: var(--ink); background: #f0f1ea; }
+.string-window-picker label:has(input:checked) { color: var(--root); border-color: #91aa9c; background: #edf3ef; }
+.progression-path-view .fret-note { font-size: 11px; }
 .page-footer { margin-top: 30px; padding: 18px 0 24px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .skip-link { position: fixed; left: 16px; top: 12px; opacity: 0; pointer-events: none; background: var(--root); color: white; padding: 14px; z-index: 10; }
@@ -255,13 +254,13 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .progression-fretboard-title { flex-direction: column; align-items: flex-start; gap: 10px; }
   .fretboard-mode-switch { width: 100%; }
   .fretboard-mode-switch > span { margin-right: auto; }
-  .fretboard-mode-switch button { min-height: 44px; }
+  .fretboard-mode-switch label { min-height: 44px; }
   .progression-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .active-step-summary { line-height: 1.45; margin: 12px 0 4px; }
   .progression-map-controls { display: block; margin-top: 3px; }
   .progression-map-controls > p { padding-bottom: 11px; }
-  .string-filters > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .string-filters label, .string-filters button { min-height: 44px; padding-inline: 7px; justify-content: center; }
+  .string-window-picker > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .string-window-picker label { min-height: 44px; padding-inline: 7px; }
 }
 @media (max-width: 480px) {
   .site-header { align-items: flex-start; }
@@ -271,6 +270,6 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .progression-step-heading { margin-bottom: 8px; }
   .progression-choices { grid-template-columns: 1fr; }
   .progression-choice { grid-template-columns: 15px 34px minmax(0, 1fr); min-height: 43px; }
-  .string-filters > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .string-window-picker > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }

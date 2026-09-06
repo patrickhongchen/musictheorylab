@@ -47,6 +47,18 @@ export interface ProgressionStep {
 export interface HarmonizedProgression { readonly scale: Scale; readonly steps: readonly ProgressionStep[] }
 export interface FretPosition { readonly string: number; readonly fret: number; readonly tone: ChordTone }
 export interface FretboardModel { readonly tuning: readonly Pitch[]; readonly fretCount: number; readonly positions: readonly FretPosition[] }
+/** A scale-note occurrence that can act as a top-note anchor on the fretboard. */
+export interface ScaleFretPosition {
+  readonly string: number
+  readonly fret: number
+  readonly degree: ScaleDegree
+  readonly pitchClass: PitchClass
+}
+export interface ScaleFretboardModel {
+  readonly tuning: readonly Pitch[]
+  readonly fretCount: number
+  readonly positions: readonly ScaleFretPosition[]
+}
 export interface ProgressionFretboardFrame {
   readonly stepIndex: number
   readonly topDegree: ScaleDegree

@@ -3,7 +3,7 @@ import { createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
 import { ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import { createFretboard, createProgressionFretboard, createProgressionFretboards } from './fretboard'
+import { createFretboard, createProgressionFretboard, createProgressionFretboards, createScaleFretboard } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
 
@@ -99,6 +99,46 @@ describe('fretboard domain mapping', () => {
   it('labels enharmonic frets using the chord spelling', () => {
     const board = createFretboard(explore('Gb', 'Db')[0].triad.tones)
     expect(new Set(board.positions.map(p => p.tone.pitchClass.name))).toEqual(new Set(['Gb', 'Bb', 'Db']))
+  })
+
+  describe('scale top-note anchors', () => {
+    it('maps every C-major scale occurrence on a string with its degree and spelling', () => {
+      const board = createScaleFretboard(createScale({ tonic: 'C', mode: 'major' }))
+
+      expect(board.positions.filter(position => position.string === 1).map(position => [position.fret, position.degree, position.pitchClass.name]))
+        .toEqual([
+          [0, 3, 'E'], [1, 4, 'F'], [3, 5, 'G'], [5, 6, 'A'], [7, 7, 'B'],
+          [8, 1, 'C'], [10, 2, 'D'], [12, 3, 'E'], [13, 4, 'F'], [15, 5, 'G'],
+        ])
+    })
+
+    it('maps every anchor to the chroma at its physical coordinate', () => {
+      const board = createScaleFretboard(createScale({ tonic: 'D', mode: 'major' }))
+
+      expect(board.positions.every(position => {
+        const open = board.tuning[board.tuning.length - position.string]
+        return position.pitchClass.chroma === (open.midi + position.fret) % 12
+      })).toBe(true)
+    })
+
+    it('preserves flat-key spelling for enharmonic fret positions', () => {
+      const board = createScaleFretboard(createScale({ tonic: 'Cb', mode: 'major' }))
+      const openB = board.positions.find(position => position.string === 2 && position.fret === 0)
+      const openHighE = board.positions.find(position => position.string === 1 && position.fret === 0)
+
+      expect([openB?.degree, openB?.pitchClass.name]).toEqual([1, 'Cb'])
+      expect([openHighE?.degree, openHighE?.pitchClass.name]).toEqual([4, 'Fb'])
+    })
+
+    it('honors custom tuning and fret range without encoding string visibility', () => {
+      const tuning = [pitch('D3'), pitch('A3'), pitch('D4')]
+      const board = createScaleFretboard(createScale({ tonic: 'C', mode: 'major' }), tuning, 2)
+
+      expect(board.tuning).toBe(tuning)
+      expect(board.fretCount).toBe(2)
+      expect(board.positions.map(position => [position.string, position.fret, position.pitchClass.name]))
+        .toEqual([[1, 0, 'D'], [1, 2, 'E'], [2, 0, 'A'], [2, 2, 'B'], [3, 0, 'D'], [3, 2, 'E']])
+    })
   })
 })
 
