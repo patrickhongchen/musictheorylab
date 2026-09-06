@@ -4,6 +4,9 @@ import type {
   FretboardModel,
   FretPosition,
   HarmonizedProgression,
+  PentatonicScale,
+  PentatonicScaleFretboardModel,
+  PentatonicScaleFretPosition,
   ProgressionFretboardFrame,
   ProgressionFretboardMarker,
   ProgressionFretboardModel,
@@ -44,6 +47,25 @@ export function createScaleFretboard(scale: Scale, tuning = STANDARD_TUNING, fre
           pitchClass: scale.notes[noteIndex],
         })
       }
+    }
+  })
+
+  positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
+  return { tuning, fretCount, positions }
+}
+
+/** Maps every occurrence of every pentatonic scale tone across the requested fret range. */
+export function createPentatonicScaleFretboard(
+  scale: PentatonicScale,
+  tuning = STANDARD_TUNING,
+  fretCount = 15,
+): PentatonicScaleFretboardModel {
+  const positions: PentatonicScaleFretPosition[] = []
+
+  tuning.forEach((open, index) => {
+    for (let fret = 0; fret <= fretCount; fret++) {
+      const tone = scale.tones.find(candidate => candidate.pitchClass.chroma === (open.midi + fret) % 12)
+      if (tone) positions.push({ string: tuning.length - index, fret, tone })
     }
   })
 

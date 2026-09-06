@@ -1,5 +1,5 @@
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import type { Inversion, Pitch, Scale, Triad, TriadResult, Voicing } from './types'
+import type { Inversion, PentatonicScale, Pitch, Scale, Triad, TriadResult, Voicing } from './types'
 
 const INVERSIONS: readonly Inversion[] = [
   { index: 0, name: 'Root position', figure: '' },
@@ -48,4 +48,17 @@ export function ascendingScaleSopranos(scale: Scale): readonly Pitch[] {
     notes.push(pitchAtMidi(note, previous.midi + distance))
     return notes
   }, [first])
+}
+
+/** Places the five pentatonic tones in one ascending octave and repeats the tonic at the top. */
+export function ascendingPentatonicPitches(scale: PentatonicScale): readonly Pitch[] {
+  const first = pitch(`${scale.tones[0].pitchClass.name}4`)
+  const pitches = scale.tones.slice(1).reduce<Pitch[]>((notes, tone) => {
+    const previous = notes[notes.length - 1]
+    const distance = (tone.pitchClass.chroma - previous.chroma + 12) % 12 || 12
+    notes.push(pitchAtMidi(tone.pitchClass, previous.midi + distance))
+    return notes
+  }, [first])
+
+  return [...pitches, pitchAtMidi(scale.tones[0].pitchClass, first.midi + 12)]
 }

@@ -17,6 +17,20 @@ export type ChordToneRole = 'root' | 'third' | 'fifth'
 export type RomanNumeral = string
 export interface Key { readonly tonic: string; readonly mode: 'major' }
 export interface Scale { readonly key: Key; readonly name: string; readonly notes: readonly PitchClass[] }
+export type PentatonicScaleType = 'major' | 'minor'
+export type PentatonicScaleToneLabel = '1' | '2' | 'b3' | '3' | '4' | '5' | '6' | 'b7'
+/** A pitch in a pentatonic scale, with both Tonal's interval and a UI-ready degree label. */
+export interface PentatonicScaleTone {
+  readonly pitchClass: PitchClass
+  readonly interval: string
+  readonly label: PentatonicScaleToneLabel
+}
+export interface PentatonicScale {
+  readonly tonic: string
+  readonly type: PentatonicScaleType
+  readonly name: string
+  readonly tones: readonly PentatonicScaleTone[]
+}
 export interface ChordTone { readonly pitchClass: PitchClass; readonly role: ChordToneRole; readonly interval: string }
 export interface Triad {
   readonly id: string
@@ -58,6 +72,16 @@ export interface ScaleFretboardModel {
   readonly tuning: readonly Pitch[]
   readonly fretCount: number
   readonly positions: readonly ScaleFretPosition[]
+}
+export interface PentatonicScaleFretPosition {
+  readonly string: number
+  readonly fret: number
+  readonly tone: PentatonicScaleTone
+}
+export interface PentatonicScaleFretboardModel {
+  readonly tuning: readonly Pitch[]
+  readonly fretCount: number
+  readonly positions: readonly PentatonicScaleFretPosition[]
 }
 /** One note from a selected close-position inversion, placed on a guitar string. */
 export interface VoicingFretPosition {

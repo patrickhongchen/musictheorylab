@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createScale, MAJOR_KEYS } from './scales'
+import { createPentatonicScale, createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
-import { ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
+import { ascendingPentatonicPitches, ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import { createFretboard, createProgressionFretboard, createProgressionFretboards, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
+import { createFretboard, createPentatonicScaleFretboard, createProgressionFretboard, createProgressionFretboards, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
 
@@ -213,6 +213,61 @@ describe('fretboard domain mapping', () => {
       expect(() => createProgressionVoicingFretboard(cMajorProgression, [1, 2])).toThrow('exactly three strings')
       expect(() => createProgressionVoicingFretboard(cMajorProgression, [1, 1, 2])).toThrow('exactly three strings')
     })
+  })
+})
+
+describe('pentatonic scales', () => {
+  it.each([
+    ['major', ['C', 'D', 'E', 'G', 'A'], ['1', '2', '3', '5', '6'], ['1P', '2M', '3M', '5P', '6M']],
+    ['minor', ['C', 'Eb', 'F', 'G', 'Bb'], ['1', 'b3', '4', '5', 'b7'], ['1P', '3m', '4P', '5P', '7m']],
+  ] as const)('creates the C %s pentatonic with interval-aware labels', (type, notes, labels, intervals) => {
+    const scale = createPentatonicScale('C', type)
+
+    expect(scale.name).toBe(`C ${type} pentatonic`)
+    expect(scale.tones.map(tone => tone.pitchClass.name)).toEqual(notes)
+    expect(scale.tones.map(tone => tone.label)).toEqual(labels)
+    expect(scale.tones.map(tone => tone.interval)).toEqual(intervals)
+  })
+
+  it('preserves enharmonic spellings supplied by Tonal', () => {
+    expect(createPentatonicScale('F#', 'major').tones.map(tone => tone.pitchClass.name))
+      .toEqual(['F#', 'G#', 'A#', 'C#', 'D#'])
+    expect(createPentatonicScale('Gb', 'minor').tones.map(tone => tone.pitchClass.name))
+      .toEqual(['Gb', 'Bbb', 'Cb', 'Db', 'Fb'])
+  })
+
+  it('maps all and only matching positions over a configurable fret count', () => {
+    const tuning = [pitch('C3'), pitch('E3')]
+    const board = createPentatonicScaleFretboard(createPentatonicScale('C', 'minor'), tuning, 5)
+
+    expect(board.tuning).toBe(tuning)
+    expect(board.fretCount).toBe(5)
+    expect(board.positions.map(position => [position.string, position.fret, position.tone.pitchClass.name, position.tone.label]))
+      .toEqual([
+        [1, 1, 'F', '4'], [1, 3, 'G', '5'],
+        [2, 0, 'C', '1'], [2, 3, 'Eb', 'b3'], [2, 5, 'F', '4'],
+      ])
+    expect(board.positions.every(position => {
+      const open = board.tuning[board.tuning.length - position.string]
+      return position.tone.pitchClass.chroma === (open.midi + position.fret) % 12
+    })).toBe(true)
+  })
+
+  it('rejects an invalid tonic', () => {
+    expect(() => createPentatonicScale('H', 'major')).toThrow('Unsupported scale')
+  })
+
+  it.each([
+    ['major', ['C4', 'D4', 'E4', 'G4', 'A4', 'C5']],
+    ['minor', ['C4', 'Eb4', 'F4', 'G4', 'Bb4', 'C5']],
+  ] as const)('places the C %s pentatonic across one ascending octave', (type, expected) => {
+    expect(ascendingPentatonicPitches(createPentatonicScale('C', type)).map(note => note.scientific))
+      .toEqual(expected)
+  })
+
+  it('keeps the repeated tonic spelling across an enharmonic octave boundary', () => {
+    expect(ascendingPentatonicPitches(createPentatonicScale('Cb', 'major')).map(note => note.scientific))
+      .toEqual(['Cb4', 'Db4', 'Eb4', 'Gb4', 'Ab4', 'Cb5'])
   })
 })
 
