@@ -53,3 +53,21 @@ export interface ProgressionFretboardFrame {
   readonly triad: Triad
   readonly model: FretboardModel
 }
+/** One chord-tone occurrence at a fret, retained separately for each progression step. */
+export interface ProgressionFretboardMarker {
+  readonly stepIndex: number
+  readonly topDegree: ScaleDegree
+  readonly triad: Triad
+  readonly tone: ChordTone
+}
+/** A physical fretboard coordinate shared by one or more progression markers. */
+export interface ProgressionFretPosition {
+  readonly string: number
+  readonly fret: number
+  readonly markers: readonly ProgressionFretboardMarker[]
+}
+export interface ProgressionFretboardModel {
+  readonly tuning: readonly Pitch[]
+  readonly fretCount: number
+  readonly positions: readonly ProgressionFretPosition[]
+}

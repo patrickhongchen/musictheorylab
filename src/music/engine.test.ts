@@ -3,7 +3,7 @@ import { createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
 import { ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import { createFretboard, createProgressionFretboards } from './fretboard'
+import { createFretboard, createProgressionFretboard, createProgressionFretboards } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
 
@@ -144,6 +144,51 @@ describe('seven-step harmonized progressions', () => {
     const cOnFifthString = frames.map(frame => frame.model.positions.find(position => position.string === 5 && position.fret === 3)?.tone.role)
     expect(cOnFifthString[0]).toBe('root')
     expect(cOnFifthString[5]).toBe('third')
+  })
+
+  describe('grouped progression fretboard', () => {
+    it('groups shared C at fifth string, third fret while preserving each occurrence and role', () => {
+      const board = createProgressionFretboard(createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES))
+      const position = board.positions.find(candidate => candidate.string === 5 && candidate.fret === 3)
+
+      expect(position?.markers.map(marker => [marker.stepIndex, marker.tone.pitchClass.name, marker.tone.role]))
+        .toEqual([[0, 'C', 'root'], [3, 'C', 'fifth'], [5, 'C', 'third']])
+    })
+
+    it('retains separate step identities when the same chord is selected repeatedly', () => {
+      const repeatedI: ProgressionChordDegrees = [1, 2, 1, 4, 1, 6, 7]
+      const board = createProgressionFretboard(createProgression(cMajor, repeatedI))
+      const openHighE = board.positions.find(position => position.string === 1 && position.fret === 0)
+
+      expect(openHighE?.markers.filter(marker => marker.triad.scaleDegree === 1).map(marker => marker.stepIndex))
+        .toEqual([0, 2, 4])
+    })
+
+    it('maps every marker to the chroma at its physical string and fret', () => {
+      const board = createProgressionFretboard(createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES))
+
+      for (const position of board.positions) {
+        const chroma = (board.tuning[board.tuning.length - position.string].midi + position.fret) % 12
+        expect(position.markers.every(marker => marker.tone.pitchClass.chroma === chroma)).toBe(true)
+      }
+    })
+
+    it('returns unique coordinates with positions and markers in deterministic order', () => {
+      const board = createProgressionFretboard(createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES))
+      const coordinates = board.positions.map(position => `${position.string}-${position.fret}`)
+
+      expect(new Set(coordinates).size).toBe(coordinates.length)
+      expect(board.positions).toEqual([...board.positions].sort((left, right) => left.string - right.string || left.fret - right.fret))
+      expect(board.positions.every(position => position.markers.every((marker, index) => index === 0 || position.markers[index - 1].stepIndex < marker.stepIndex))).toBe(true)
+    })
+
+    it('uses the progression chord spelling for enharmonic fret markers', () => {
+      const cb = createProgression(createScale({ tonic: 'Cb', mode: 'major' }), DEFAULT_PROGRESSION_DEGREES)
+      const board = createProgressionFretboard(cb)
+      const openB = board.positions.find(position => position.string === 2 && position.fret === 0)
+
+      expect(openB?.markers.map(marker => marker.tone.pitchClass.name)).toEqual(['Cb', 'Cb', 'Cb'])
+    })
   })
 })
 

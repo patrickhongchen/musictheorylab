@@ -1,5 +1,14 @@
 import { pitch } from './pitches'
-import type { ChordTone, FretboardModel, FretPosition, HarmonizedProgression, ProgressionFretboardFrame } from './types'
+import type {
+  ChordTone,
+  FretboardModel,
+  FretPosition,
+  HarmonizedProgression,
+  ProgressionFretboardFrame,
+  ProgressionFretboardMarker,
+  ProgressionFretboardModel,
+  ProgressionFretPosition,
+} from './types'
 
 export const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'].map(pitch)
 
@@ -22,4 +31,27 @@ export function createProgressionFretboards(progression: HarmonizedProgression, 
     triad: step.triad,
     model: createFretboard(step.triad.tones, tuning, fretCount),
   }))
+}
+
+/** Groups every progression occurrence by physical string/fret without losing step-specific roles or spelling. */
+export function createProgressionFretboard(progression: HarmonizedProgression, tuning = STANDARD_TUNING, fretCount = 15): ProgressionFretboardModel {
+  const grouped = new Map<string, { string: number; fret: number; markers: ProgressionFretboardMarker[] }>()
+
+  progression.steps.forEach(step => {
+    createFretboard(step.triad.tones, tuning, fretCount).positions.forEach(({ string, fret, tone }) => {
+      const key = `${string}-${fret}`
+      const position = grouped.get(key) ?? { string, fret, markers: [] }
+      position.markers.push({ stepIndex: step.index, topDegree: step.topDegree, triad: step.triad, tone })
+      grouped.set(key, position)
+    })
+  })
+
+  const positions: ProgressionFretPosition[] = [...grouped.values()]
+    .sort((left, right) => left.string - right.string || left.fret - right.fret)
+    .map(position => ({
+      ...position,
+      markers: position.markers.sort((left, right) => left.stepIndex - right.stepIndex),
+    }))
+
+  return { tuning, fretCount, positions }
 }

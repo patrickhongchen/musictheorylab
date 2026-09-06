@@ -33,7 +33,7 @@ Deploy the contents of `dist/` to any static host. Relative asset paths support 
 - Chord name, Roman numeral, chord-tone roles, bass, soprano, inversion and inversion figures.
 - A responsive VexFlow treble staff with key signature, ledger lines, colored noteheads and a labeled soprano.
 - Six-string SVG fretboard, standard E2–A2–D3–G3–B3–E4 tuning, frets 0–15, all available chord-tone locations.
-- Progression Builder with one harmony choice per ascending scale top note, a complete seven-chord staff, and step-by-step fretboard inspection.
+- Progression Builder with one harmony choice per ascending scale top note, a complete seven-chord staff, step-by-step fretboard inspection, and an all-progression map with string filters.
 - Root/third/fifth colors paired with numbers and solid/outlined/dashed markers. The numbers describe chord roles, including the diminished fifth of vii°.
 - Tone.js chord and ascending arpeggio playback using the exact staff pitches.
 - Mobile stacking, comfortable tap targets, native radio keyboard navigation, focus states, screen-reader descriptions, reduced-motion support, and local fretboard scrolling.
@@ -94,7 +94,7 @@ For C major with G on top:
 | iii | E minor | B3 E4 G4 | B3 | Second inversion |
 | V | G major | B3 D4 G4 | B3 | First inversion |
 
-`src/music/engine.test.ts` has **140 passing tests** covering this exact example, independent expected memberships for every scale degree in all 15 keys, interval quality, ascending/complete/close voicings, bass-derived inversion, complete seven-step progressions, D/E♭/G♭ transposition examples, F♯/G♭/C♯/C♭ spelling, B♯/C♭ octave boundaries, invalid input, and complete fretboard occurrence mapping from the open strings through fret 15.
+`src/music/engine.test.ts` has **145 passing tests** covering this exact example, independent expected memberships for every scale degree in all 15 keys, interval quality, ascending/complete/close voicings, bass-derived inversion, complete seven-step progressions, grouped progression-map positions, D/E♭/G♭ transposition examples, F♯/G♭/C♯/C♭ spelling, B♯/C♭ octave boundaries, invalid input, and complete fretboard occurrence mapping from the open strings through fret 15.
 
 Browser verification used connected Chrome at desktop, 390px and 320px widths. Key and chord changes, diminished chords, playback controls, single-SVG cleanup across all keys, and local fretboard overflow were checked. This is responsive browser testing, not physical iPhone/Safari testing; speaker output was not recorded or independently auditioned.
 
