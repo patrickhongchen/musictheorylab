@@ -1,0 +1,107 @@
+import { describe, expect, it } from 'vitest'
+import { createScale, MAJOR_KEYS } from './scales'
+import { diatonicTriads } from './triads'
+import { closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
+import { pitch, pitchAtMidi, pitchClass } from './pitches'
+import { createFretboard } from './fretboard'
+
+const explore = (tonic: string, soprano: string) => harmonizeTopNote(diatonicTriads(createScale({ tonic, mode: 'major' })), soprano)
+
+describe('C major / G acceptance case', () => {
+  const results = explore('C', 'G')
+  it('returns exactly I, iii, V with their names and chord tones', () => {
+    expect(results.map(({ triad }) => [triad.romanNumeral, triad.chordName, triad.tones.map(t => t.pitchClass.name)]))
+      .toEqual([['I', 'C major', ['C', 'E', 'G']], ['iii', 'E minor', ['E', 'G', 'B']], ['V', 'G major', ['G', 'B', 'D']]])
+  })
+  it('creates the specified actual pitches, ordered bass to soprano', () => {
+    expect(results.map(r => r.voicing.notes.map(n => n.pitch.scientific)))
+      .toEqual([['C4', 'E4', 'G4'], ['B3', 'E4', 'G4'], ['B3', 'D4', 'G4']])
+  })
+  it('derives inversion from the bass and preserves roles after rotation', () => {
+    expect(results.map(r => r.voicing.inversion.name)).toEqual(['Root position', 'Second inversion', 'First inversion'])
+    expect(results.map(r => r.voicing.bass.role)).toEqual(['root', 'fifth', 'third'])
+    expect(results.map(r => r.voicing.soprano.role)).toEqual(['fifth', 'third', 'root'])
+  })
+})
+
+describe('transposition and spelling', () => {
+  it.each([
+    ['D', 'A', ['D major', 'F# minor', 'A major'], [['D4', 'F#4', 'A4'], ['C#4', 'F#4', 'A4'], ['C#4', 'E4', 'A4']]],
+    ['Eb', 'Bb', ['Eb major', 'G minor', 'Bb major'], [['Eb4', 'G4', 'Bb4'], ['D4', 'G4', 'Bb4'], ['D4', 'F4', 'Bb4']]],
+    ['Gb', 'Db', ['Gb major', 'Bb minor', 'Db major'], [['Gb4', 'Bb4', 'Db5'], ['F4', 'Bb4', 'Db5'], ['F4', 'Ab4', 'Db5']]],
+  ])('%s major with %s on top', (key, top, names, pitches) => {
+    const results = explore(key, top)
+    expect(results.map(r => r.triad.chordName)).toEqual(names)
+    expect(results.map(r => r.voicing.notes.map(n => n.pitch.scientific))).toEqual(pitches)
+    expect(results.map(r => r.voicing.inversion.index)).toEqual([0, 2, 1])
+  })
+  it.each([
+    ['F#', ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']],
+    ['Gb', ['Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb', 'F']],
+    ['C#', ['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#']],
+    ['Cb', ['Cb', 'Db', 'Eb', 'Fb', 'Gb', 'Ab', 'Bb']],
+  ])('keeps correct %s scale and chord spelling', (tonic, expected) => {
+    const scale = createScale({ tonic, mode: 'major' })
+    expect(scale.notes.map(n => n.name)).toEqual(expected)
+    expect(diatonicTriads(scale).flatMap(t => t.tones.map(n => n.pitchClass.name)).every(n => expected.includes(n))).toBe(true)
+  })
+  it('handles enharmonic octave boundaries without relabeling notes', () => {
+    expect(pitchAtMidi(pitchClass('B#'), 60).scientific).toBe('B#3')
+    expect(pitchAtMidi(pitchClass('Cb'), 59).scientific).toBe('Cb4')
+    expect(sopranoPitch('B#').scientific).toBe('B#4')
+    expect(sopranoPitch('Cb').scientific).toBe('Cb5')
+  })
+})
+
+describe.each(MAJOR_KEYS)('$tonic major: all seven soprano choices', key => {
+  const scale = createScale(key)
+  const triads = diatonicTriads(scale)
+  // Independent expected memberships by scale degree, rather than copying the filter.
+  const expectedDegrees = [[1, 4, 6], [2, 5, 7], [1, 3, 6], [2, 4, 7], [1, 3, 5], [2, 4, 6], [3, 5, 7]]
+  it('generates the expected major-scale quality and numeral pattern', () => {
+    expect(triads.map(t => t.romanNumeral)).toEqual(['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'])
+    expect(triads.map(t => t.quality)).toEqual(['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished'])
+  })
+  for (let index = 0; index < 7; index++) {
+    it(`harmonizes degree ${index + 1} with three complete close-position voicings`, () => {
+      const top = scale.notes[index]
+      const results = harmonizeTopNote(triads, top.name)
+      expect(results.map(r => r.triad.scaleDegree)).toEqual(expectedDegrees[index])
+      expect(new Set(results.map(r => r.voicing.soprano.pitch.midi)).size).toBe(1)
+      for (const { triad, voicing } of results) {
+        const midi = voicing.notes.map(n => n.pitch.midi)
+        expect(midi[0]).toBeLessThan(midi[1])
+        expect(midi[1]).toBeLessThan(midi[2])
+        expect(midi[2] - midi[0]).toBeLessThan(12)
+        expect(voicing.soprano.pitch.name).toBe(top.name)
+        expect(new Set(voicing.notes.map(n => n.pitch.name))).toEqual(new Set(triad.tones.map(t => t.pitchClass.name)))
+        expect(voicing.bass.role).toBe(['root', 'third', 'fifth'][voicing.inversion.index])
+        expect(voicing.notes.every(n => Number.isFinite(n.pitch.frequency))).toBe(true)
+      }
+    })
+  }
+})
+
+describe('fretboard domain mapping', () => {
+  it('finds every occurrence including open strings and octave repeats', () => {
+    const board = createFretboard(explore('C', 'G')[0].triad.tones)
+    expect(board.positions.filter(p => p.string === 1).map(p => [p.fret, p.tone.pitchClass.name, p.tone.role]))
+      .toEqual([[0, 'E', 'third'], [3, 'G', 'fifth'], [8, 'C', 'root'], [12, 'E', 'third']])
+    for (let string = 1; string <= 6; string++) {
+      for (let fret = 0; fret <= 12; fret++) {
+        const expected = [0, 4, 7].includes((board.tuning[6 - string].midi + fret) % 12)
+        expect(board.positions.some(p => p.string === string && p.fret === fret)).toBe(expected)
+      }
+    }
+  })
+  it('labels enharmonic frets using the chord spelling', () => {
+    const board = createFretboard(explore('Gb', 'Db')[0].triad.tones)
+    expect(new Set(board.positions.map(p => p.tone.pitchClass.name))).toEqual(new Set(['Gb', 'Bb', 'Db']))
+  })
+})
+
+it('rejects invalid input instead of producing broken visualization data', () => {
+  expect(() => createScale({ tonic: 'H', mode: 'major' })).toThrow()
+  expect(() => pitch('C')).toThrow()
+  expect(() => closePosition(explore('C', 'G')[0].triad, pitch('F#4'))).toThrow()
+})

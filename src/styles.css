@@ -1,0 +1,170 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #252925;
+  background: #faf9f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --ink: #252925;
+  --muted: #656961;
+  --line: #d9dbd3;
+  --root: #22685b;
+  --third: #a24b22;
+  --fifth: #72558e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, select, input { font: inherit; }
+button, select { min-height: 46px; border-radius: 5px; }
+button, label:has(input), select { -webkit-tap-highlight-color: transparent; }
+button, select { cursor: pointer; }
+button { transition: background 150ms, border-color 150ms; }
+button:disabled { cursor: wait; opacity: .72; }
+button:focus-visible, select:focus-visible, .fretboard-scroll:focus-visible { outline: 3px solid var(--root); outline-offset: 5px; }
+h1, h2, p { margin: 0; }
+h1, h2, .brand, .note-face, .chord-name, .roman, .chord-inversion, .tone-note, dd, .figure { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; }
+h1 { font-size: clamp(35px, 4vw, 48px); line-height: 1.16; letter-spacing: -1.4px; }
+h2 { font-size: 22px; line-height: 1.3; letter-spacing: -.4px; }
+p { font-size: 15px; line-height: 1.65; }
+strong { font-weight: 600; }
+.site-header { max-width: 1280px; margin: 0 auto; padding: 23px 0 19px; border-bottom: 1px solid #b7bcb2; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.brand { font-size: 24px; letter-spacing: -.5px; }
+.header-description { color: var(--muted); font-size: 14px; }
+main { max-width: 1120px; margin: 0 auto; padding: 30px 0 0; }
+.intro { display: flex; align-items: center; justify-content: space-between; gap: 32px; margin-bottom: 33px; }
+.intro p { color: var(--muted); margin-top: 10px; font-size: 16px; }
+.key-control { display: flex; flex-direction: column; gap: 7px; font-size: 13px; flex: 0 0 205px; }
+.key-control select { width: 100%; padding: 0 14px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 15px; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.note-selector { margin-bottom: 24px; }
+.note-selector legend { font: 22px Georgia, serif; padding: 0; margin-bottom: 11px; letter-spacing: -.4px; }
+.note-buttons { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 16px; }
+.note-choice { position: relative; cursor: pointer; text-align: center; }
+.note-choice input, .chord-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.note-face { display: block; padding: 10px 0 11px; border: 1px solid #b9bdb3; border-radius: 5px; font-size: 29px; line-height: 1; transition: background 150ms, color 150ms; }
+.note-choice:hover .note-face { background: #f0f1ea; }
+.note-choice.is-selected .note-face { background: var(--root); color: white; border-color: var(--root); }
+.note-choice input:focus-visible + .note-face { outline: 3px solid var(--root); outline-offset: 4px; }
+.scale-degree { display: block; color: var(--muted); font-size: 12px; margin-top: 8px; }
+.note-choice.is-selected .scale-degree { color: var(--root); font-weight: 700; }
+.section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 11px; }
+.section-heading > span { font-size: 13px; color: var(--muted); }
+.chord-options { display: grid; gap: 0; }
+.chord-option { display: grid; grid-template-columns: 22px 1.15fr .6fr 1.35fr 1.1fr; align-items: center; gap: 22px; position: relative; cursor: pointer; min-height: 62px; padding: 9px 21px; border: 1px solid var(--line); margin-top: -1px; background: transparent; transition: background 150ms; }
+.chord-option:first-of-type { border-radius: 5px 5px 0 0; margin-top: 0; }
+.chord-option:last-child { border-radius: 0 0 5px 5px; }
+.chord-option:hover { background: #f0f1ea; }
+.chord-option.is-selected { background: #edf3ef; border: 1px solid var(--root); border-radius: 5px; z-index: 1; }
+.chord-option:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; z-index: 2; }
+.selection-dot { width: 18px; height: 18px; border: 1px solid var(--muted); border-radius: 50%; display: grid; place-items: center; }
+.is-selected .selection-dot { border-color: var(--root); }
+.is-selected .selection-dot::after { content: ''; width: 10px; height: 10px; background: var(--root); border-radius: 50%; }
+.chord-name { font-size: 21px; }
+.roman { font-size: 24px; text-align: center; border-left: 1px solid var(--line); }
+.chord-option .tone-notes { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.chord-inversion { font-size: 18px; text-align: center; }
+.tone-notes { display: inline-flex; justify-content: center; align-items: center; gap: 25px; }
+.tone-note { font-size: 21px; display: inline-flex; flex-direction: column; align-items: center; gap: 1px; white-space: nowrap; }
+.tone-note small { font: 10px/1.1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.role-root { color: var(--root); }
+.role-third { color: var(--third); }
+.role-fifth { color: var(--fifth); }
+.voicing-section { margin-top: 23px; padding: 24px 0; border-top: 1px solid #b7bcb2; border-bottom: 1px solid #b7bcb2; display: grid; grid-template-columns: 1.12fr 1fr; gap: 42px; }
+.staff-panel { min-width: 0; }
+.staff-view { width: 100%; min-height: 190px; margin-top: -10px; }
+.staff-view svg { display: block; width: 100%; height: auto; }
+.staff-loading { height: 190px; display: grid; place-items: center; font-size: 13px; color: var(--muted); }
+.bass-to-top { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: -15px; }
+.bass-to-top > span:first-child { font-size: 12px; color: var(--muted); }
+.audio-controls { margin-top: 19px; }
+.audio-buttons { display: flex; gap: 12px; justify-content: center; }
+.audio-buttons button { font-size: 14px; font-weight: 500; padding: 0 19px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
+.primary-button { background: var(--root); color: white; border: 1px solid var(--root); min-width: 147px; }
+.primary-button:hover:not(:disabled) { background: #194f45; }
+.secondary-button { border: 1px solid var(--root); color: var(--root); background: transparent; min-width: 133px; }
+.secondary-button:hover:not(:disabled) { background: #edf3ef; }
+.audio-hint { margin-top: 9px; color: var(--muted); font-size: 12px; text-align: center; min-height: 20px; }
+.explanation { border-left: 1px solid var(--line); padding-left: 42px; }
+.explanation-title { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.figure { font-size: 22px; color: var(--muted); }
+.figure sup { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; margin-left: 4px; }
+.explanation > p { margin-top: 14px; max-width: 400px; }
+.voicing-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 25px 0 0; }
+.voicing-facts dt { font-size: 12px; color: var(--muted); margin-bottom: 9px; }
+.voicing-facts dd { font-size: 30px; margin: 0; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.explanation .learning-note { margin-top: 20px; color: var(--muted); font-size: 12px; max-width: 300px; }
+.fretboard-section { padding-top: 22px; }
+.fretboard-heading { justify-content: flex-start; gap: 35px; align-items: center; margin-bottom: 0; }
+.role-legend { display: flex; align-items: center; gap: 22px; list-style: none; margin: 0; padding: 0; }
+.role-legend li { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.role-legend li > span:last-child { color: var(--ink); }
+.role-number { height: 21px; width: 21px; display: grid; place-items: center; font-size: 11px; border: 1px solid currentColor; border-radius: 50%; }
+.role-root .role-number { background: var(--root); color: white; }
+.role-fifth .role-number { border-style: dashed; }
+.fretboard-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
+.fretboard { display: block; width: 100%; min-width: 820px; }
+.fret-label, .string-label { fill: var(--muted); font-size: 13px; }
+.string-label { fill: var(--ink); font-size: 15px; }
+.string-number { font-size: 9px; fill: var(--muted); }
+.fret-note { font-size: 12px; font-weight: 600; }
+.fret-role { font-size: 9px; font-weight: 700; }
+.fretboard-caption { display: flex; justify-content: space-between; gap: 15px; margin-top: 2px; }
+.fretboard-caption p { font-size: 12px; color: var(--muted); }
+.page-footer { margin-top: 30px; padding: 18px 0 24px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.skip-link { position: fixed; left: 16px; top: 12px; opacity: 0; pointer-events: none; background: var(--root); color: white; padding: 14px; z-index: 10; }
+.skip-link:focus { opacity: 1; pointer-events: auto; }
+@media (max-width: 1350px) {
+  .site-header { margin-inline: 32px; }
+  main { width: calc(100% - 112px); margin-inline: auto; }
+}
+@media (max-width: 1000px) {
+  main { width: calc(100% - 64px); }
+  .intro { gap: 22px; }
+  .key-control { flex-basis: 165px; }
+  .voicing-section { gap: 24px; }
+  .explanation { padding-left: 24px; }
+  .chord-option { gap: 12px; padding-inline: 15px; }
+  .chord-name { font-size: 19px; }
+  .chord-inversion { font-size: 16px; }
+  .tone-notes { gap: 18px; }
+}
+@media (max-width: 700px) {
+  .site-header { margin-inline: 20px; padding: 20px 0 17px; }
+  .brand { font-size: 21px; }
+  .header-description { display: none; }
+  main { width: calc(100% - 40px); padding-top: 27px; }
+  .intro { display: block; margin-bottom: 26px; }
+  h1 { max-width: 350px; font-size: 36px; letter-spacing: -1.2px; }
+  .intro p { margin-top: 10px; font-size: 14px; max-width: 300px; }
+  .key-control { margin-top: 23px; max-width: 100%; }
+  .key-control select { font-size: 16px; }
+  .note-buttons { gap: 7px; }
+  .note-face { font-size: 23px; padding: 12px 0; }
+  .note-selector { margin-bottom: 25px; }
+  h2, .note-selector legend { font-size: 21px; }
+  .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+  .section-heading > span { font-size: 12px; }
+  .chord-options { gap: 9px; }
+  .chord-option { grid-template-columns: 18px 1fr 100px; column-gap: 13px; row-gap: 6px; padding: 14px; border-radius: 5px !important; margin: 0; }
+  .selection-dot { grid-row: 1 / 3; }
+  .chord-name { font-size: 21px; }
+  .roman { grid-column: 3; grid-row: 1; text-align: right; border: 0; font-size: 25px; }
+  .chord-option .tone-notes { grid-column: 3; grid-row: 2; border: 0; justify-content: flex-end; gap: 16px; }
+  .chord-inversion { grid-column: 2; grid-row: 2; font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-align: left; color: var(--muted); }
+  .chord-option .tone-note { font-size: 19px; }
+  .voicing-section { display: flex; flex-direction: column; gap: 24px; padding: 22px 0 25px; }
+  .staff-view { min-height: 0; margin-top: 0; }
+  .bass-to-top { margin-top: 0; }
+  .explanation { border-left: 0; border-top: 1px solid var(--line); padding: 24px 0 0; }
+  .explanation > p { font-size: 14px; }
+  .voicing-facts { margin-top: 22px; }
+  .explanation .learning-note { max-width: none; }
+  .fretboard-heading { gap: 13px; }
+  .role-legend { gap: 23px; }
+  .fretboard-caption { flex-direction: column; gap: 4px; margin-top: 10px; }
+  .fretboard-caption p { font-size: 11px; }
+  .page-footer { margin-top: 24px; font-size: 10px; }
+  .page-footer span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
