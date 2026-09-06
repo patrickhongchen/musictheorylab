@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
-import { closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
+import { ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import { createFretboard } from './fretboard'
+import { createFretboard, createProgressionFretboards } from './fretboard'
+import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
+import type { ProgressionChordDegrees } from './types'
 
 const explore = (tonic: string, soprano: string) => harmonizeTopNote(diatonicTriads(createScale({ tonic, mode: 'major' })), soprano)
 
@@ -86,9 +88,9 @@ describe('fretboard domain mapping', () => {
   it('finds every occurrence including open strings and octave repeats', () => {
     const board = createFretboard(explore('C', 'G')[0].triad.tones)
     expect(board.positions.filter(p => p.string === 1).map(p => [p.fret, p.tone.pitchClass.name, p.tone.role]))
-      .toEqual([[0, 'E', 'third'], [3, 'G', 'fifth'], [8, 'C', 'root'], [12, 'E', 'third']])
+      .toEqual([[0, 'E', 'third'], [3, 'G', 'fifth'], [8, 'C', 'root'], [12, 'E', 'third'], [15, 'G', 'fifth']])
     for (let string = 1; string <= 6; string++) {
-      for (let fret = 0; fret <= 12; fret++) {
+      for (let fret = 0; fret <= 15; fret++) {
         const expected = [0, 4, 7].includes((board.tuning[6 - string].midi + fret) % 12)
         expect(board.positions.some(p => p.string === string && p.fret === fret)).toBe(expected)
       }
@@ -97,6 +99,51 @@ describe('fretboard domain mapping', () => {
   it('labels enharmonic frets using the chord spelling', () => {
     const board = createFretboard(explore('Gb', 'Db')[0].triad.tones)
     expect(new Set(board.positions.map(p => p.tone.pitchClass.name))).toEqual(new Set(['Gb', 'Bb', 'Db']))
+  })
+})
+
+describe('seven-step harmonized progressions', () => {
+  const cMajor = createScale({ tonic: 'C', mode: 'major' })
+
+  it('places every scale note in one continuously ascending soprano register', () => {
+    expect(ascendingScaleSopranos(cMajor).map(note => note.scientific))
+      .toEqual(['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5'])
+  })
+
+  it('offers exactly three harmonizations for each top note', () => {
+    expect(cMajor.notes.map((_, index) => harmonizationChoices(cMajor, (index + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7).map(result => result.triad.scaleDegree)))
+      .toEqual([[1, 4, 6], [2, 5, 7], [1, 3, 6], [2, 4, 7], [1, 3, 5], [2, 4, 6], [3, 5, 7]])
+  })
+
+  it('builds an ordered progression with one complete voicing per top note', () => {
+    const progression = createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES)
+    expect(progression.steps.map(step => step.triad.romanNumeral)).toEqual(['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'])
+    expect(progression.steps.map(step => step.voicing.soprano.pitch.scientific))
+      .toEqual(['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5'])
+    expect(progression.steps.map(step => step.voicing.notes.map(note => note.pitch.scientific)))
+      .toEqual([
+        ['E4', 'G4', 'C5'], ['F4', 'A4', 'D5'], ['G4', 'B4', 'E5'], ['A4', 'C5', 'F5'],
+        ['B4', 'D5', 'G5'], ['C5', 'E5', 'A5'], ['D5', 'F5', 'B5'],
+      ])
+  })
+
+  it('rejects a chord that does not contain its assigned top note', () => {
+    const invalid: ProgressionChordDegrees = [2, 2, 3, 4, 5, 6, 7]
+    expect(() => createProgression(cMajor, invalid)).toThrow('Scale degree 2 cannot harmonize scale degree 1 (C)')
+  })
+
+  it('preserves spelling when the same selections are transposed', () => {
+    const cb = createProgression(createScale({ tonic: 'Cb', mode: 'major' }), DEFAULT_PROGRESSION_DEGREES)
+    expect(cb.steps.map(step => step.voicing.soprano.pitch.scientific))
+      .toEqual(['Cb5', 'Db5', 'Eb5', 'Fb5', 'Gb5', 'Ab5', 'Bb5'])
+  })
+
+  it('keeps shared fretboard pitches and their chord-tone roles isolated by step', () => {
+    const frames = createProgressionFretboards(createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES))
+    expect(frames).toHaveLength(7)
+    const cOnFifthString = frames.map(frame => frame.model.positions.find(position => position.string === 5 && position.fret === 3)?.tone.role)
+    expect(cOnFifthString[0]).toBe('root')
+    expect(cOnFifthString[5]).toBe('third')
   })
 })
 

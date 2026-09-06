@@ -32,8 +32,6 @@ export function TriadExplorer() {
   }
 
   return <>
-    <header className="site-header"><span className="brand">Music Theory Lab</span><span className="header-description">An interactive music workbook</span></header>
-    <main id="main">
       <div className="intro">
         <div><h1>One note. Three harmonies.</h1><p>Keep a note on top. Discover the chords beneath it.</p></div>
         <TheoryControls tonic={tonic} onKeyChange={setTonic} />
@@ -74,6 +72,5 @@ export function TriadExplorer() {
         <div className="fretboard-caption"><p>Available chord tones · not a single guitar voicing</p><p>Standard tuning: E A D G B E</p></div>
       </section>
       <footer className="page-footer">Diatonic Triad Explorer<span>Explore a note. Hear a possibility.</span></footer>
-    </main>
   </>
 }

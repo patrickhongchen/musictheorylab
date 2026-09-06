@@ -20,7 +20,7 @@ button, label:has(input), select { -webkit-tap-highlight-color: transparent; }
 button, select { cursor: pointer; }
 button { transition: background 150ms, border-color 150ms; }
 button:disabled { cursor: wait; opacity: .72; }
-button:focus-visible, select:focus-visible, .fretboard-scroll:focus-visible { outline: 3px solid var(--root); outline-offset: 5px; }
+button:focus-visible, select:focus-visible, a:focus-visible, .fretboard-scroll:focus-visible, .progression-staff-scroll:focus-visible { outline: 3px solid var(--root); outline-offset: 5px; }
 h1, h2, p { margin: 0; }
 h1, h2, .brand, .note-face, .chord-name, .roman, .chord-inversion, .tone-note, dd, .figure { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; }
 h1 { font-size: clamp(35px, 4vw, 48px); line-height: 1.16; letter-spacing: -1.4px; }
@@ -28,8 +28,12 @@ h2 { font-size: 22px; line-height: 1.3; letter-spacing: -.4px; }
 p { font-size: 15px; line-height: 1.65; }
 strong { font-weight: 600; }
 .site-header { max-width: 1280px; margin: 0 auto; padding: 23px 0 19px; border-bottom: 1px solid #b7bcb2; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
-.brand { font-size: 24px; letter-spacing: -.5px; }
+.brand { color: var(--ink); font-size: 24px; letter-spacing: -.5px; text-decoration: none; }
 .header-description { color: var(--muted); font-size: 14px; }
+.lab-nav { display: flex; align-items: center; gap: 30px; }
+.lab-nav a { color: var(--muted); font-family: Georgia, 'Times New Roman', serif; font-size: 17px; text-decoration: none; padding: 5px 0 7px; border-bottom: 2px solid transparent; }
+.lab-nav a:hover { color: var(--ink); }
+.lab-nav a[aria-current='page'] { color: var(--root); border-bottom-color: var(--root); }
 main { max-width: 1120px; margin: 0 auto; padding: 30px 0 0; }
 .intro { display: flex; align-items: center; justify-content: space-between; gap: 32px; margin-bottom: 33px; }
 .intro p { color: var(--muted); margin-top: 10px; font-size: 16px; }
@@ -102,7 +106,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .role-root .role-number { background: var(--root); color: white; }
 .role-fifth .role-number { border-style: dashed; }
 .fretboard-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
-.fretboard { display: block; width: 100%; min-width: 820px; }
+.fretboard { display: block; width: 100%; min-width: 1020px; }
 .fret-label, .string-label { fill: var(--muted); font-size: 13px; }
 .string-label { fill: var(--ink); font-size: 15px; }
 .string-number { font-size: 9px; fill: var(--muted); }
@@ -110,6 +114,43 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .fret-role { font-size: 9px; font-weight: 700; }
 .fretboard-caption { display: flex; justify-content: space-between; gap: 15px; margin-top: 2px; }
 .fretboard-caption p { font-size: 12px; color: var(--muted); }
+.progression-intro { margin-bottom: 25px; }
+.progression-builder > h2 { color: var(--root); margin-bottom: 12px; }
+.progression-step-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid #b7bcb2; border-bottom: 1px solid #b7bcb2; padding: 13px 0 17px; }
+.progression-step { padding: 0 10px; border-left: 1px solid var(--line); }
+.progression-step:first-child { border-left: 0; }
+.progression-step-heading { text-align: center; }
+.progression-step-number { width: 27px; height: 27px; margin: 0 auto 8px; display: grid; place-items: center; border: 1px solid var(--root); border-radius: 50%; color: var(--root); font-size: 12px; }
+.progression-top-note { display: block; color: var(--root); font: 27px/1 Georgia, 'Times New Roman', serif; margin-bottom: 11px; }
+.progression-choices { display: grid; gap: 4px; }
+.progression-choice { min-height: 58px; padding: 7px 7px; border: 1px solid transparent; border-radius: 5px; display: grid; grid-template-columns: 17px 31px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: 5px; cursor: pointer; }
+.progression-choice:hover { background: #f0f1ea; }
+.progression-choice.is-selected { background: #edf3ef; border-color: #91aa9c; }
+.progression-choice:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 2px; }
+.progression-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.progression-choice .selection-dot { width: 15px; height: 15px; grid-row: 1 / 3; }
+.progression-choice.is-selected .selection-dot::after { width: 8px; height: 8px; }
+.progression-choice-roman { color: var(--root); font: 18px/1.1 Georgia, 'Times New Roman', serif; white-space: nowrap; }
+.progression-choice-name { font: 13px/1.2 Georgia, 'Times New Roman', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progression-choice-inversion { grid-column: 2 / 4; color: var(--muted); font-size: 9px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progression-staff-section { margin-top: 24px; padding: 19px 0 9px; border-bottom: 1px solid #b7bcb2; }
+.progression-section-heading { margin-bottom: 0; }
+.progression-section-heading h2 { color: var(--root); }
+.progression-staff-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
+.progression-staff-view { min-width: 980px; min-height: 225px; }
+.progression-staff-view svg { display: block; }
+.progression-staff-loading { height: 225px; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+.progression-fretboard-section { padding-top: 20px; }
+.progression-fretboard-title { display: flex; align-items: center; gap: 28px; }
+.progression-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 14px 0 11px; }
+.progression-strip button { min-width: 0; padding: 7px 9px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); display: grid; grid-template-columns: 22px 1fr; grid-template-rows: auto auto; align-items: center; text-align: left; column-gap: 7px; }
+.progression-strip button:hover { background: #f0f1ea; }
+.progression-strip button.is-active { color: var(--root); border-color: var(--root); background: #edf3ef; }
+.progression-strip button > span { width: 22px; height: 22px; grid-row: 1 / 3; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; }
+.progression-strip button > strong { font: 17px/1 Georgia, 'Times New Roman', serif; }
+.progression-strip button > small { color: var(--muted); font-size: 9px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.active-step-summary { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
+.active-step-summary strong { color: var(--root); }
 .page-footer { margin-top: 30px; padding: 18px 0 24px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .skip-link { position: fixed; left: 16px; top: 12px; opacity: 0; pointer-events: none; background: var(--root); color: white; padding: 14px; z-index: 10; }
@@ -128,11 +169,29 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .chord-name { font-size: 19px; }
   .chord-inversion { font-size: 16px; }
   .tone-notes { gap: 18px; }
+  .progression-step { padding-inline: 6px; }
+  .progression-choice { padding-inline: 4px; grid-template-columns: 14px 27px minmax(0, 1fr); column-gap: 3px; }
+  .progression-choice .selection-dot { width: 13px; height: 13px; }
+  .progression-choice-name { font-size: 11px; }
+  .progression-choice-inversion { font-size: 8px; }
+}
+@media (max-width: 1100px) {
+  .progression-step-grid { grid-template-columns: 1fr; gap: 0; padding: 0; border: 1px solid var(--line); border-radius: 5px; }
+  .progression-step { display: grid; grid-template-columns: 95px 1fr; align-items: center; padding: 10px 12px; border: 0; border-top: 1px solid var(--line); }
+  .progression-step:first-child { border-top: 0; }
+  .progression-step-heading { display: flex; align-items: center; gap: 12px; text-align: left; }
+  .progression-step-number { margin: 0; flex: 0 0 27px; }
+  .progression-top-note { margin: 0; }
+  .progression-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .progression-choice { min-height: 52px; padding: 6px; }
+  .progression-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .site-header { margin-inline: 20px; padding: 20px 0 17px; }
   .brand { font-size: 21px; }
   .header-description { display: none; }
+  .lab-nav { gap: 17px; }
+  .lab-nav a { font-size: 14px; }
   main { width: calc(100% - 40px); padding-top: 27px; }
   .intro { display: block; margin-bottom: 26px; }
   h1 { max-width: 350px; font-size: 36px; letter-spacing: -1.2px; }
@@ -166,5 +225,25 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .fretboard-caption p { font-size: 11px; }
   .page-footer { margin-top: 24px; font-size: 10px; }
   .page-footer span { display: none; }
+  .progression-intro { margin-bottom: 24px; }
+  .progression-step { grid-template-columns: 68px 1fr; padding-inline: 9px; }
+  .progression-step-heading { gap: 8px; }
+  .progression-top-note { font-size: 24px; }
+  .progression-choice-inversion { display: none; }
+  .progression-choice { grid-template-rows: auto; min-height: 46px; }
+  .progression-choice .selection-dot { grid-row: 1; }
+  .progression-section-heading { gap: 4px; }
+  .progression-fretboard-title { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .progression-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .active-step-summary { line-height: 1.45; margin: 12px 0 4px; }
+}
+@media (max-width: 480px) {
+  .site-header { align-items: flex-start; }
+  .lab-nav { align-items: flex-end; flex-direction: column; gap: 5px; }
+  .lab-nav a { padding-block: 2px 4px; }
+  .progression-step { display: block; padding: 12px; }
+  .progression-step-heading { margin-bottom: 8px; }
+  .progression-choices { grid-template-columns: 1fr; }
+  .progression-choice { grid-template-columns: 15px 34px minmax(0, 1fr); min-height: 43px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }

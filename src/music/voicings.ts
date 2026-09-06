@@ -1,5 +1,5 @@
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import type { Inversion, Pitch, Triad, TriadResult, Voicing } from './types'
+import type { Inversion, Pitch, Scale, Triad, TriadResult, Voicing } from './types'
 
 const INVERSIONS: readonly Inversion[] = [
   { index: 0, name: 'Root position', figure: '' },
@@ -31,7 +31,21 @@ export function closePosition(triad: Triad, soprano: Pitch): Voicing {
 }
 
 export function harmonizeTopNote(triads: readonly Triad[], topNote: string): TriadResult[] {
-  const soprano = sopranoPitch(topNote)
+  return harmonizeTopPitch(triads, sopranoPitch(topNote))
+}
+
+export function harmonizeTopPitch(triads: readonly Triad[], soprano: Pitch): TriadResult[] {
   return triads.filter(triad => triad.tones.some(tone => tone.pitchClass.chroma === soprano.chroma))
     .map(triad => ({ triad, voicing: closePosition(triad, soprano) }))
+}
+
+/** Places the scale in one continuously ascending soprano register. */
+export function ascendingScaleSopranos(scale: Scale): readonly Pitch[] {
+  const first = sopranoPitch(scale.notes[0].name)
+  return scale.notes.slice(1).reduce<Pitch[]>((notes, note) => {
+    const previous = notes[notes.length - 1]
+    const distance = (note.chroma - previous.chroma + 12) % 12 || 12
+    notes.push(pitchAtMidi(note, previous.midi + distance))
+    return notes
+  }, [first])
 }

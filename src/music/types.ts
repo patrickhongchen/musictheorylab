@@ -36,5 +36,20 @@ export interface Voicing {
   readonly inversion: Inversion
 }
 export interface TriadResult { readonly triad: Triad; readonly voicing: Voicing }
+export type ProgressionChordDegrees = readonly [ScaleDegree, ScaleDegree, ScaleDegree, ScaleDegree, ScaleDegree, ScaleDegree, ScaleDegree]
+export interface ProgressionStep {
+  readonly index: number
+  readonly topDegree: ScaleDegree
+  readonly topNote: PitchClass
+  readonly triad: Triad
+  readonly voicing: Voicing
+}
+export interface HarmonizedProgression { readonly scale: Scale; readonly steps: readonly ProgressionStep[] }
 export interface FretPosition { readonly string: number; readonly fret: number; readonly tone: ChordTone }
 export interface FretboardModel { readonly tuning: readonly Pitch[]; readonly fretCount: number; readonly positions: readonly FretPosition[] }
+export interface ProgressionFretboardFrame {
+  readonly stepIndex: number
+  readonly topDegree: ScaleDegree
+  readonly triad: Triad
+  readonly model: FretboardModel
+}
