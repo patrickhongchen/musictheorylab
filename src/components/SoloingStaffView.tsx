@@ -25,7 +25,6 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   readonly family: string
   readonly size: number
   readonly weight?: string
-  readonly letterSpacing?: string
 }) {
   const label = document.createElementNS(svg.namespaceURI, 'text')
   label.setAttribute('x', String(x))
@@ -35,7 +34,6 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   label.setAttribute('font-family', options.family)
   label.setAttribute('font-size', String(options.size))
   if (options.weight) label.setAttribute('font-weight', options.weight)
-  if (options.letterSpacing) label.setAttribute('letter-spacing', options.letterSpacing)
   label.textContent = text
   svg.append(label)
 }
@@ -157,20 +155,17 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
         const color = toneColor(tone, noteFilter)
 
         if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
-        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 16, 181)
+        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
 
-        appendText(svg, x, 190, displayNote(tone.pitch.scientific), {
+        appendText(svg, x, 189, displayNote(toneDegree(tone, noteFilter)), {
           color,
           family: "Georgia, 'Times New Roman', serif",
-          size: 15,
-          weight: '600',
+          size: 18,
         })
-        appendText(svg, x, 211, displayNote(toneDegree(tone, noteFilter)), {
+        appendText(svg, x, 211, displayNote(tone.pitch.scientific), {
           color: SOLOING_VISUAL_COLORS.muted,
-          family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          size: 10.5,
-          weight: '650',
-          letterSpacing: '.025em',
+          family: 'system-ui, sans-serif',
+          size: 12,
         })
       })
 
