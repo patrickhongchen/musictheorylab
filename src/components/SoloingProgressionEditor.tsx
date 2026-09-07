@@ -86,19 +86,6 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
     onChange([...progression], progression[destination].id)
   }
 
-  const duplicateSelectedStep = () => {
-    if (!selectedStep) return
-    const duplicate: SoloingStep = {
-      ...selectedStep,
-      id: createSoloingStepId(),
-      chord: { ...selectedStep.chord },
-      scale: { ...selectedStep.scale },
-    }
-    const nextSteps = [...progression]
-    nextSteps.splice(effectiveSelectedIndex + 1, 0, duplicate)
-    onChange(nextSteps, duplicate.id)
-  }
-
   const deleteSelectedStep = () => {
     if (!selectedStep || progression.length <= 1) return
     const nextSteps = progression.filter(step => step.id !== selectedStep.id)
@@ -234,7 +221,7 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
         >
           Next <MoveArrow direction="right" />
         </button>
-        <button type="button" onClick={duplicateSelectedStep}>
+        <button type="button" onClick={addStep}>
           Duplicate
         </button>
         <button type="button" onClick={() => moveSelectedStep(-1)} disabled={effectiveSelectedIndex === 0}>

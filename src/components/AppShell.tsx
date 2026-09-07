@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
-
-export type LabPage = 'explorer' | 'progression' | 'scales' | 'blues'
+import { LABS, type LabPage } from '../navigation'
 
 export function AppShell({ page, children }: { page: LabPage; children: ReactNode }) {
   return <>
@@ -8,10 +7,7 @@ export function AppShell({ page, children }: { page: LabPage; children: ReactNod
     <header className="site-header">
       <a className="brand" href="?lab=explorer">Music Theory Lab</a>
       <nav className="lab-nav" aria-label="Music labs">
-        <a href="?lab=explorer" aria-current={page === 'explorer' ? 'page' : undefined}>Explorer</a>
-        <a href="?lab=progression" aria-current={page === 'progression' ? 'page' : undefined}>Progression Builder</a>
-        <a href="?lab=scales" aria-current={page === 'scales' ? 'page' : undefined}>Scales</a>
-        <a href="?lab=blues" aria-current={page === 'blues' ? 'page' : undefined}>Soloing</a>
+        {LABS.map(lab => <a key={lab.id} href={`?lab=${lab.id}`} aria-current={page === lab.id ? 'page' : undefined}>{lab.label}</a>)}
       </nav>
     </header>
     <main id="main">{children}</main>

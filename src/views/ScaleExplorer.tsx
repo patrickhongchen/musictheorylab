@@ -1,29 +1,18 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ScaleFretboardView } from '../components/ScaleFretboardView'
+import { ScaleFretboardView, type ScaleFretboardLabelMode } from '../components/ScaleFretboardView'
 import { createPentatonicScaleFretboard } from '../music/fretboard'
 import { createPentatonicScale, MAJOR_KEYS } from '../music/scales'
 import type { PentatonicScaleType } from '../music/types'
 import { ascendingPentatonicPitches } from '../music/voicings'
 import { displayNote } from '../presentation/notes'
+import { scaleToneRole, SCALE_TONE_STYLE } from '../presentation/scales'
 
-type ScaleLabelMode = 'notes' | 'degrees'
 const ScaleStaffView = lazy(() => import('../components/ScaleStaffView'))
-
-function displayDegree(label: string) {
-  return label.replace('b', '♭').replace('#', '♯')
-}
-
-function toneRole(label: string) {
-  if (label === '1') return 'root'
-  if (label === '3' || label === 'b3') return 'third'
-  if (label === '5') return 'fifth'
-  return 'color'
-}
 
 export function ScaleExplorer() {
   const [tonic, setTonic] = useState('C')
   const [scaleType, setScaleType] = useState<PentatonicScaleType>('major')
-  const [labelMode, setLabelMode] = useState<ScaleLabelMode>('notes')
+  const [labelMode, setLabelMode] = useState<ScaleFretboardLabelMode>('notes')
   const scale = useMemo(() => createPentatonicScale(tonic, scaleType), [tonic, scaleType])
   const scalePitches = useMemo(() => ascendingPentatonicPitches(scale), [scale])
   const board = useMemo(() => createPentatonicScaleFretboard(scale, undefined, 22), [scale])
@@ -65,11 +54,11 @@ export function ScaleExplorer() {
       </div>
       <ol className="scale-tone-strip">
         {scale.tones.map(tone => {
-          const role = toneRole(tone.label)
+          const role = scaleToneRole(tone.label)
           return <li className={`scale-tone scale-tone-${role}`} key={tone.pitchClass.name}>
-            <span className="scale-tone-degree">{displayDegree(tone.label)}</span>
+            <span className="scale-tone-degree">{displayNote(tone.label)}</span>
             <strong>{displayNote(tone.pitchClass.name)}</strong>
-            <small>{role === 'color' ? 'Scale tone' : role === 'root' ? 'Tonic' : `${role[0].toUpperCase()}${role.slice(1)}`}</small>
+            <small>{SCALE_TONE_STYLE[role].label}</small>
           </li>
         })}
       </ol>

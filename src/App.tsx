@@ -1,22 +1,23 @@
-import { useEffect } from 'react'
-import { AppShell, type LabPage } from './components/AppShell'
+import { useEffect, type ComponentType } from 'react'
+import { AppShell } from './components/AppShell'
+import { requestedLab, type LabPage } from './navigation'
 import { TriadExplorer } from './views/TriadExplorer'
 import { ProgressionBuilder } from './views/ProgressionBuilder'
 import { ScaleExplorer } from './views/ScaleExplorer'
-import { BluesSoloing } from './views/BluesSoloing'
+import { SoloingExplorer } from './views/SoloingExplorer'
+
+const LAB_VIEWS = {
+  explorer: TriadExplorer,
+  progression: ProgressionBuilder,
+  scales: ScaleExplorer,
+  blues: SoloingExplorer,
+} satisfies Record<LabPage, ComponentType>
 
 export default function App() {
-  const requestedPage = new URLSearchParams(window.location.search).get('lab')
-  const page: LabPage = requestedPage === 'progression' || requestedPage === 'scales' || requestedPage === 'blues' ? requestedPage : 'explorer'
+  const lab = requestedLab(window.location.search)
+  const View = LAB_VIEWS[lab.id]
   useEffect(() => {
-    document.title = {
-      explorer: 'Diatonic Triad Explorer · Music Theory Lab',
-      progression: 'Progression Builder · Music Theory Lab',
-      scales: 'Pentatonic Scale Map · Music Theory Lab',
-      blues: 'Soloing · Music Theory Lab',
-    }[page]
-  }, [page])
-  return <AppShell page={page}>{page === 'progression'
-    ? <ProgressionBuilder />
-    : page === 'scales' ? <ScaleExplorer /> : page === 'blues' ? <BluesSoloing /> : <TriadExplorer />}</AppShell>
+    document.title = `${lab.title} · Music Theory Lab`
+  }, [lab.title])
+  return <AppShell page={lab.id}><View /></AppShell>
 }

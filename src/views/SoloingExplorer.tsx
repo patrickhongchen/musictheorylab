@@ -14,7 +14,7 @@ import { displayNote } from '../presentation/notes'
 
 const SoloingStaffView = lazy(() => import('../components/SoloingStaffView'))
 
-export function BluesSoloing() {
+export function SoloingExplorer() {
   const [progression, setProgression] = useState<SoloingStep[]>(createSeedSoloingProgression)
   const [selectedStepId, setSelectedStepId] = useState('seed-d7')
   const [showNextChord, setShowNextChord] = useState(false)

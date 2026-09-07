@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import type { PentatonicScaleFretboardModel } from '../music/types'
 import { displayNote } from '../presentation/notes'
+import { scaleToneRole, SCALE_TONE_STYLE } from '../presentation/scales'
 
 export type ScaleFretboardLabelMode = 'notes' | 'degrees'
 
@@ -8,34 +9,6 @@ export interface ScaleFretboardViewProps {
   readonly model: PentatonicScaleFretboardModel
   readonly scaleName: string
   readonly labelMode: ScaleFretboardLabelMode
-}
-
-type ScaleToneRole = 'root' | 'third' | 'fifth' | 'color'
-
-const SCALE_TONE_STYLE: Record<ScaleToneRole, { label: string; color: string }> = {
-  root: { label: 'Root', color: '#22685b' },
-  third: { label: 'Third', color: '#a24b22' },
-  fifth: { label: 'Fifth', color: '#72558e' },
-  color: { label: 'Scale tone', color: '#656961' },
-}
-
-function scaleToneRole(label: string): ScaleToneRole {
-  const normalized = label.replace('b', '♭').replace('#', '♯')
-  if (normalized === '1') return 'root'
-  if (normalized === '3' || normalized === '♭3') return 'third'
-  if (normalized === '5') return 'fifth'
-  return 'color'
-}
-
-export function ScaleToneLegend() {
-  return <ul className="role-legend scale-tone-legend" aria-label="Scale-tone colors">
-    {(Object.entries(SCALE_TONE_STYLE) as [ScaleToneRole, (typeof SCALE_TONE_STYLE)[ScaleToneRole]][]).map(([role, style]) => (
-      <li className={`scale-role-${role}${role === 'root' ? ' role-root' : ''}`} key={role}>
-        <span className="role-number" style={{ color: role === 'root' ? undefined : style.color }}>{role === 'root' ? '1' : role === 'third' ? '3' : role === 'fifth' ? '5' : '•'}</span>
-        <span>{style.label}</span>
-      </li>
-    ))}
-  </ul>
 }
 
 /** Pure SVG adapter. Scale positions and note spelling are supplied by the music engine. */
