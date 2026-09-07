@@ -4,71 +4,41 @@ import { BluesFretboardView, type BluesLabelMode } from '../components/BluesFret
 import {
   COMMON_BLUES_KEYS,
   ascendingBluesScalePitches,
-  changePhrasePitches,
   connectGuideTones,
   createBluesFretboard,
   createTwelveBarBlues,
-  nearestScaleApproach,
-  type BluesChordToneRole,
 } from '../music/blues'
 import { displayNote } from '../presentation/notes'
 
 const BluesStaffView = lazy(() => import('../components/BluesStaffView'))
 
-type PracticeFocus = 'roots' | 'guides' | 'approach'
-
-const PRACTICE_STEPS: readonly {
-  focus: PracticeFocus
-  title: string
-  instruction: string
-}[] = [
-  { focus: 'roots', title: 'Roots on beat 1', instruction: 'Play the root of each chord on beat 1 for 3–5 minutes.' },
-  { focus: 'guides', title: 'Guide tones', instruction: 'Target the 3rd and ♭7 of each chord. Listen for the pull.' },
-  { focus: 'approach', title: 'Approach and resolve', instruction: 'Approach the target from a step away, then land on it.' },
-]
-
-const ROLE_NAME: Record<BluesChordToneRole, string> = {
-  root: 'root',
-  third: '3rd',
-  fifth: '5th',
-  seventh: '♭7',
-}
-
-function movementLabel(semitones: number) {
-  if (semitones === 0) return 'common tone'
-  const direction = semitones > 0 ? 'up' : 'down'
-  const amount = Math.abs(semitones)
-  return `${direction} ${amount === 1 ? 'a half step' : `${amount} semitones`}`
-}
-
 export function BluesSoloing() {
   const [tonic, setTonic] = useState('A')
-  const [focus, setFocus] = useState<PracticeFocus>('guides')
   const [tempo, setTempo] = useState(72)
   const [selectedBar, setSelectedBar] = useState(4)
   const [playingBar, setPlayingBar] = useState<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [labelMode, setLabelMode] = useState<BluesLabelMode>('notes')
-  const [practiceStatus, setPracticeStatus] = useState('Choose a practice step when you are ready to narrow the challenge.')
+  const [fretStart, setFretStart] = useState(5)
   const player = useRef<BluesPlayer | null>(null)
 
   const progression = useMemo(() => createTwelveBarBlues(tonic), [tonic])
   const activeIndex = playingBar ?? selectedBar
   const activeBar = progression.bars[activeIndex]
-  const previousBar = progression.bars[activeIndex === 0 ? progression.bars.length - 1 : activeIndex - 1]
-  const isChange = previousBar.chord.degree !== activeBar.chord.degree
-  const connections = useMemo(
-    () => connectGuideTones(previousBar.chord, activeBar.chord),
-    [activeBar.chord, previousBar.chord],
-  )
-  const targetRole: BluesChordToneRole = focus === 'roots' ? 'root' : 'third'
-  const target = activeBar.chord.tones.find(tone => tone.role === targetRole) ?? activeBar.chord.tones[0]
-  const approach = nearestScaleApproach(progression.scale, target.pitchClass)
-  const notationLead = focus === 'roots' ? previousBar.chord.root : approach.pitchClass
+  const nextChangeBar = [...progression.bars.slice(activeIndex + 1), ...progression.bars.slice(0, activeIndex + 1)]
+    .find(bar => bar.chord.degree !== activeBar.chord.degree) ?? progression.bars[(activeIndex + 1) % progression.bars.length]
+  const fretEnd = Math.min(fretStart + 4, 22)
   const scaleStaffPitches = useMemo(() => ascendingBluesScalePitches(progression.scale), [progression])
-  const changeStaffPitches = changePhrasePitches(notationLead, target.pitchClass)
-  const board = useMemo(() => createBluesFretboard(progression, activeBar.chord), [activeBar.chord, progression])
-  const changeIndices = progression.bars.filter(bar => bar.beginsChange).map(bar => bar.index)
+  const currentBoard = useMemo(
+    () => createBluesFretboard(progression, activeBar.chord, fretStart, fretEnd),
+    [activeBar.chord, fretEnd, fretStart, progression],
+  )
+  const nextBoard = useMemo(
+    () => createBluesFretboard(progression, nextChangeBar.chord, fretStart, fretEnd),
+    [fretEnd, fretStart, nextChangeBar.chord, progression],
+  )
+  const sharedTones = activeBar.chord.tones.filter(tone => nextChangeBar.chord.tones.some(nextTone => nextTone.pitchClass.chroma === tone.pitchClass.chroma))
+  const guideMoves = connectGuideTones(activeBar.chord, nextChangeBar.chord)
 
   useEffect(() => {
     const instance = new BluesPlayer()
@@ -93,7 +63,6 @@ export function BluesSoloing() {
     const instance = player.current
     if (!instance) return
     setIsPlaying(true)
-    setPracticeStatus('Listen for each new color. The active bar drives the target note and fretboard below.')
     try {
       await instance.play(
         progression,
@@ -102,13 +71,11 @@ export function BluesSoloing() {
         () => {
           setIsPlaying(false)
           setPlayingBar(null)
-          setPracticeStatus('Chorus complete. Sing one target note, then play the form again.')
         },
       )
     } catch {
       setIsPlaying(false)
       setPlayingBar(null)
-      setPracticeStatus('Audio could not start. You can still step through the form bar by bar.')
     }
   }
 
@@ -117,28 +84,12 @@ export function BluesSoloing() {
     setSelectedBar(index)
   }
 
-  const moveChange = (direction: -1 | 1) => {
-    const next = direction > 0
-      ? changeIndices.find(index => index > activeIndex) ?? changeIndices[0]
-      : [...changeIndices].reverse().find(index => index < activeIndex) ?? changeIndices[changeIndices.length - 1]
-    selectBar(next)
-  }
-
   const changeKey = (nextTonic: string) => {
     stopPlayback()
     setTonic(nextTonic)
     setSelectedBar(4)
-    setPracticeStatus(`Now listen for the same I–IV–V relationships in ${displayNote(nextTonic)}.`)
   }
 
-  const startPractice = (step: typeof PRACTICE_STEPS[number], index: number) => {
-    stopPlayback()
-    setFocus(step.focus)
-    setSelectedBar(index === 2 ? 8 : 4)
-    setPracticeStatus(`${step.title} selected. ${step.instruction}`)
-  }
-
-  const scaleNotes = progression.scale.tones.map(tone => displayNote(tone.pitchClass.name)).join('  ')
   const scaleName = `${displayNote(progression.tonic.name)} minor blues`
 
   return <div className="blues-page">
@@ -152,14 +103,6 @@ export function BluesSoloing() {
           <span>Key</span>
           <select value={tonic} onChange={event => changeKey(event.target.value)}>
             {COMMON_BLUES_KEYS.map(key => <option value={key} key={key}>{displayNote(key)}</option>)}
-          </select>
-        </label>
-        <label className="key-control blues-focus-control">
-          <span>Focus</span>
-          <select value={focus} onChange={event => setFocus(event.target.value as PracticeFocus)}>
-            <option value="roots">Roots</option>
-            <option value="guides">Guide tones</option>
-            <option value="approach">Approach notes</option>
           </select>
         </label>
         <label className="key-control blues-tempo-control">
@@ -200,45 +143,6 @@ export function BluesSoloing() {
       </div>
     </section>
 
-    <section className="change-lesson" aria-labelledby="change-heading" aria-live="polite">
-      <div className="change-name">
-        <h2 id="change-heading">{isChange ? 'What changed?' : 'Hold the sound.'}</h2>
-        <p className="change-chords">
-          <span className={`degree-${previousBar.chord.degree}`}>{displayNote(previousBar.chord.name)}</span>
-          <span aria-hidden="true">→</span>
-          <span className={`degree-${activeBar.chord.degree}`}>{displayNote(activeBar.chord.name)}</span>
-        </p>
-      </div>
-      <div className="base-scale-summary">
-        <span>Home base</span>
-        <strong>{scaleName}</strong>
-        <p>{scaleNotes}</p>
-      </div>
-      <div className="target-summary">
-        <span>{focus === 'approach' ? 'Approach and resolve' : 'Target note'}</span>
-        <strong className={`target-${target.role}`}>
-          {focus === 'approach' && <>{displayNote(approach.pitchClass.name)} <span aria-hidden="true">→</span> </>}
-          Aim for <b>{displayNote(target.pitchClass.name)}</b>
-        </strong>
-        <p>{ROLE_NAME[target.role]} of {displayNote(activeBar.chord.name)}</p>
-      </div>
-      <div className="change-explanation">
-        {isChange ? <>
-          <p><strong>{displayNote(target.pitchClass.name)}</strong> belongs to {displayNote(activeBar.chord.name)}. Landing there makes bar {activeBar.index + 1} sound intentional, even while the blues scale connects the phrase.</p>
-          {focus !== 'roots' && <p className="tension-advice">Let {displayNote(approach.pitchClass.name)} create the blues rub; resolve it to {displayNote(target.pitchClass.name)} on the strong beat.</p>}
-          <ul aria-label="Smooth guide-tone paths">
-            {connections.map(connection => <li key={`${connection.from.pitchClass.name}-${connection.to.pitchClass.name}`}>
-              {displayNote(connection.from.pitchClass.name)} → {displayNote(connection.to.pitchClass.name)} <span>{movementLabel(connection.semitones)}</span>
-            </li>)}
-          </ul>
-        </> : <p>Stay with {displayNote(activeBar.chord.name)} and shape a phrase. Repetition and space make the next chord change easier to hear.</p>}
-      </div>
-      <div className="change-navigation">
-        <button className="secondary-button" type="button" onClick={() => moveChange(-1)}>← Prev change</button>
-        <button className="secondary-button" type="button" onClick={() => moveChange(1)}>Next change →</button>
-      </div>
-    </section>
-
     <section className="blues-target-section" aria-labelledby="targets-heading">
       <div className="section-heading">
         <h2 id="targets-heading">One home base, three targets</h2>
@@ -265,18 +169,13 @@ export function BluesSoloing() {
     <section className="blues-staff-section" aria-labelledby="blues-staff-heading">
         <div className="section-heading">
           <h2 id="blues-staff-heading">Read it on the staff</h2>
-          <span>The home vocabulary, then one clear arrival across the barline</span>
+          <span>The blues vocabulary in standard notation</span>
         </div>
         <Suspense fallback={<div className="blues-staff-loading">Preparing the blues notation…</div>}>
           <BluesStaffView
-            key={`${tonic}-${activeIndex}-${focus}`}
+            key={tonic}
             scale={progression.scale}
             scalePitches={scaleStaffPitches}
-            changePitches={changeStaffPitches}
-            fromChord={previousBar.chord}
-            toChord={activeBar.chord}
-            targetRole={targetRole}
-            leadLabel={focus === 'roots' ? 'previous root' : focus === 'approach' ? 'approach' : 'guide tone'}
           />
         </Suspense>
     </section>
@@ -285,9 +184,24 @@ export function BluesSoloing() {
       <div className="section-heading blues-fretboard-heading">
         <div>
           <h2 id="blues-fretboard-heading">See it under your fingers</h2>
-          <p>Home scale stays visible. {displayNote(activeBar.chord.name)} chord tones come forward.</p>
+          <p>Visualize the movement from the current chord to the next change.</p>
         </div>
-        <div className="blues-fretboard-controls">
+      </div>
+      <div className="transition-toolbar">
+        <div className="transition-chords" aria-label={`Current chord ${displayNote(activeBar.chord.name)}, next chord ${displayNote(nextChangeBar.chord.name)}`}>
+          <span>Current → Next</span>
+          <p><strong className="current-chord">{displayNote(activeBar.chord.name)}</strong><i aria-hidden="true">→</i><strong className="next-chord">{displayNote(nextChangeBar.chord.name)}</strong></p>
+          <small>Next change · bar {nextChangeBar.index + 1}</small>
+        </div>
+        <div className="transition-controls">
+          <div className="fret-window-control">
+            <span>Fret window</span>
+            <div>
+              <button className="secondary-button" type="button" disabled={fretStart === 0} onClick={() => setFretStart(start => Math.max(0, start - 5))} aria-label="Previous fret window">←</button>
+              <strong>{fretStart}–{fretEnd}</strong>
+              <button className="secondary-button" type="button" disabled={fretStart >= 20} onClick={() => setFretStart(start => Math.min(20, start + 5))} aria-label="Next fret window">→</button>
+            </div>
+          </div>
           <fieldset className="label-mode-picker">
             <legend>Marker labels</legend>
             <div>
@@ -297,32 +211,19 @@ export function BluesSoloing() {
           </fieldset>
         </div>
       </div>
-      <BluesFretboardView model={board} chord={activeBar.chord} labelMode={labelMode} />
-      <div className="blues-map-legend">
-        <span><i className="home-dot" />{scaleName} home base</span>
-        <span><i className="third-dot" />3rd of {displayNote(activeBar.chord.name)}</span>
-        <span><i className="seventh-dot" />♭7 of {displayNote(activeBar.chord.name)}</span>
-        <span><i className="chord-dot" />Other chord tone</span>
+      <BluesFretboardView currentModel={currentBoard} nextModel={nextBoard} currentChord={activeBar.chord} nextChord={nextChangeBar.chord} labelMode={labelMode} />
+      <div className="transition-legend">
+        <span><i className="shared-tone-dot" /><b>Shared tone</b><small>in both chords</small></span>
+        <span><i className="current-tone-dot" /><b>Current chord</b><small>{displayNote(activeBar.chord.name)} only</small></span>
+        <span><i className="next-tone-dot" /><b>Next target</b><small>{displayNote(nextChangeBar.chord.name)} destination</small></span>
       </div>
-      <div className="fretboard-caption">
-        <p>Open strings through fret 22 · scroll to explore the whole neck</p>
-        <p>Standard tuning: E A D G B E</p>
+      <div className="transition-insight">
+        <i aria-hidden="true" />
+        <p>
+          <strong>{sharedTones.map(tone => displayNote(tone.pitchClass.name)).join(' and ')} {sharedTones.length === 1 ? 'is' : 'are'} in both chords.</strong>{' '}
+          Hold {sharedTones.length === 1 ? 'it' : 'them'} when it fits; move {guideMoves.map(move => `${displayNote(move.from.pitchClass.name)}→${displayNote(move.to.pitchClass.name)}`).join(' or ')} to make {displayNote(nextChangeBar.chord.name)} arrive. Faint dots keep the {scaleName} scale in view.
+        </p>
       </div>
-    </section>
-
-    <section className="practice-section" aria-labelledby="practice-heading">
-      <div className="section-heading">
-        <h2 id="practice-heading">Your practice path</h2>
-        <span id="practice-status" role="status">{practiceStatus}</span>
-      </div>
-      <ol className="practice-steps">
-        {PRACTICE_STEPS.map((step, index) => <li className={focus === step.focus ? 'is-active' : ''} key={step.focus}>
-          <span>{index + 1}</span>
-          <div><h3>{step.title}</h3><p>{step.instruction}</p></div>
-          <button className="secondary-button" type="button" onClick={() => startPractice(step, index)} aria-describedby="practice-status">Start</button>
-        </li>)}
-      </ol>
-      <p className="practice-tip"><strong>Tip:</strong> Slow it down. Make one change at a time. Let your ear decide.</p>
     </section>
 
     <footer className="page-footer blues-footer">
