@@ -41,7 +41,7 @@ function LegendMarker({ kind }: LegendMarkerProps) {
     <circle
       cx="9.5"
       cy="9.5"
-      r={current ? 6.5 : 5.5}
+      r="6"
       fill={current ? CURRENT_FILL : PAPER_COLOR}
       stroke={current ? CURRENT_COLOR : SCALE_COLOR}
       strokeWidth={current ? 2.4 : 1.7}
@@ -106,7 +106,7 @@ export function SoloingFretboardView({
     >
       <title id={titleId}>{displayNote(currentChord.name)} chord tones over {displayNote(scale.name)} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. Small paper circles with ink borders are selected-scale tones outside the current chord. Larger mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale. {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. All note markers are the same size. Paper circles with ink borders are selected-scale tones outside the current chord. Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale. {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -143,35 +143,35 @@ export function SoloingFretboardView({
         return <g key={`${position.string}-${position.fret}`} className="transition-position" transform={`translate(${x}, ${y})`}>
           <circle
             className="transition-marker"
-            r={isCurrent ? 15 : 11}
+            r="13"
             fill={isCurrent ? CURRENT_FILL : PAPER_COLOR}
             stroke={isCurrent ? CURRENT_COLOR : isScale ? SCALE_COLOR : OUTSIDE_COLOR}
             strokeWidth={isCurrent ? 3 : 1.8}
           />
           {isNext && <circle
-            r={isCurrent ? 19 : 15.5}
+            r="17"
             fill="none"
             stroke={NEXT_COLOR}
             strokeWidth="2.2"
             strokeDasharray="4 3"
           />}
           {isOutsideScale && <rect
-            x={isCurrent ? 9.5 : 7}
-            y={isCurrent ? -17 : -14.5}
+            x="8"
+            y="-16"
             width="7"
             height="7"
             rx="1"
             fill={OUTSIDE_COLOR}
             stroke={PAPER_COLOR}
             strokeWidth="1.5"
-            transform={`rotate(45 ${isCurrent ? 13 : 10.5} ${isCurrent ? -13.5 : -11})`}
+            transform="rotate(45 11.5 -12.5)"
           />}
           <text
             textAnchor="middle"
             dominantBaseline="central"
             className="transition-label"
             fill={SCALE_COLOR}
-            fontSize={isCurrent ? 11 : 9.5}
+            fontSize="10.5"
             fontWeight="700"
           >{label}</text>
         </g>

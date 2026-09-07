@@ -28,8 +28,8 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Background: warm paper `#faf9f6`.
 - Text: ink `#252925`, muted `#656961`.
 - Lines: `#d9dbd3` with stronger section rules where hierarchy needs them.
-- Selected-scale tone outside the current chord: small paper marker with an ink `#252925` outline and ink label.
-- Current chord tone: larger pale-mint `#d8eee7` marker with a heavy green `#176b5b` border and bold ink label on the fretboard; solid green notehead on the staff.
+- Selected-scale tone outside the current chord: paper marker with an ink `#252925` outline and ink label.
+- Current chord tone: same-size pale-mint `#d8eee7` marker with a heavy green `#176b5b` border and bold ink label on the fretboard; solid green notehead on the staff.
 - Chord tone outside the selected scale: amber `#c56a1a` diamond attached to the marker or placed beside the staff degree.
 - Next chord: cobalt `#4666b0` dashed outer halo. Shared tones retain their base marker and add the halo.
 - Role treatments compose independently so a current/next/outside tone shows the current marker, amber diamond, and blue halo together.
