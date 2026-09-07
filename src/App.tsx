@@ -13,7 +13,7 @@ export default function App() {
       explorer: 'Diatonic Triad Explorer · Music Theory Lab',
       progression: 'Progression Builder · Music Theory Lab',
       scales: 'Pentatonic Scale Map · Music Theory Lab',
-      blues: 'Soloing Over Changes · Music Theory Lab',
+      blues: 'Chord-Scale Soloing · Music Theory Lab',
     }[page]
   }, [page])
   return <AppShell page={page}>{page === 'progression'

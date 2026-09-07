@@ -509,4 +509,109 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .transition-controls .label-mode-picker { width: 100%; grid-template-columns: 82px minmax(0, 1fr); }
   .transition-controls .label-mode-picker legend { margin: 0; }
 }
+
+/* Chord-scale soloing workbench */
+.soloing-page { --blues-i: #22685b; --blues-iv: #b55c2a; }
+.soloing-intro { margin-bottom: 28px; }
+.soloing-intro > div { max-width: 760px; }
+.soloing-progression-editor { padding-bottom: 25px; border-bottom: 1px solid #b7bcb2; }
+.soloing-progression-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 12px; }
+.soloing-progression-heading p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.soloing-add-step { min-width: 124px; padding: 0 16px; border: 1px solid var(--root); background: transparent; color: var(--root); font-size: 12px; font-weight: 650; }
+.soloing-add-step:hover { background: #edf3ef; }
+.soloing-step-list { display: flex; max-width: 100%; margin: 0; padding: 0 0 8px; gap: 10px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
+.soloing-step-list > li { flex: 1 0 230px; min-width: 0; }
+.soloing-step-card { display: grid; width: 100%; min-height: 76px; grid-template-columns: 42px minmax(0, 1fr); padding: 0; overflow: hidden; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); text-align: left; }
+.soloing-step-card:hover { background: #f0f1ea; }
+.soloing-step-card.is-selected { border-color: var(--root); background: #edf3ef; box-shadow: inset 0 0 0 1px var(--root); }
+.soloing-step-number { align-self: stretch; display: grid; place-items: center; border-right: 1px solid var(--line); font: 23px/1 Georgia, 'Times New Roman', serif; }
+.soloing-step-card.is-selected .soloing-step-number { border-color: var(--root); background: var(--root); color: white; }
+.soloing-step-summary { min-width: 0; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 13px; padding: 11px 14px; }
+.soloing-step-summary strong { color: var(--root); font: 25px/1 Georgia, 'Times New Roman', serif; font-weight: 400; white-space: nowrap; }
+.soloing-step-summary small { min-width: 0; color: var(--muted); font: 12px/1.3 Georgia, 'Times New Roman', serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.soloing-step-editor { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 14px 28px; align-items: end; margin-top: 15px; padding-top: 16px; border-top: 1px solid var(--line); }
+.soloing-step-editor legend { float: left; grid-row: 1; align-self: center; padding: 0; font: 19px/1.2 Georgia, 'Times New Roman', serif; }
+.soloing-step-editor legend small { display: block; margin-top: 5px; color: var(--muted); font: 10px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+.soloing-step-fields { grid-column: 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.soloing-step-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; }
+.soloing-step-fields select { width: 100%; min-width: 0; padding: 0 11px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 13px; }
+.soloing-step-actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; }
+.soloing-step-actions button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 11px; }
+.soloing-step-actions button:hover:not(:disabled) { background: #f0f1ea; }
+.soloing-step-actions button:disabled { cursor: not-allowed; opacity: .42; }
+.soloing-step-actions .soloing-delete-step { margin-left: auto; color: #8a3f2c; border-color: #d5b5aa; }
+.soloing-empty-progression { color: var(--muted); font-size: 13px; }
+.soloing-workbench { padding-top: 23px; }
+.soloing-workbench-heading { display: grid; grid-template-columns: auto minmax(360px, 1fr) auto; align-items: center; gap: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+.soloing-sound-summary { display: flex; min-width: 0; align-items: baseline; gap: 10px; }
+.soloing-sound-summary > span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .055em; }
+.soloing-sound-summary > strong { color: var(--root); font: 28px/1 Georgia, 'Times New Roman', serif; font-weight: 400; }
+.soloing-sound-summary > b { min-width: 0; font: 16px/1.25 Georgia, 'Times New Roman', serif; font-weight: 400; white-space: nowrap; }
+.soloing-sound-summary > i { color: var(--muted); font-style: normal; }
+.soloing-sound-summary > em { align-self: stretch; width: 1px; margin: 0 8px; background: var(--line); }
+.soloing-workbench-controls { display: flex; align-items: flex-end; gap: 12px; }
+.soloing-label-picker { width: 152px; }
+.soloing-label-picker legend { color: var(--muted); }
+.soloing-label-picker label { min-width: 76px; }
+.soloing-legend-row { display: flex; justify-content: flex-end; min-height: 53px; align-items: center; border-bottom: 1px solid var(--line); }
+.soloing-legend-row .transition-legend { justify-content: flex-end; gap: 26px; margin: 0; }
+.soloing-visual-section { padding: 19px 0 16px; border-bottom: 1px solid #b7bcb2; }
+.soloing-visual-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 4px; }
+.soloing-visual-heading h3 { margin: 0; font: 21px/1.3 Georgia, 'Times New Roman', serif; font-weight: 400; }
+.soloing-visual-heading p, .soloing-visual-heading > span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.soloing-visual-heading p { margin-top: 4px; }
+.soloing-visual-section .blues-staff-scroll { margin-top: 5px; }
+.soloing-visual-section .transition-fretboard-scroll { margin-top: 2px; }
+.soloing-fretboard-section { padding-bottom: 8px; }
+.soloing-footer { margin-top: 0; }
+
+@media (max-width: 1050px) {
+  .soloing-workbench-heading { grid-template-columns: auto 1fr; }
+  .soloing-workbench-controls { grid-column: 1 / -1; justify-content: flex-end; }
+  .soloing-step-editor { grid-template-columns: 145px minmax(0, 1fr); gap-inline: 20px; }
+}
+
+@media (max-width: 700px) {
+  .soloing-intro { margin-bottom: 24px; }
+  .soloing-progression-heading { align-items: center; }
+  .soloing-progression-heading p { display: none; }
+  .soloing-add-step { min-height: 44px; }
+  .soloing-step-list { margin-inline: -20px; padding-inline: 20px; }
+  .soloing-step-list > li { flex-basis: 205px; }
+  .soloing-step-editor { display: block; }
+  .soloing-step-editor legend { float: none; margin-bottom: 13px; }
+  .soloing-step-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .soloing-step-fields select { min-height: 46px; font-size: 16px; }
+  .soloing-step-actions { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .soloing-step-actions button { min-height: 44px; }
+  .soloing-step-actions .soloing-delete-step { margin-left: 0; }
+  .soloing-workbench-heading { display: block; }
+  .soloing-sound-summary { margin-top: 13px; display: grid; grid-template-columns: 58px auto 12px minmax(0, 1fr); gap: 7px 8px; align-items: baseline; }
+  .soloing-sound-summary > em { grid-column: 1 / -1; width: 100%; height: 1px; margin: 2px 0; }
+  .soloing-workbench-controls { margin-top: 15px; justify-content: space-between; }
+  .soloing-workbench-controls .overlay-toggle { min-height: 44px; }
+  .soloing-legend-row { justify-content: flex-start; padding: 12px 0; }
+  .soloing-legend-row .transition-legend { justify-content: flex-start; gap: 12px 20px; }
+  .soloing-visual-heading { display: block; }
+  .soloing-visual-heading > span { display: block; margin-top: 5px; }
+  .soloing-visual-section .blues-staff-scroll,
+  .soloing-visual-section .transition-fretboard-scroll { margin-inline: -20px; padding-inline: 20px; }
+}
+
+@media (max-width: 420px) {
+  .soloing-progression-heading { align-items: flex-end; }
+  .soloing-workbench-controls { display: grid; grid-template-columns: 1fr; }
+  .soloing-label-picker { width: 100%; display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; }
+  .soloing-label-picker legend { margin: 0; }
+  .soloing-label-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 350px) {
+  .soloing-step-fields { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .site-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .brand { align-self: flex-start; white-space: nowrap; }
+  .lab-nav { width: 100%; max-width: none; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: nowrap; overflow-x: auto; }
+  .lab-nav a { flex: 0 0 auto; white-space: nowrap; }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
