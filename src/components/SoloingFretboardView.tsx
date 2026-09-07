@@ -4,8 +4,10 @@ import { displayNote } from '../presentation/notes'
 
 export type SoloingLabelMode = 'notes' | 'degrees'
 
-const CURRENT_COLOR = '#22685b'
-const NEXT_COLOR = '#b55c2a'
+const CURRENT_COLOR = '#176b5b'
+const CURRENT_FILL = '#d8eee7'
+const OUTSIDE_COLOR = '#c56a1a'
+const NEXT_COLOR = '#4666b0'
 const SCALE_COLOR = '#252925'
 const PAPER_COLOR = '#faf9f6'
 
@@ -33,19 +35,27 @@ interface LegendMarkerProps {
 }
 
 function LegendMarker({ kind }: LegendMarkerProps) {
-  const common = { display: 'block', width: 15, height: 15, borderRadius: '50%' }
-  if (kind === 'scale') return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${SCALE_COLOR}` }} />
-  if (kind === 'current') return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR }} />
-  if (kind === 'next') return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${NEXT_COLOR}` }} />
-  return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR, border: `2px solid ${NEXT_COLOR}`, outline: `2px solid ${PAPER_COLOR}`, outlineOffset: -4 }} />
+  const current = kind === 'current'
+  return <svg aria-hidden="true" width="19" height="19" viewBox="0 0 19 19">
+    {kind === 'next' && <circle cx="9.5" cy="9.5" r="8" fill="none" stroke={NEXT_COLOR} strokeWidth="1.8" strokeDasharray="3 2" />}
+    <circle
+      cx="9.5"
+      cy="9.5"
+      r={current ? 6.5 : 5.5}
+      fill={current ? CURRENT_FILL : PAPER_COLOR}
+      stroke={current ? CURRENT_COLOR : SCALE_COLOR}
+      strokeWidth={current ? 2.4 : 1.7}
+    />
+    {kind === 'outside' && <rect x="12.1" y="2.6" width="4.8" height="4.8" rx=".7" fill={OUTSIDE_COLOR} stroke={PAPER_COLOR} strokeWidth="1" transform="rotate(45 14.5 5)" />}
+  </svg>
 }
 
 export function SoloingVisualLegend({ showNextChord = false }: { readonly showNextChord?: boolean }) {
   const items = [
-    { kind: 'scale' as const, label: 'Scale tone', detail: 'Black outline' },
-    { kind: 'current' as const, label: 'Current chord', detail: 'Solid green' },
-    ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Orange outline' }] : []),
-    { kind: 'outside' as const, label: 'Outside scale', detail: 'Green + orange ring' },
+    { kind: 'scale' as const, label: 'Scale tone', detail: 'Ink outline' },
+    { kind: 'current' as const, label: 'Current chord', detail: 'Mint + green' },
+    { kind: 'outside' as const, label: 'Outside scale', detail: 'Amber diamond' },
+    ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Blue dashed halo' }] : []),
   ]
   return <div className="transition-legend" aria-label="Soloing visualization legend">
     {items.map(item => <span key={item.kind}>
@@ -96,7 +106,7 @@ export function SoloingFretboardView({
     >
       <title id={titleId}>{displayNote(currentChord.name)} chord tones over {displayNote(scale.name)} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. White circles with black borders are selected-scale tones outside the current chord. Solid green markers are current-chord tones. An orange ring around a green marker means that chord tone falls outside the selected scale. {showNextChord && nextChord ? `Orange outlines also show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. Small paper circles with ink borders are selected-scale tones outside the current chord. Larger mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale. {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -125,8 +135,7 @@ export function SoloingFretboardView({
         const isCurrent = Boolean(position.currentChordTone)
         const isNext = showNextChord && Boolean(position.nextChordTone)
         const isScale = Boolean(position.scaleTone)
-        const isCurrentOutsideScale = isCurrent && !isScale
-        const hasOrangeRing = isCurrentOutsideScale || isNext
+        const isOutsideScale = !isScale
         const label = markerLabel(position, labelMode, showNextChord)
         const x = fretX(position.fret)
         const y = stringY(position.string)
@@ -134,23 +143,35 @@ export function SoloingFretboardView({
         return <g key={`${position.string}-${position.fret}`} className="transition-position" transform={`translate(${x}, ${y})`}>
           <circle
             className="transition-marker"
-            r={isCurrent ? 14 : 12}
-            fill={isCurrent ? CURRENT_COLOR : PAPER_COLOR}
-            stroke={isCurrent ? CURRENT_COLOR : isScale ? SCALE_COLOR : NEXT_COLOR}
-            strokeWidth="2.2"
+            r={isCurrent ? 15 : 11}
+            fill={isCurrent ? CURRENT_FILL : PAPER_COLOR}
+            stroke={isCurrent ? CURRENT_COLOR : isScale ? SCALE_COLOR : OUTSIDE_COLOR}
+            strokeWidth={isCurrent ? 3 : 1.8}
           />
-          {hasOrangeRing && <circle
-            r="17"
+          {isNext && <circle
+            r={isCurrent ? 19 : 15.5}
             fill="none"
             stroke={NEXT_COLOR}
-            strokeWidth="2.4"
+            strokeWidth="2.2"
+            strokeDasharray="4 3"
+          />}
+          {isOutsideScale && <rect
+            x={isCurrent ? 9.5 : 7}
+            y={isCurrent ? -17 : -14.5}
+            width="7"
+            height="7"
+            rx="1"
+            fill={OUTSIDE_COLOR}
+            stroke={PAPER_COLOR}
+            strokeWidth="1.5"
+            transform={`rotate(45 ${isCurrent ? 13 : 10.5} ${isCurrent ? -13.5 : -11})`}
           />}
           <text
             textAnchor="middle"
             dominantBaseline="central"
             className="transition-label"
-            fill={isCurrent ? '#fff' : isScale ? SCALE_COLOR : NEXT_COLOR}
-            fontSize="10"
+            fill={SCALE_COLOR}
+            fontSize={isCurrent ? 11 : 9.5}
             fontWeight="700"
           >{label}</text>
         </g>

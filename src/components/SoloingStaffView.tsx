@@ -4,9 +4,9 @@ import type { SoloingStaffModel, SoloingStaffTone } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
 
 const SCALE_COLOR = '#252925'
-const CURRENT_COLOR = '#22685b'
-const NEXT_COLOR = '#b55c2a'
-const PAPER_COLOR = '#faf9f6'
+const CURRENT_COLOR = '#176b5b'
+const OUTSIDE_COLOR = '#c56a1a'
+const NEXT_COLOR = '#4666b0'
 
 function vexKey(tone: SoloingStaffTone) {
   const { pitch } = tone
@@ -35,16 +35,29 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   svg.append(label)
 }
 
-function appendRing(svg: SVGSVGElement, x: number, y: number, radius: number, color: string) {
+function appendNextHalo(svg: SVGSVGElement, x: number, y: number, radius: number) {
   const ring = document.createElementNS(svg.namespaceURI, 'ellipse')
   ring.setAttribute('cx', String(x))
   ring.setAttribute('cy', String(y))
   ring.setAttribute('rx', String(radius))
   ring.setAttribute('ry', String(radius - 1.5))
   ring.setAttribute('fill', 'none')
-  ring.setAttribute('stroke', color)
-  ring.setAttribute('stroke-width', '2.4')
+  ring.setAttribute('stroke', NEXT_COLOR)
+  ring.setAttribute('stroke-width', '2.2')
+  ring.setAttribute('stroke-dasharray', '4 3')
   svg.append(ring)
+}
+
+function appendOutsideDiamond(svg: SVGSVGElement, x: number, y: number) {
+  const diamond = document.createElementNS(svg.namespaceURI, 'rect')
+  diamond.setAttribute('x', String(x - 3.5))
+  diamond.setAttribute('y', String(y - 3.5))
+  diamond.setAttribute('width', '7')
+  diamond.setAttribute('height', '7')
+  diamond.setAttribute('rx', '1')
+  diamond.setAttribute('fill', OUTSIDE_COLOR)
+  diamond.setAttribute('transform', `rotate(45 ${x} ${y})`)
+  svg.append(diamond)
 }
 
 function describeTone(tone: SoloingStaffTone, showNextChord: boolean) {
@@ -102,12 +115,11 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
 
       const notes = visibleTones.map(tone => {
         const note = new StaveNote({ keys: [vexKey(tone)], duration: 'q' })
-        const isNextOnlyOutsideScale = !tone.isCurrentChordTone && tone.isNextChordTone && tone.isOutsideScale
-        const color = tone.isCurrentChordTone ? CURRENT_COLOR : isNextOnlyOutsideScale ? NEXT_COLOR : SCALE_COLOR
+        const color = tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR
         note.setKeyStyle(0, {
-          fillStyle: isNextOnlyOutsideScale ? PAPER_COLOR : color,
+          fillStyle: color,
           strokeStyle: color,
-          lineWidth: isNextOnlyOutsideScale ? 2.2 : 1.4,
+          lineWidth: 1.4,
         })
         return note
       })
@@ -130,14 +142,11 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
         const x = note.getNoteHeadBeginX() + 4
         const y = note.getYs()[0]
 
-        // Orange rings flag either an out-of-scale current chord tone or a
-        // pitch available in the next chord. Draw only one ring when both apply.
-        if ((tone.isCurrentChordTone && tone.isOutsideScale) || (showNextChord && tone.isNextChordTone)) {
-          appendRing(svg, x, y, 12, NEXT_COLOR)
-        }
+        if (showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
+        if (tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
 
         appendText(svg, x, 189, displayNote(toneDegree(tone)), {
-          color: tone.isCurrentChordTone ? CURRENT_COLOR : tone.isOutsideScale ? NEXT_COLOR : SCALE_COLOR,
+          color: tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR,
           family: "Georgia, 'Times New Roman', serif",
           size: 17,
           weight: tone.isCurrentChordTone ? '700' : undefined,
@@ -172,9 +181,9 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
   }, [model, showNextChord, visibleTones])
 
   const nextDescription = showNextChord && model.nextChord
-    ? ` Orange outlines mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
+    ? ` Blue dashed halos mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
     : ''
-  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic with chord tones placed in pitch order. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; an orange ring around a green note marks a current-chord tone outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
+  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic with chord tones placed in pitch order. Black notes belong to the selected scale. Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"

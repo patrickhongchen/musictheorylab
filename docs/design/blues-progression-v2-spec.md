@@ -28,10 +28,11 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Background: warm paper `#faf9f6`.
 - Text: ink `#252925`, muted `#656961`.
 - Lines: `#d9dbd3` with stronger section rules where hierarchy needs them.
-- Selected-scale tone outside the current chord: paper fill with an ink `#252925` outline and ink label.
-- Current chord tone inside the scale: solid green `#22685b`.
-- Current chord tone outside the selected scale: solid green `#22685b` with an orange outer ring.
-- Next chord: orange outline; shared current/next tone: green fill with an orange outer ring.
+- Selected-scale tone outside the current chord: small paper marker with an ink `#252925` outline and ink label.
+- Current chord tone: larger pale-mint `#d8eee7` marker with a heavy green `#176b5b` border and bold ink label on the fretboard; solid green notehead on the staff.
+- Chord tone outside the selected scale: amber `#c56a1a` diamond attached to the marker or placed beside the staff degree.
+- Next chord: cobalt `#4666b0` dashed outer halo. Shared tones retain their base marker and add the halo.
+- Role treatments compose independently so a current/next/outside tone shows the current marker, amber diamond, and blue halo together.
 - On the staff, chord tones outside the scale are inserted at their chromatic pitch position inside the tonic-to-tonic run.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.
