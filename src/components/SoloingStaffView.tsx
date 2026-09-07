@@ -14,10 +14,8 @@ function vexKey(tone: SoloingStaffTone) {
   return `${pitch.letter.toLowerCase()}${pitch.accidental}/${pitch.octave}`
 }
 
-function toneDegree(tone: SoloingStaffTone, noteFilter: SoloingNoteFilter) {
-  if (noteFilter === 'scale') return tone.scaleTone?.label ?? ''
-  if (noteFilter === 'both') return tone.scaleTone?.label ?? tone.currentChordTone?.label ?? tone.nextChordTone?.label ?? ''
-  return tone.currentChordTone?.label ?? tone.nextChordTone?.label ?? tone.scaleTone?.label ?? ''
+function toneDegree(tone: SoloingStaffTone) {
+  return tone.scaleDegreeLabel
 }
 
 function appendText(svg: SVGSVGElement, x: number, y: number, text: string, options: {
@@ -92,8 +90,8 @@ function appendOutsideDiamond(svg: SVGSVGElement, x: number, y: number) {
 }
 
 function describeTone(tone: SoloingStaffTone, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
-  const roles: string[] = []
-  if (noteFilter !== 'chord' && tone.isScaleTone) roles.push(`degree ${displayNote(tone.scaleTone?.label ?? '')} of the selected scale`)
+  const roles: string[] = [`scale-relative degree ${displayNote(tone.scaleDegreeLabel)}`]
+  if (noteFilter !== 'chord' && tone.isScaleTone) roles.push('selected scale tone')
   if (noteFilter !== 'scale' && tone.isCurrentChordTone) roles.push(`degree ${displayNote(tone.currentChordTone?.label ?? '')} of the current chord`)
   if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) roles.push(`degree ${displayNote(tone.nextChordTone?.label ?? '')} of the next chord`)
   if (noteFilter !== 'scale' && tone.isOutsideScale) roles.push('outside the selected scale')
@@ -183,15 +181,15 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
         const color = toneColor(tone, noteFilter)
 
         if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
-        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 145)
+        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 168)
 
-        appendDegreeLabel(svg, x, 151, toneDegree(tone, noteFilter), color)
-        appendText(svg, x, 173, displayNote(tone.pitch.name), {
+        appendText(svg, x, 151, displayNote(tone.pitch.name), {
           color: SOLOING_VISUAL_COLORS.muted,
           family: "Georgia, 'Times New Roman', serif",
           size: 16,
           weight: '400',
         })
+        appendDegreeLabel(svg, x, 174, toneDegree(tone), color)
       })
 
       setError(false)
@@ -224,7 +222,7 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
     : noteFilter === 'chord'
       ? `Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.`
       : `Black notes belong to the selected scale. Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.`
-  const description = `${displayNote(model.scale.name)}, filtered to ${noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}, in ascending pitch order. ${markerDescription}${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord, noteFilter)).join('; ')}.`
+  const description = `${displayNote(model.scale.name)}, filtered to ${noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}, in ascending pitch order. ${markerDescription}${nextDescription} Note names sit above scale-relative degrees. ${visibleTones.map(tone => describeTone(tone, showNextChord, noteFilter)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"

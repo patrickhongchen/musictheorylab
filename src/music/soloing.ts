@@ -1,4 +1,4 @@
-import { Note, Scale as TonalScale } from 'tonal'
+import { Interval, Note, Scale as TonalScale } from 'tonal'
 import { STANDARD_TUNING } from './fretboard'
 import { pitchAtMidi, pitchClass } from './pitches'
 import type { Pitch, PitchClass } from './types'
@@ -99,6 +99,8 @@ export interface SoloingStep {
 }
 
 export interface SoloingToneMembership {
+  /** A stable chromatic degree measured from the selected scale root. */
+  readonly scaleDegreeLabel: string
   readonly scaleTone?: SoloingScaleTone
   readonly currentChordTone?: SoloingChordTone
   readonly nextChordTone?: SoloingChordTone
@@ -238,6 +240,27 @@ export function createSeedSoloingProgression(): SoloingStep[] {
   }))
 }
 
+/** Transposes every chord and scale root in a progression by a chromatic interval. */
+export function transposeSoloingProgression(
+  steps: readonly SoloingStep[],
+  semitones: number,
+): SoloingStep[] {
+  if (!Number.isInteger(semitones)) {
+    throw new Error('Transpose interval must be an integer number of semitones')
+  }
+
+  const transposeRoot = (root: string) => {
+    const chroma = pitchClass(root).chroma
+    return NOTE_ROOTS[(chroma + semitones % 12 + 12) % 12]
+  }
+
+  return steps.map(step => ({
+    ...step,
+    chord: { ...step.chord, root: transposeRoot(step.chord.root) },
+    scale: { ...step.scale, root: transposeRoot(step.scale.root) },
+  }))
+}
+
 /** Finds the immediate next step by stable identity and wraps the final step to the first. */
 export function getNextSoloingStep(steps: readonly SoloingStep[], currentId: string): SoloingStep | undefined {
   if (steps.length < 2) return undefined
@@ -262,6 +285,14 @@ function findByChroma<T extends { readonly pitchClass: PitchClass }>(tones: read
   return tones.find(tone => tone.pitchClass.chroma === chroma)
 }
 
+/** Labels any pitch relative to the selected scale root, including chromatic tones. */
+export function soloingScaleDegreeLabel(root: PitchClass, note: PitchClass): string {
+  const interval = Interval.get(Interval.distance(root.name, note.name))
+  if (interval.empty) throw new Error(`Cannot measure ${note.name} from ${root.name}`)
+  const accidental = interval.alt < 0 ? 'b'.repeat(-interval.alt) : '#'.repeat(interval.alt)
+  return `${accidental}${interval.simple}`
+}
+
 function membership(
   chroma: number,
   scale: SoloingScale,
@@ -271,7 +302,12 @@ function membership(
   const scaleTone = findByChroma(scale.tones, chroma)
   const currentChordTone = findByChroma(currentChord.tones, chroma)
   const nextChordTone = nextChord && findByChroma(nextChord.tones, chroma)
+  const displayedPitch = scaleTone?.pitchClass
+    ?? currentChordTone?.pitchClass
+    ?? nextChordTone?.pitchClass
+    ?? pitchClass(Note.fromMidi(chroma + 60))
   return {
+    scaleDegreeLabel: soloingScaleDegreeLabel(scale.root, displayedPitch),
     scaleTone,
     currentChordTone,
     nextChordTone,

@@ -107,7 +107,7 @@ export function BluesSoloing() {
             <legend>Marker labels</legend>
             <div>
               <label><input type="radio" name="soloing-labels" checked={labelMode === 'notes'} onChange={() => setLabelMode('notes')} /><span>Notes</span></label>
-              <label><input type="radio" name="soloing-labels" checked={labelMode === 'degrees'} onChange={() => setLabelMode('degrees')} /><span>Degrees</span></label>
+              <label><input type="radio" name="soloing-labels" checked={labelMode === 'degrees'} onChange={() => setLabelMode('degrees')} /><span>Scale degrees</span></label>
             </div>
           </fieldset>
         </div>
@@ -155,7 +155,7 @@ export function BluesSoloing() {
     </section>}
 
     <footer className="page-footer soloing-footer">
-      <span>Blues Soloing Lab</span>
+      <span>Soloing</span>
       <span>Build the harmony. Choose the color. Follow the change.</span>
     </footer>
   </div>

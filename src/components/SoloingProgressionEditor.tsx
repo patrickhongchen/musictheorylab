@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   NOTE_ROOTS,
   SOLOING_CHORD_QUALITIES,
@@ -7,6 +8,7 @@ import {
   createSoloingScale,
   createSoloingStepId,
   scaleTypeLabel,
+  transposeSoloingProgression,
   type SoloingStep,
 } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
@@ -33,6 +35,7 @@ function MoveArrow({ direction }: { readonly direction: 'left' | 'right' }) {
 }
 
 export function SoloingProgressionEditor({ progression, selectedStepId, onChange }: Props) {
+  const [transposeAmount, setTransposeAmount] = useState(2)
   const selectedIndex = progression.findIndex(step => step.id === selectedStepId)
   const selectedStep = progression[selectedIndex] ?? progression[0]
   const effectiveSelectedIndex = selectedIndex >= 0 ? selectedIndex : 0
@@ -63,19 +66,24 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
           chord: { root: NOTE_ROOTS[0], quality: SOLOING_CHORD_QUALITIES[0] },
           scale: { root: NOTE_ROOTS[0], type: SOLOING_SCALE_TYPES[0] },
         }
-    onChange([...progression, nextStep], nextStep.id)
+    const nextSteps = [...progression]
+    nextSteps.splice(selectedStep ? effectiveSelectedIndex + 1 : 0, 0, nextStep)
+    onChange(nextSteps, nextStep.id)
   }
 
   const moveSelectedStep = (offset: -1 | 1) => {
-    if (!selectedStep) return
     const destination = effectiveSelectedIndex + offset
-    if (destination < 0 || destination >= progression.length) return
+    if (!selectedStep || destination < 0 || destination >= progression.length) return
     const nextSteps = [...progression]
-    ;[nextSteps[effectiveSelectedIndex], nextSteps[destination]] = [
-      nextSteps[destination],
-      nextSteps[effectiveSelectedIndex],
-    ]
+    nextSteps.splice(effectiveSelectedIndex, 1)
+    nextSteps.splice(destination, 0, selectedStep)
     onChange(nextSteps, selectedStep.id)
+  }
+
+  const selectRelativeStep = (offset: -1 | 1) => {
+    if (!selectedStep || progression.length < 2) return
+    const destination = (effectiveSelectedIndex + offset + progression.length) % progression.length
+    onChange([...progression], progression[destination].id)
   }
 
   const duplicateSelectedStep = () => {
@@ -104,9 +112,32 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
         <h2 id="soloing-progression-heading">Your progression</h2>
         <p>Choose a chord, then give it the scale you want to hear.</p>
       </div>
-      <button className="soloing-add-step" type="button" onClick={addStep}>
+      <button className="soloing-add-step" type="button" onClick={addStep}
+        title={selectedStep ? `Insert after step ${effectiveSelectedIndex + 1}` : 'Add the first chord'}>
         <span aria-hidden="true">+</span> Add chord
       </button>
+    </div>
+
+    <div className="soloing-transpose-controls">
+      <label htmlFor="soloing-transpose-amount">Transpose all</label>
+      <select id="soloing-transpose-amount" value={transposeAmount}
+        onChange={event => setTransposeAmount(Number(event.target.value))}>
+        {[
+          'Half step (1 semitone)', 'Whole step (2 semitones)', 'Minor 3rd (3 semitones)',
+          'Major 3rd (4 semitones)', 'Perfect 4th (5 semitones)', 'Tritone (6 semitones)',
+          'Perfect 5th (7 semitones)', 'Minor 6th (8 semitones)', 'Major 6th (9 semitones)',
+          'Minor 7th (10 semitones)', 'Major 7th (11 semitones)',
+        ].map((label, index) => <option key={index + 1} value={index + 1}>{label}</option>)}
+      </select>
+      <button type="button" disabled={!selectedStep}
+        onClick={() => onChange(transposeSoloingProgression(progression, -transposeAmount), selectedStepId)}>
+        Down
+      </button>
+      <button type="button" disabled={!selectedStep}
+        onClick={() => onChange(transposeSoloingProgression(progression, transposeAmount), selectedStepId)}>
+        Up
+      </button>
+      <span>Shifts every chord and scale together.</span>
     </div>
 
     {progression.length > 0
@@ -186,23 +217,31 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
       </div>
       <div className="soloing-step-actions" aria-label={`Actions for step ${effectiveSelectedIndex + 1}`}>
         <button
+          className="soloing-step-navigation"
           type="button"
-          onClick={() => moveSelectedStep(-1)}
-          disabled={effectiveSelectedIndex === 0}
-          aria-label={`Move step ${effectiveSelectedIndex + 1} earlier`}
+          onClick={() => selectRelativeStep(-1)}
+          disabled={progression.length < 2}
+          aria-label={`Select previous chord from step ${effectiveSelectedIndex + 1}`}
         >
-          <MoveArrow direction="left" /> Earlier
+          <MoveArrow direction="left" /> Previous
         </button>
         <button
+          className="soloing-step-navigation"
           type="button"
-          onClick={() => moveSelectedStep(1)}
-          disabled={effectiveSelectedIndex === progression.length - 1}
-          aria-label={`Move step ${effectiveSelectedIndex + 1} later`}
+          onClick={() => selectRelativeStep(1)}
+          disabled={progression.length < 2}
+          aria-label={`Select next chord from step ${effectiveSelectedIndex + 1}`}
         >
-          Later <MoveArrow direction="right" />
+          Next <MoveArrow direction="right" />
         </button>
         <button type="button" onClick={duplicateSelectedStep}>
           Duplicate
+        </button>
+        <button type="button" onClick={() => moveSelectedStep(-1)} disabled={effectiveSelectedIndex === 0}>
+          <MoveArrow direction="left" /> Move earlier
+        </button>
+        <button type="button" onClick={() => moveSelectedStep(1)} disabled={effectiveSelectedIndex === progression.length - 1}>
+          Move later <MoveArrow direction="right" />
         </button>
         <button
           className="soloing-delete-step"
@@ -214,6 +253,7 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
           Delete
         </button>
       </div>
+      <p className="soloing-insertion-hint">New chords are inserted after the selected chord.</p>
     </fieldset>}
   </section>
 }

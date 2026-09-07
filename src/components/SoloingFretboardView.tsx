@@ -18,17 +18,14 @@ function isVisible(position: SoloingFretPosition, showNextChord: boolean, noteFi
   return Boolean(position.scaleTone || position.currentChordTone || (showNextChord && position.nextChordTone))
 }
 
-function markerLabel(position: SoloingFretPosition, labelMode: SoloingLabelMode, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
+function markerLabel(position: SoloingFretPosition, labelMode: SoloingLabelMode) {
   if (labelMode === 'notes') return displayNote(position.pitchClass.name)
-  const tone = noteFilter === 'scale'
-    ? position.scaleTone
-    : position.currentChordTone ?? (showNextChord ? position.nextChordTone : undefined) ?? position.scaleTone
-  return displayNote(tone?.label ?? '')
+  return displayNote(position.scaleDegreeLabel)
 }
 
 function spokenRole(position: SoloingFretPosition, currentChord: SoloingChord, nextChord: SoloingChord | undefined, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
-  const roles: string[] = []
-  if (noteFilter !== 'chord' && position.scaleTone) roles.push(`degree ${displayNote(position.scaleTone.label)} of the selected scale`)
+  const roles: string[] = [`scale-relative degree ${displayNote(position.scaleDegreeLabel)}`]
+  if (noteFilter !== 'chord' && position.scaleTone) roles.push('selected scale tone')
   if (noteFilter !== 'scale' && position.currentChordTone) roles.push(`degree ${displayNote(position.currentChordTone.label)} of current chord ${displayNote(currentChord.name)}`)
   if (noteFilter !== 'scale' && showNextChord && nextChord && position.nextChordTone) roles.push(`degree ${displayNote(position.nextChordTone.label)} of next chord ${displayNote(nextChord.name)}`)
   if (noteFilter !== 'scale' && position.isOutsideScale) roles.push('outside the selected scale')
@@ -119,7 +116,7 @@ export function SoloingFretboardView({
     >
       <title id={titleId}>{noteFilter === 'scale' ? displayNote(scale.name) : noteFilter === 'chord' ? `${displayNote(currentChord.name)} chord tones` : `${displayNote(currentChord.name)} chord tones over ${displayNote(scale.name)}`} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. The view is filtered to {noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}. All note markers are the same size. {markerDescription} {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : noteFilter === 'scale' ? 'Chord overlays are hidden in Scale view.' : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord, noteFilter)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. The view is filtered to {noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}. All note markers are the same size. {markerDescription} {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : noteFilter === 'scale' ? 'Chord overlays are hidden in Scale view.' : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'scale-relative degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord, noteFilter)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -149,7 +146,7 @@ export function SoloingFretboardView({
         const isNext = noteFilter !== 'scale' && showNextChord && Boolean(position.nextChordTone)
         const isScale = Boolean(position.scaleTone)
         const isOutsideScale = noteFilter !== 'scale' && !isScale
-        const label = markerLabel(position, labelMode, showNextChord, noteFilter)
+        const label = markerLabel(position, labelMode)
         const x = fretX(position.fret)
         const y = stringY(position.string)
 
@@ -161,13 +158,7 @@ export function SoloingFretboardView({
             stroke={isCurrent ? CURRENT_COLOR : isScale ? SCALE_COLOR : OUTSIDE_COLOR}
             strokeWidth={isCurrent ? 3 : 1.8}
           />
-          {isNext && <circle
-            r="17"
-            fill="none"
-            stroke={NEXT_COLOR}
-            strokeWidth="2.2"
-            strokeDasharray="4 3"
-          />}
+          {isNext && <circle r="17" fill="none" stroke={NEXT_COLOR} strokeWidth="2.2" strokeDasharray="4 3" />}
           {isOutsideScale && <rect
             x="8"
             y="-16"

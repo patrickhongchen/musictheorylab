@@ -519,6 +519,12 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .soloing-progression-heading p { margin-top: 5px; color: var(--muted); font-size: 12px; }
 .soloing-add-step { min-width: 124px; padding: 0 16px; border: 1px solid var(--root); background: transparent; color: var(--root); font-size: 12px; font-weight: 650; }
 .soloing-add-step:hover { background: #edf3ef; }
+.soloing-transpose-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.soloing-transpose-controls label { margin-right: 4px; font-size: 12px; font-weight: 650; }
+.soloing-transpose-controls select, .soloing-transpose-controls button { min-height: 44px; padding: 0 12px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 12px; }
+.soloing-transpose-controls button:hover:not(:disabled) { background: #edf3ef; }
+.soloing-transpose-controls span, .soloing-insertion-hint { color: var(--muted); font-size: 11px; }
+.soloing-insertion-hint { grid-column: 1 / -1; margin: 0; }
 .soloing-step-list { display: flex; max-width: 100%; margin: 0; padding: 0 0 8px; gap: 10px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
 .soloing-step-list > li { flex: 1 0 230px; min-width: 0; }
 .soloing-step-card { display: grid; width: 100%; min-height: 76px; grid-template-columns: 42px minmax(0, 1fr); padding: 0; overflow: hidden; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); text-align: left; }
@@ -537,6 +543,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .soloing-step-fields select { width: 100%; min-width: 0; padding: 0 11px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 13px; }
 .soloing-step-actions { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; }
 .soloing-step-actions button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); font-size: 11px; }
+.soloing-step-actions .soloing-step-navigation { min-width: 96px; }
 .soloing-step-actions button:hover:not(:disabled) { background: #f0f1ea; }
 .soloing-step-actions button:disabled { cursor: not-allowed; opacity: .42; }
 .soloing-step-actions .soloing-delete-step { margin-left: auto; color: #8a3f2c; border-color: #d5b5aa; }
@@ -557,9 +564,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .soloing-note-filter { width: 213px; }
 .soloing-note-filter label { min-width: 71px; }
 .soloing-note-filter label + label { margin-left: -1px; }
-.soloing-label-picker { width: 152px; }
+.soloing-label-picker { width: 190px; }
 .soloing-label-picker legend { color: var(--muted); }
-.soloing-label-picker label { min-width: 76px; }
+.soloing-label-picker label:first-child { min-width: 76px; }
+.soloing-label-picker label:last-child { min-width: 114px; }
 .soloing-legend-row { display: flex; min-height: 47px; align-items: center; border-bottom: 1px solid var(--line); }
 .soloing-legend-row .transition-legend { justify-content: flex-start; gap: 30px; margin: 0; }
 .soloing-legend-row .transition-legend span { display: flex; gap: 8px; }

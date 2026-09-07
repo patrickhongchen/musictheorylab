@@ -16,6 +16,7 @@ import {
   createSoloingStep,
   createSoloingStepId,
   getNextSoloingStep,
+  transposeSoloingProgression,
   type SoloingChordQuality,
   type SoloingScaleType,
 } from './soloing'
@@ -121,6 +122,29 @@ describe('soloing progression', () => {
     expect(getNextSoloingStep(progression, 'missing')).toBeUndefined()
     expect(getNextSoloingStep([], 'missing')).toBeUndefined()
   })
+
+  it('transposes chord and scale roots together while preserving step data', () => {
+    const progression = [
+      createSoloingStep({ root: 'B', quality: 'minor7' }, { root: 'Db', type: 'blues' }, 'one'),
+      createSoloingStep({ root: 'F#', quality: 'major' }, { root: 'A', type: 'dorian' }, 'two'),
+    ]
+    const transposed = transposeSoloingProgression(progression, 3)
+
+    expect(transposed).toEqual([
+      { id: 'one', chord: { root: 'D', quality: 'minor7' }, scale: { root: 'E', type: 'blues' } },
+      { id: 'two', chord: { root: 'A', quality: 'major' }, scale: { root: 'C', type: 'dorian' } },
+    ])
+    expect(transposeSoloingProgression(progression, -2).map(step => [step.chord.root, step.scale.root]))
+      .toEqual([['A', 'B'], ['E', 'G']])
+    expect(progression[0].chord.root).toBe('B')
+    expect(transposed[0]).not.toBe(progression[0])
+    expect(transposed[0].chord).not.toBe(progression[0].chord)
+    expect(transposed[0].scale).not.toBe(progression[0].scale)
+  })
+
+  it('rejects non-integer transpose intervals', () => {
+    expect(() => transposeSoloingProgression(SEED_SOLOING_PROGRESSION, 1.5)).toThrow('integer')
+  })
 })
 
 describe('soloing visual models', () => {
@@ -152,10 +176,10 @@ describe('soloing visual models', () => {
 
     expect(model.currentChord.name).toBe('A7')
     expect(model.nextChord?.name).toBe('D7')
-    expect(a).toMatchObject({ isScaleTone: true, isCurrentChordTone: true, isNextChordTone: true, isSharedChordTone: true })
-    expect(d).toMatchObject({ isScaleTone: true, isCurrentChordTone: false, isNextChordTone: true, isSharedChordTone: false })
-    expect(cSharp).toMatchObject({ isScaleTone: false, isCurrentChordTone: true, isNextChordTone: false, isOutsideScale: true })
-    expect(fSharp).toMatchObject({ isScaleTone: false, isCurrentChordTone: false, isNextChordTone: true, isOutsideScale: true })
+    expect(a).toMatchObject({ scaleDegreeLabel: '1', isScaleTone: true, isCurrentChordTone: true, isNextChordTone: true, isSharedChordTone: true })
+    expect(d).toMatchObject({ scaleDegreeLabel: '4', isScaleTone: true, isCurrentChordTone: false, isNextChordTone: true, isSharedChordTone: false })
+    expect(cSharp).toMatchObject({ scaleDegreeLabel: '3', isScaleTone: false, isCurrentChordTone: true, isNextChordTone: false, isOutsideScale: true })
+    expect(fSharp).toMatchObject({ scaleDegreeLabel: '6', isScaleTone: false, isCurrentChordTone: false, isNextChordTone: true, isOutsideScale: true })
   })
 
   it('maps classified membership to physical standard-tuning coordinates from fret 0 through 22', () => {
@@ -173,6 +197,7 @@ describe('soloing visual models', () => {
     const lowFSharp = board.positions.find(position => position.string === 6 && position.fret === 2)
     expect(lowFSharp).toMatchObject({
       pitchClass: { name: 'F#' },
+      scaleDegreeLabel: '6',
       isScaleTone: false,
       isCurrentChordTone: false,
       isNextChordTone: true,
@@ -180,6 +205,7 @@ describe('soloing visual models', () => {
     })
     const highA = board.positions.find(position => position.string === 1 && position.fret === 5)
     expect(highA).toMatchObject({
+      scaleDegreeLabel: '1',
       isScaleTone: true,
       isCurrentChordTone: true,
       isNextChordTone: true,

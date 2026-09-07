@@ -11,7 +11,7 @@ export function AppShell({ page, children }: { page: LabPage; children: ReactNod
         <a href="?lab=explorer" aria-current={page === 'explorer' ? 'page' : undefined}>Explorer</a>
         <a href="?lab=progression" aria-current={page === 'progression' ? 'page' : undefined}>Progression Builder</a>
         <a href="?lab=scales" aria-current={page === 'scales' ? 'page' : undefined}>Scales</a>
-        <a href="?lab=blues" aria-current={page === 'blues' ? 'page' : undefined}>Blues Soloing</a>
+        <a href="?lab=blues" aria-current={page === 'blues' ? 'page' : undefined}>Soloing</a>
       </nav>
     </header>
     <main id="main">{children}</main>
