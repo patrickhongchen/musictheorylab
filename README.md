@@ -35,6 +35,7 @@ Deploy the contents of `dist/` to any static host. Relative asset paths support 
 - Six-string SVG fretboard, standard E2–A2–D3–G3–B3–E4 tuning, frets 0–15, all available chord-tone locations.
 - Progression Builder with one harmony choice per ascending scale top note, a complete seven-chord staff, step-by-step fretboard inspection, and an all-progression map with string filters.
 - Pentatonic Scale Map with major/minor modes, an ascending staff, note-name and degree labels, a five-tone overview, and a 22-fret map that distinguishes tonic-triad tones from the other scale colors.
+- Blues Soloing Lab with a playable 12-bar form, tonic minor-blues home base, dominant chord-tone and guide-tone targets, synchronized scale/change notation with melodic playback, a complete 22-fret map, and progressive practice focuses.
 - Root/third/fifth colors paired with numbers and solid/outlined/dashed markers. The numbers describe chord roles, including the diminished fifth of vii°.
 - Tone.js chord and ascending arpeggio playback using the exact staff pitches.
 - Mobile stacking, comfortable tap targets, native radio keyboard navigation, focus states, screen-reader descriptions, reduced-motion support, and local fretboard scrolling.

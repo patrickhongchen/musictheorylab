@@ -1,0 +1,211 @@
+import { Note, Scale as TonalScale } from 'tonal'
+import { STANDARD_TUNING } from './fretboard'
+import { pitchAtMidi, pitchClass } from './pitches'
+import type { Pitch, PitchClass } from './types'
+
+export type BluesDegree = 1 | 4 | 5
+export type BluesChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
+export type BluesScaleDegree = '1' | 'b3' | '4' | 'b5' | '5' | 'b7'
+
+export interface BluesChordTone {
+  readonly pitchClass: PitchClass
+  readonly role: BluesChordToneRole
+  readonly label: '1' | '3' | '5' | 'b7'
+}
+
+export interface BluesChord {
+  readonly degree: BluesDegree
+  readonly root: PitchClass
+  readonly name: string
+  readonly romanNumeral: 'I' | 'IV' | 'V'
+  readonly tones: readonly BluesChordTone[]
+}
+
+export interface BluesScaleTone {
+  readonly pitchClass: PitchClass
+  readonly label: BluesScaleDegree
+}
+
+export interface BluesScale {
+  readonly name: string
+  readonly tones: readonly BluesScaleTone[]
+}
+
+export interface BluesBar {
+  readonly index: number
+  readonly phrase: 1 | 2 | 3
+  readonly chord: BluesChord
+  readonly beginsChange: boolean
+}
+
+export interface TwelveBarBlues {
+  readonly tonic: PitchClass
+  readonly scale: BluesScale
+  readonly chords: readonly [BluesChord, BluesChord, BluesChord]
+  readonly bars: readonly BluesBar[]
+}
+
+export interface GuideToneConnection {
+  readonly from: BluesChordTone
+  readonly to: BluesChordTone
+  readonly semitones: number
+}
+
+export interface BluesFretPosition {
+  readonly string: number
+  readonly fret: number
+  readonly pitchClass: PitchClass
+  readonly scaleTone?: BluesScaleTone
+  readonly chordTone?: BluesChordTone
+}
+
+export interface BluesFretboardModel {
+  readonly tuning: readonly Pitch[]
+  readonly fretStart: number
+  readonly fretEnd: number
+  readonly positions: readonly BluesFretPosition[]
+}
+
+export const COMMON_BLUES_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
+
+const CHORD_INTERVALS = ['1P', '3M', '5P', '7m'] as const
+const CHORD_ROLES = ['root', 'third', 'fifth', 'seventh'] as const
+const CHORD_LABELS = ['1', '3', '5', 'b7'] as const
+const SCALE_LABELS = ['1', 'b3', '4', 'b5', '5', 'b7'] as const
+const FORM: readonly BluesDegree[] = [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5]
+
+function createDominantChord(rootName: string, degree: BluesDegree): BluesChord {
+  const root = pitchClass(rootName)
+  const numeral = degree === 1 ? 'I' : degree === 4 ? 'IV' : 'V'
+  return {
+    degree,
+    root,
+    name: `${root.name}7`,
+    romanNumeral: numeral,
+    tones: CHORD_INTERVALS.map((interval, index) => ({
+      pitchClass: pitchClass(Note.transpose(root.name, interval)),
+      role: CHORD_ROLES[index],
+      label: CHORD_LABELS[index],
+    })),
+  }
+}
+
+/** Builds the common turnaround form: I I I I / IV IV I I / V IV I V. */
+export function createTwelveBarBlues(tonicName: string): TwelveBarBlues {
+  const tonic = pitchClass(tonicName)
+  const major = TonalScale.get(`${tonic.name} major`)
+  const blues = TonalScale.get(`${tonic.name} blues`)
+  if (major.empty || major.notes.length !== 7 || blues.empty || blues.notes.length !== 6) {
+    throw new Error(`Unsupported blues key: ${tonicName}`)
+  }
+
+  const chords = [
+    createDominantChord(major.notes[0], 1),
+    createDominantChord(major.notes[3], 4),
+    createDominantChord(major.notes[4], 5),
+  ] as const
+  const byDegree = new Map(chords.map(chord => [chord.degree, chord]))
+  const bars = FORM.map((degree, index): BluesBar => {
+    const chord = byDegree.get(degree)
+    if (!chord) throw new Error(`Missing blues chord degree ${degree}`)
+    return {
+      index,
+      phrase: (Math.floor(index / 4) + 1) as BluesBar['phrase'],
+      chord,
+      beginsChange: index > 0 && degree !== FORM[index - 1],
+    }
+  })
+
+  return {
+    tonic,
+    chords,
+    bars,
+    scale: {
+      name: `${tonic.name} minor blues`,
+      // Blues-scale colors favor practical fretboard names (E rather than Fb in Bb blues).
+      // Dominant chord spellings remain functional and unsimplified above.
+      tones: blues.notes.map((note, index) => ({ pitchClass: pitchClass(Note.simplify(note)), label: SCALE_LABELS[index] })),
+    },
+  }
+}
+
+function signedDistance(from: PitchClass, to: PitchClass) {
+  return ((to.chroma - from.chroma + 18) % 12) - 6
+}
+
+/** Pairs the two defining dominant tones by the smoothest total motion. */
+export function connectGuideTones(from: BluesChord, to: BluesChord): readonly GuideToneConnection[] {
+  const fromGuides = from.tones.filter(tone => tone.role === 'third' || tone.role === 'seventh')
+  const toGuides = to.tones.filter(tone => tone.role === 'third' || tone.role === 'seventh')
+  const direct = fromGuides.map((tone, index) => ({
+    from: tone,
+    to: toGuides[index],
+    semitones: signedDistance(tone.pitchClass, toGuides[index].pitchClass),
+  }))
+  const crossed = fromGuides.map((tone, index) => ({
+    from: tone,
+    to: toGuides[1 - index],
+    semitones: signedDistance(tone.pitchClass, toGuides[1 - index].pitchClass),
+  }))
+  const cost = (connections: readonly GuideToneConnection[]) => connections.reduce((sum, connection) => sum + Math.abs(connection.semitones), 0)
+  return cost(crossed) < cost(direct) ? crossed : direct
+}
+
+export function nearestScaleApproach(scale: BluesScale, target: PitchClass): BluesScaleTone {
+  return scale.tones.reduce((nearest, tone) => (
+    Math.abs(signedDistance(tone.pitchClass, target)) < Math.abs(signedDistance(nearest.pitchClass, target)) ? tone : nearest
+  ))
+}
+
+/** Places the six blues colors plus the octave tonic in a readable treble register. */
+export function ascendingBluesScalePitches(scale: BluesScale): readonly Pitch[] {
+  const first = pitchAtMidi(scale.tones[0].pitchClass, 60 + scale.tones[0].pitchClass.chroma)
+  const pitches = scale.tones.slice(1).reduce<Pitch[]>((notes, tone) => {
+    const previous = notes[notes.length - 1]
+    const distance = (tone.pitchClass.chroma - previous.chroma + 12) % 12 || 12
+    notes.push(pitchAtMidi(tone.pitchClass, previous.midi + distance))
+    return notes
+  }, [first])
+  return [...pitches, pitchAtMidi(scale.tones[0].pitchClass, first.midi + 12)]
+}
+
+/** Keeps a lead-in pitch beside its target so the notated resolution is easy to read. */
+export function changePhrasePitches(lead: PitchClass, target: PitchClass): readonly [Pitch, Pitch] {
+  const targetPitch = pitchAtMidi(target, 60 + target.chroma)
+  const below = targetPitch.midi - ((targetPitch.midi - lead.chroma + 12) % 12)
+  const above = below + 12
+  const leadMidi = Math.abs(targetPitch.midi - below) <= Math.abs(above - targetPitch.midi) ? below : above
+  return [pitchAtMidi(lead, leadMidi), targetPitch]
+}
+
+/** Maps the home blues scale plus the selected chord's tones in one position window. */
+export function createBluesFretboard(
+  progression: TwelveBarBlues,
+  chord: BluesChord,
+  fretStart = 0,
+  fretEnd = 22,
+  tuning = STANDARD_TUNING,
+): BluesFretboardModel {
+  if (!Number.isInteger(fretStart) || !Number.isInteger(fretEnd) || fretStart < 0 || fretEnd < fretStart) {
+    throw new Error('A valid ascending fret range is required')
+  }
+  const positions: BluesFretPosition[] = []
+  tuning.forEach((open, tuningIndex) => {
+    for (let fret = fretStart; fret <= fretEnd; fret++) {
+      const chroma = (open.midi + fret) % 12
+      const scaleTone = progression.scale.tones.find(tone => tone.pitchClass.chroma === chroma)
+      const chordTone = chord.tones.find(tone => tone.pitchClass.chroma === chroma)
+      if (scaleTone || chordTone) {
+        positions.push({
+          string: tuning.length - tuningIndex,
+          fret,
+          pitchClass: chordTone?.pitchClass ?? scaleTone!.pitchClass,
+          scaleTone,
+          chordTone,
+        })
+      }
+    }
+  })
+  positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
+  return { tuning, fretStart, fretEnd, positions }
+}
