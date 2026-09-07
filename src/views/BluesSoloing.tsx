@@ -19,7 +19,7 @@ export function BluesSoloing() {
   const [playingBar, setPlayingBar] = useState<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [labelMode, setLabelMode] = useState<BluesLabelMode>('notes')
-  const [fretStart, setFretStart] = useState(5)
+  const [showNextChord, setShowNextChord] = useState(false)
   const player = useRef<BluesPlayer | null>(null)
 
   const progression = useMemo(() => createTwelveBarBlues(tonic), [tonic])
@@ -27,15 +27,14 @@ export function BluesSoloing() {
   const activeBar = progression.bars[activeIndex]
   const nextChangeBar = [...progression.bars.slice(activeIndex + 1), ...progression.bars.slice(0, activeIndex + 1)]
     .find(bar => bar.chord.degree !== activeBar.chord.degree) ?? progression.bars[(activeIndex + 1) % progression.bars.length]
-  const fretEnd = Math.min(fretStart + 4, 22)
   const scaleStaffPitches = useMemo(() => ascendingBluesScalePitches(progression.scale), [progression])
   const currentBoard = useMemo(
-    () => createBluesFretboard(progression, activeBar.chord, fretStart, fretEnd),
-    [activeBar.chord, fretEnd, fretStart, progression],
+    () => createBluesFretboard(progression, activeBar.chord),
+    [activeBar.chord, progression],
   )
   const nextBoard = useMemo(
-    () => createBluesFretboard(progression, nextChangeBar.chord, fretStart, fretEnd),
-    [fretEnd, fretStart, nextChangeBar.chord, progression],
+    () => createBluesFretboard(progression, nextChangeBar.chord),
+    [nextChangeBar.chord, progression],
   )
   const sharedTones = activeBar.chord.tones.filter(tone => nextChangeBar.chord.tones.some(nextTone => nextTone.pitchClass.chroma === tone.pitchClass.chroma))
   const guideMoves = connectGuideTones(activeBar.chord, nextChangeBar.chord)
@@ -189,19 +188,16 @@ export function BluesSoloing() {
       </div>
       <div className="transition-toolbar">
         <div className="transition-chords" aria-label={`Current chord ${displayNote(activeBar.chord.name)}, next chord ${displayNote(nextChangeBar.chord.name)}`}>
-          <span>Current → Next</span>
-          <p><strong className="current-chord">{displayNote(activeBar.chord.name)}</strong><i aria-hidden="true">→</i><strong className="next-chord">{displayNote(nextChangeBar.chord.name)}</strong></p>
-          <small>Next change · bar {nextChangeBar.index + 1}</small>
+          <span>{showNextChord ? 'Current → Next' : 'Current chord'}</span>
+          <p><strong className="current-chord">{displayNote(activeBar.chord.name)}</strong>{showNextChord && <><i aria-hidden="true">→</i><strong className="next-chord">{displayNote(nextChangeBar.chord.name)}</strong></>}</p>
+          <small>{showNextChord ? <>Next change · bar {nextChangeBar.index + 1}</> : <>Chord tones + {scaleName} scale</>}</small>
         </div>
         <div className="transition-controls">
-          <div className="fret-window-control">
-            <span>Fret window</span>
-            <div>
-              <button className="secondary-button" type="button" disabled={fretStart === 0} onClick={() => setFretStart(start => Math.max(0, start - 5))} aria-label="Previous fret window">←</button>
-              <strong>{fretStart}–{fretEnd}</strong>
-              <button className="secondary-button" type="button" disabled={fretStart >= 20} onClick={() => setFretStart(start => Math.min(20, start + 5))} aria-label="Next fret window">→</button>
-            </div>
-          </div>
+          <span className="full-neck-label">Full neck · frets 0–22</span>
+          <button className={`overlay-toggle${showNextChord ? ' is-active' : ''}`} type="button" aria-pressed={showNextChord} onClick={() => setShowNextChord(shown => !shown)}>
+            <i aria-hidden="true" />
+            <span><b>{showNextChord ? 'Next chord shown' : 'Show next chord'}</b><small>{showNextChord ? 'Hide movement overlay' : `${displayNote(nextChangeBar.chord.name)} targets + paths`}</small></span>
+          </button>
           <fieldset className="label-mode-picker">
             <legend>Marker labels</legend>
             <div>
@@ -211,18 +207,19 @@ export function BluesSoloing() {
           </fieldset>
         </div>
       </div>
-      <BluesFretboardView currentModel={currentBoard} nextModel={nextBoard} currentChord={activeBar.chord} nextChord={nextChangeBar.chord} labelMode={labelMode} />
+      <BluesFretboardView currentModel={currentBoard} nextModel={nextBoard} currentChord={activeBar.chord} nextChord={nextChangeBar.chord} labelMode={labelMode} showNextChord={showNextChord} />
       <div className="transition-legend">
-        <span><i className="shared-tone-dot" /><b>Shared tone</b><small>in both chords</small></span>
-        <span><i className="current-tone-dot" /><b>Current chord</b><small>{displayNote(activeBar.chord.name)} only</small></span>
-        <span><i className="next-tone-dot" /><b>Next target</b><small>{displayNote(nextChangeBar.chord.name)} destination</small></span>
+        <span><i className="scale-context-dot" /><b>Home scale</b><small>{scaleName}</small></span>
+        {showNextChord && <span><i className="shared-tone-dot" /><b>Shared tone</b><small>in both chords</small></span>}
+        <span><i className="current-tone-dot" /><b>Current chord</b><small>{displayNote(activeBar.chord.name)}{showNextChord ? ' only' : ' tones'}</small></span>
+        {showNextChord && <span><i className="next-tone-dot" /><b>Next target</b><small>{displayNote(nextChangeBar.chord.name)} destination</small></span>}
       </div>
       <div className="transition-insight">
         <i aria-hidden="true" />
-        <p>
+        {showNextChord ? <p>
           <strong>{sharedTones.map(tone => displayNote(tone.pitchClass.name)).join(' and ')} {sharedTones.length === 1 ? 'is' : 'are'} in both chords.</strong>{' '}
           Hold {sharedTones.length === 1 ? 'it' : 'them'} when it fits; move {guideMoves.map(move => `${displayNote(move.from.pitchClass.name)}→${displayNote(move.to.pitchClass.name)}`).join(' or ')} to make {displayNote(nextChangeBar.chord.name)} arrive. Faint dots keep the {scaleName} scale in view.
-        </p>
+        </p> : <p><strong>Start with {displayNote(activeBar.chord.name)}.</strong> Green notes outline the chord; faint dots keep the {scaleName} vocabulary nearby. Add the next-chord overlay when you are ready to connect them.</p>}
       </div>
     </section>
 

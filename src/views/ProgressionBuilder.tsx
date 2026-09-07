@@ -167,7 +167,7 @@ export function ProgressionBuilder() {
         <div className="fretboard-caption"><p>Chord tones for the selected progression step</p><p>Standard tuning: E A D G B E</p></div>
       </> : <>
         <p className="progression-map-status" role="status">{progressionLabelMode === 'key'
-          ? <>Each colored line is one selected chord inversion, repeated wherever it fits on the neck. Step {activeStep + 1} is highlighted; small numbers are degrees in {displayNote(tonic)} major.</>
+          ? <>Inversions repeat across the neck. Step {activeStep + 1} is highlighted; numbers show {displayNote(tonic)} major degrees.</>
           : <>Step {activeStep + 1}, <strong>{displayNote(activeProgressionStep.triad.chordName)}</strong>, is selected. Its notes are labeled relative to the chord; the other shapes keep note names only.</>}</p>
         <ProgressionPathView
           model={progressionBoard}
