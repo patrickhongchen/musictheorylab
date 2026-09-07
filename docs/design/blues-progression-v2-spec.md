@@ -40,7 +40,8 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - The next-chord control uses a short, persistent `Next chord` label; its switch and accessible name communicate whether the overlay is shown or hidden.
 - The marker key uses only the marker symbol and role name visually; treatment details remain in its accessible label.
 - On the staff, chord tones outside the scale are inserted at their chromatic pitch position inside the tonic-to-tonic run.
-- Staff noteheads and degree labels use the same shared role palette as the fretboard: ink for scale, green for current chord, amber for outside-scale next tones, and blue for the next-chord halo. Scientific pitch names stay neutral.
+- Staff noteheads and degree labels use the same shared role palette as the fretboard: ink for scale, green for current chord, amber for outside-scale next tones, and blue for the next-chord halo. Pitch-class names stay neutral and omit octave numbers.
+- Staff degree and pitch-class labels use the same 16px regular-weight app serif. The numeral and pitch letter share the notehead's center axis; an accidental sits to the numeral's left without shifting that axis.
 - Staff annotations reuse the established application hierarchy: a regular Georgia degree above a smaller muted system-sans scientific pitch.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.

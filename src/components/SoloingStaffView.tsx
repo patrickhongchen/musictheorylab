@@ -38,6 +38,34 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   svg.append(label)
 }
 
+function appendDegreeLabel(svg: SVGSVGElement, x: number, y: number, degree: string, color: string) {
+  const displayedDegree = displayNote(degree)
+  const accidental = displayedDegree.match(/^[♭♯]/)?.[0]
+  const numeral = accidental ? displayedDegree.slice(accidental.length) : displayedDegree
+  const options = {
+    color,
+    family: "Georgia, 'Times New Roman', serif",
+    size: 16,
+    weight: '400',
+  }
+
+  // Center the numeral itself on the notehead. Centering the full string would
+  // push a flattened or sharpened degree visibly to the right of its pitch name.
+  appendText(svg, x, y, numeral, options)
+  if (accidental) {
+    const accidentalLabel = document.createElementNS(svg.namespaceURI, 'text')
+    accidentalLabel.setAttribute('x', String(x - 5))
+    accidentalLabel.setAttribute('y', String(y))
+    accidentalLabel.setAttribute('text-anchor', 'end')
+    accidentalLabel.setAttribute('fill', color)
+    accidentalLabel.setAttribute('font-family', options.family)
+    accidentalLabel.setAttribute('font-size', String(options.size))
+    accidentalLabel.setAttribute('font-weight', options.weight)
+    accidentalLabel.textContent = accidental
+    svg.append(accidentalLabel)
+  }
+}
+
 function appendNextHalo(svg: SVGSVGElement, x: number, y: number, radius: number) {
   const ring = document.createElementNS(svg.namespaceURI, 'ellipse')
   ring.setAttribute('cx', String(x))
@@ -69,7 +97,7 @@ function describeTone(tone: SoloingStaffTone, showNextChord: boolean, noteFilter
   if (noteFilter !== 'scale' && tone.isCurrentChordTone) roles.push(`degree ${displayNote(tone.currentChordTone?.label ?? '')} of the current chord`)
   if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) roles.push(`degree ${displayNote(tone.nextChordTone?.label ?? '')} of the next chord`)
   if (noteFilter !== 'scale' && tone.isOutsideScale) roles.push('outside the selected scale')
-  return `${displayNote(tone.pitch.scientific)}: ${roles.join(', ')}`
+  return `${displayNote(tone.pitch.name)}: ${roles.join(', ')}`
 }
 
 function toneColor(tone: SoloingStaffTone, noteFilter: SoloingNoteFilter) {
@@ -117,7 +145,7 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
 
       host.replaceChildren()
       const width = Math.max(680, host.clientWidth, visibleTones.length * 76 + 92)
-      const height = 234
+      const height = 196
       const renderer = new Renderer(host, Renderer.Backends.SVG)
       renderer.resize(width, height)
       const context = renderer.getContext()
@@ -155,17 +183,14 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
         const color = toneColor(tone, noteFilter)
 
         if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
-        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
+        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 145)
 
-        appendText(svg, x, 189, displayNote(toneDegree(tone, noteFilter)), {
-          color,
-          family: "Georgia, 'Times New Roman', serif",
-          size: 18,
-        })
-        appendText(svg, x, 211, displayNote(tone.pitch.scientific), {
+        appendDegreeLabel(svg, x, 151, toneDegree(tone, noteFilter), color)
+        appendText(svg, x, 173, displayNote(tone.pitch.name), {
           color: SOLOING_VISUAL_COLORS.muted,
-          family: 'system-ui, sans-serif',
-          size: 12,
+          family: "Georgia, 'Times New Roman', serif",
+          size: 16,
+          weight: '400',
         })
       })
 
@@ -207,7 +232,7 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
     role="region"
     aria-label="Soloing staff, scroll horizontally on small screens"
   >
-    <div className="blues-scale-staff scale-staff-view" role="img" aria-label={description} style={{ minWidth: 680, minHeight: 234 }}>
+    <div className="blues-scale-staff scale-staff-view" role="img" aria-label={description} style={{ minWidth: 680, minHeight: 196 }}>
       <div ref={hostRef} />
       {error && <p className="blues-staff-error" role="alert">The staff could not render. The note and degree summary remains available to assistive technology.</p>}
     </div>
