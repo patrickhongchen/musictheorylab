@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow/bravura'
 import type { SoloingStaffModel, SoloingStaffTone } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
-import type { SoloingNoteFilter } from './soloingVisualTypes'
+import { SOLOING_VISUAL_COLORS, type SoloingNoteFilter } from './soloingVisualTypes'
 
-const SCALE_COLOR = '#252925'
-const CURRENT_COLOR = '#176b5b'
-const OUTSIDE_COLOR = '#c56a1a'
-const NEXT_COLOR = '#4666b0'
+const SCALE_COLOR = SOLOING_VISUAL_COLORS.scale
+const CURRENT_COLOR = SOLOING_VISUAL_COLORS.current
+const OUTSIDE_COLOR = SOLOING_VISUAL_COLORS.outside
+const NEXT_COLOR = SOLOING_VISUAL_COLORS.next
 
 function vexKey(tone: SoloingStaffTone) {
   const { pitch } = tone
@@ -25,6 +25,7 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   readonly family: string
   readonly size: number
   readonly weight?: string
+  readonly letterSpacing?: string
 }) {
   const label = document.createElementNS(svg.namespaceURI, 'text')
   label.setAttribute('x', String(x))
@@ -34,6 +35,7 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   label.setAttribute('font-family', options.family)
   label.setAttribute('font-size', String(options.size))
   if (options.weight) label.setAttribute('font-weight', options.weight)
+  if (options.letterSpacing) label.setAttribute('letter-spacing', options.letterSpacing)
   label.textContent = text
   svg.append(label)
 }
@@ -70,6 +72,13 @@ function describeTone(tone: SoloingStaffTone, showNextChord: boolean, noteFilter
   if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) roles.push(`degree ${displayNote(tone.nextChordTone?.label ?? '')} of the next chord`)
   if (noteFilter !== 'scale' && tone.isOutsideScale) roles.push('outside the selected scale')
   return `${displayNote(tone.pitch.scientific)}: ${roles.join(', ')}`
+}
+
+function toneColor(tone: SoloingStaffTone, noteFilter: SoloingNoteFilter) {
+  if (noteFilter === 'scale') return SCALE_COLOR
+  if (tone.isCurrentChordTone) return CURRENT_COLOR
+  if (tone.isOutsideScale) return OUTSIDE_COLOR
+  return SCALE_COLOR
 }
 
 export interface SoloingStaffViewProps {
@@ -119,7 +128,7 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
 
       const notes = visibleTones.map(tone => {
         const note = new StaveNote({ keys: [vexKey(tone)], duration: 'q' })
-        const color = noteFilter !== 'scale' && tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR
+        const color = toneColor(tone, noteFilter)
         note.setKeyStyle(0, {
           fillStyle: color,
           strokeStyle: color,
@@ -145,20 +154,23 @@ export default function SoloingStaffView({ model, showNextChord = false, noteFil
         const tone = visibleTones[index]
         const x = note.getNoteHeadBeginX() + 4
         const y = note.getYs()[0]
+        const color = toneColor(tone, noteFilter)
 
         if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
-        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
+        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 16, 181)
 
-        appendText(svg, x, 189, displayNote(toneDegree(tone, noteFilter)), {
-          color: noteFilter !== 'scale' && tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR,
+        appendText(svg, x, 190, displayNote(tone.pitch.scientific), {
+          color,
           family: "Georgia, 'Times New Roman', serif",
-          size: 17,
-          weight: noteFilter !== 'scale' && tone.isCurrentChordTone ? '700' : undefined,
+          size: 15,
+          weight: '600',
         })
-        appendText(svg, x, 211, displayNote(tone.pitch.scientific), {
-          color: '#656961',
-          family: 'system-ui, sans-serif',
-          size: 11,
+        appendText(svg, x, 211, displayNote(toneDegree(tone, noteFilter)), {
+          color: SOLOING_VISUAL_COLORS.muted,
+          family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          size: 10.5,
+          weight: '650',
+          letterSpacing: '.025em',
         })
       })
 

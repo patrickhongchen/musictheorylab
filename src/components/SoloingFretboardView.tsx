@@ -1,16 +1,16 @@
 import { useId } from 'react'
 import type { SoloingChord, SoloingFretboardModel, SoloingFretPosition, SoloingScale } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
-import type { SoloingNoteFilter } from './soloingVisualTypes'
+import { SOLOING_VISUAL_COLORS, type SoloingNoteFilter } from './soloingVisualTypes'
 
 export type SoloingLabelMode = 'notes' | 'degrees'
 
-const CURRENT_COLOR = '#176b5b'
-const CURRENT_FILL = '#d8eee7'
-const OUTSIDE_COLOR = '#c56a1a'
-const NEXT_COLOR = '#4666b0'
-const SCALE_COLOR = '#252925'
-const PAPER_COLOR = '#faf9f6'
+const CURRENT_COLOR = SOLOING_VISUAL_COLORS.current
+const CURRENT_FILL = SOLOING_VISUAL_COLORS.currentFill
+const OUTSIDE_COLOR = SOLOING_VISUAL_COLORS.outside
+const NEXT_COLOR = SOLOING_VISUAL_COLORS.next
+const SCALE_COLOR = SOLOING_VISUAL_COLORS.scale
+const PAPER_COLOR = SOLOING_VISUAL_COLORS.paper
 
 function isVisible(position: SoloingFretPosition, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
   if (noteFilter === 'scale') return Boolean(position.scaleTone)
