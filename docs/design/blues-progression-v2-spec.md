@@ -32,6 +32,7 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Current chord tone inside the scale: solid green `#22685b`.
 - Current chord tone outside the selected scale: solid green `#22685b` with an orange outer ring.
 - Next chord: orange outline; shared current/next tone: green fill with an orange outer ring.
+- On the staff, chord tones outside the scale are inserted at their chromatic pitch position inside the tonic-to-tonic run.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.
 

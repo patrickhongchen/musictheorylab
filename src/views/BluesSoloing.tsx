@@ -105,7 +105,7 @@ export function BluesSoloing() {
             <h3 id="soloing-staff-heading">On the staff</h3>
             <p>{displayNote(staffModel.scale.name)} from tonic to tonic</p>
           </div>
-          <span>Chord tones are emphasized; outside notes sit after the divider.</span>
+          <span>Chord tones are emphasized in pitch order within the scale.</span>
         </div>
         <Suspense fallback={<div className="blues-staff-loading">Preparing the staff…</div>}>
           <SoloingStaffView model={staffModel} showNextChord={showNextChord} />

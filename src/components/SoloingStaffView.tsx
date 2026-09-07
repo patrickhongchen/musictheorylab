@@ -73,7 +73,8 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
     tone.isCurrentChordTone || (showNextChord && tone.isNextChordTone)
   )), [model.outsideChordTones, showNextChord])
   const visibleTones = useMemo(
-    () => [...model.scaleTones, ...outsideTones],
+    () => [...model.scaleTones, ...outsideTones]
+      .sort((left, right) => left.pitch.midi - right.pitch.midi),
     [model.scaleTones, outsideTones],
   )
 
@@ -148,28 +149,6 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
         })
       })
 
-      if (outsideTones.length > 0) {
-        const firstOutsideIndex = model.scaleTones.length
-        const beforeX = notes[firstOutsideIndex - 1].getNoteHeadBeginX() + 4
-        const outsideX = notes[firstOutsideIndex].getNoteHeadBeginX() + 4
-        const dividerX = (beforeX + outsideX) / 2
-        const divider = document.createElementNS(svg.namespaceURI, 'line')
-        divider.setAttribute('x1', String(dividerX))
-        divider.setAttribute('x2', String(dividerX))
-        divider.setAttribute('y1', '46')
-        divider.setAttribute('y2', '166')
-        divider.setAttribute('stroke', '#c5a486')
-        divider.setAttribute('stroke-width', '1')
-        divider.setAttribute('stroke-dasharray', '3 4')
-        svg.append(divider)
-        appendText(svg, (outsideX + width - 20) / 2, 24, 'Chord tones outside scale', {
-          color: NEXT_COLOR,
-          family: 'system-ui, sans-serif',
-          size: 10,
-          weight: '600',
-        })
-      }
-
       setError(false)
     }
 
@@ -190,12 +169,12 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
       observer.disconnect()
       host.replaceChildren()
     }
-  }, [model, outsideTones.length, showNextChord, visibleTones])
+  }, [model, showNextChord, visibleTones])
 
   const nextDescription = showNextChord && model.nextChord
     ? ` Orange outlines mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
     : ''
-  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; an orange ring around a green note marks a current-chord tone outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
+  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic with chord tones placed in pitch order. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; an orange ring around a green note marks a current-chord tone outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"
