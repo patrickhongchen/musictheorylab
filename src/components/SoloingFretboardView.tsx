@@ -34,18 +34,18 @@ interface LegendMarkerProps {
 
 function LegendMarker({ kind }: LegendMarkerProps) {
   const common = { display: 'block', width: 15, height: 15, borderRadius: '50%' }
-  if (kind === 'scale') return <i aria-hidden="true" style={{ ...common, background: SCALE_COLOR }} />
+  if (kind === 'scale') return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${SCALE_COLOR}` }} />
   if (kind === 'current') return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR }} />
   if (kind === 'next') return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${NEXT_COLOR}` }} />
-  return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${CURRENT_COLOR}` }} />
+  return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR, border: `2px solid ${NEXT_COLOR}`, outline: `2px solid ${PAPER_COLOR}`, outlineOffset: -4 }} />
 }
 
 export function SoloingVisualLegend({ showNextChord = false }: { readonly showNextChord?: boolean }) {
   const items = [
-    { kind: 'scale' as const, label: 'Scale tone', detail: 'Black circle' },
+    { kind: 'scale' as const, label: 'Scale tone', detail: 'Black outline' },
     { kind: 'current' as const, label: 'Current chord', detail: 'Solid green' },
     ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Orange outline' }] : []),
-    { kind: 'outside' as const, label: 'Outside scale', detail: 'Green outline' },
+    { kind: 'outside' as const, label: 'Outside scale', detail: 'Green + orange ring' },
   ]
   return <div className="transition-legend" aria-label="Soloing visualization legend">
     {items.map(item => <span key={item.kind}>
@@ -96,7 +96,7 @@ export function SoloingFretboardView({
     >
       <title id={titleId}>{displayNote(currentChord.name)} chord tones over {displayNote(scale.name)} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. Black circles are selected-scale tones, solid green markers are current-chord tones inside the scale, and green outlines are current-chord tones outside the selected scale. {showNextChord && nextChord ? `Orange outlines show tones in the next chord, ${displayNote(nextChord.name)}; a green marker with an orange outline is shared by both chords.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. White circles with black borders are selected-scale tones outside the current chord. Solid green markers are current-chord tones. An orange ring around a green marker means that chord tone falls outside the selected scale. {showNextChord && nextChord ? `Orange outlines also show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -126,7 +126,7 @@ export function SoloingFretboardView({
         const isNext = showNextChord && Boolean(position.nextChordTone)
         const isScale = Boolean(position.scaleTone)
         const isCurrentOutsideScale = isCurrent && !isScale
-        const isFilled = isScale || (isCurrent && !isCurrentOutsideScale)
+        const hasOrangeRing = isCurrentOutsideScale || isNext
         const label = markerLabel(position, labelMode, showNextChord)
         const x = fretX(position.fret)
         const y = stringY(position.string)
@@ -135,11 +135,11 @@ export function SoloingFretboardView({
           <circle
             className="transition-marker"
             r={isCurrent ? 14 : 12}
-            fill={isCurrent && !isCurrentOutsideScale ? CURRENT_COLOR : isScale ? SCALE_COLOR : PAPER_COLOR}
-            stroke={isCurrentOutsideScale ? CURRENT_COLOR : isFilled ? PAPER_COLOR : NEXT_COLOR}
-            strokeWidth={isCurrentOutsideScale ? 2.8 : 2}
+            fill={isCurrent ? CURRENT_COLOR : PAPER_COLOR}
+            stroke={isCurrent ? CURRENT_COLOR : isScale ? SCALE_COLOR : NEXT_COLOR}
+            strokeWidth="2.2"
           />
-          {isNext && <circle
+          {hasOrangeRing && <circle
             r="17"
             fill="none"
             stroke={NEXT_COLOR}
@@ -149,7 +149,7 @@ export function SoloingFretboardView({
             textAnchor="middle"
             dominantBaseline="central"
             className="transition-label"
-            fill={isFilled ? '#fff' : isCurrentOutsideScale ? CURRENT_COLOR : NEXT_COLOR}
+            fill={isCurrent ? '#fff' : isScale ? SCALE_COLOR : NEXT_COLOR}
             fontSize="10"
             fontWeight="700"
           >{label}</text>

@@ -101,13 +101,12 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
 
       const notes = visibleTones.map(tone => {
         const note = new StaveNote({ keys: [vexKey(tone)], duration: 'q' })
-        const isCurrentOutsideScale = tone.isCurrentChordTone && tone.isOutsideScale
         const isNextOnlyOutsideScale = !tone.isCurrentChordTone && tone.isNextChordTone && tone.isOutsideScale
         const color = tone.isCurrentChordTone ? CURRENT_COLOR : isNextOnlyOutsideScale ? NEXT_COLOR : SCALE_COLOR
         note.setKeyStyle(0, {
-          fillStyle: isCurrentOutsideScale || isNextOnlyOutsideScale ? PAPER_COLOR : color,
+          fillStyle: isNextOnlyOutsideScale ? PAPER_COLOR : color,
           strokeStyle: color,
-          lineWidth: isCurrentOutsideScale || isNextOnlyOutsideScale ? 2.2 : 1.4,
+          lineWidth: isNextOnlyOutsideScale ? 2.2 : 1.4,
         })
         return note
       })
@@ -130,10 +129,11 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
         const x = note.getNoteHeadBeginX() + 4
         const y = note.getYs()[0]
 
-        // An orange outline means the pitch is available in the next chord.
-        if (showNextChord && tone.isNextChordTone) appendRing(svg, x, y, 11, NEXT_COLOR)
-        // A green outline flags a current-chord tone that the selected scale omits.
-        if (tone.isCurrentChordTone && tone.isOutsideScale) appendRing(svg, x, y, 14, CURRENT_COLOR)
+        // Orange rings flag either an out-of-scale current chord tone or a
+        // pitch available in the next chord. Draw only one ring when both apply.
+        if ((tone.isCurrentChordTone && tone.isOutsideScale) || (showNextChord && tone.isNextChordTone)) {
+          appendRing(svg, x, y, 12, NEXT_COLOR)
+        }
 
         appendText(svg, x, 189, displayNote(toneDegree(tone)), {
           color: tone.isCurrentChordTone ? CURRENT_COLOR : tone.isOutsideScale ? NEXT_COLOR : SCALE_COLOR,
@@ -195,7 +195,7 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
   const nextDescription = showNextChord && model.nextChord
     ? ` Orange outlines mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
     : ''
-  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; green outlines mark its tones outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
+  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; an orange ring around a green note marks a current-chord tone outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"
