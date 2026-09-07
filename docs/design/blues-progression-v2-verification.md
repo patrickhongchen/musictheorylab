@@ -9,10 +9,11 @@ This pass supersedes the fixed 12-bar Blues Soloing design. It implements the co
 | Page hierarchy | Intro, progression, selected sound, staff, fretboard | Same order and restrained editorial layout |
 | Progression | Selectable numbered chord/scale cards | Horizontal rail with stable selection, add, move, duplicate, and delete |
 | Editor | Chord root/type plus independent scale root/type | Four direct selects with the requested six qualities and seven scales |
-| Current sound | Current and next harmony side by side | Live summary with a wrapping immediate-next chord |
+| Current sound | Current and next harmony side by side | Live summary isolated from a dedicated view-controls toolbar, preventing long scale names from colliding with the next-chord control |
 | Staff | Scale from tonic to tonic with chord emphasis | VexFlow notation with a shared Both/Chord/Scale filter, ascending pitch order, and amber diamonds marking out-of-scale chord tones |
 | Fretboard | One legible full-neck map | Standard tuning, frets 0–22, local horizontal scroll, Notes/Degrees labels; equal-size neutral scale and mint/green current-chord markers, with amber-diamond out-of-scale tones |
-| Overlay | Optional look-ahead | Next-chord toggle adds independent blue dashed halos on both staff and fretboard |
+| Overlay | Optional look-ahead | Compact, consistently labeled next-chord switch adds independent blue dashed halos on both staff and fretboard |
+| Legend | Explain marker roles without competing with controls | Separate one-line symbol-and-role key; treatment details remain available to assistive technology |
 | Responsive | Compact mobile controls and locally scrolling diagrams | Verified in a 390px-wide browser capture with wrapped filter controls and local diagram scrolling |
 
 The concepts supplied the visual hierarchy, spacing, typography, palette, and interaction grouping. Tonal and VexFlow remain the authority for pitch spelling and notation, correcting the illustrative note content in the generated concepts.

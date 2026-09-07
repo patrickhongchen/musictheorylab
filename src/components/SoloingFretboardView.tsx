@@ -65,10 +65,9 @@ export function SoloingVisualLegend({ showNextChord = false, noteFilter = 'both'
       ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Blue dashed halo' }] : []),
     ]
   return <div className="transition-legend" aria-label="Soloing visualization legend">
-    {items.map(item => <span key={item.kind}>
+    {items.map(item => <span key={item.kind} aria-label={`${item.label}: ${item.detail}`}>
       <LegendMarker kind={item.kind} />
       <b>{item.label}</b>
-      <small>{item.detail}</small>
     </span>)}
   </div>
 }

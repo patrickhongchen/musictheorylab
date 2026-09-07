@@ -36,6 +36,7 @@ export function BluesSoloing() {
     () => nextStep ? createSoloingScale(nextStep.scale.root, nextStep.scale.type) : undefined,
     [nextStep],
   )
+  const nextStepNumber = nextStep ? (selectedIndex + 1) % progression.length + 1 : undefined
   const effectiveShowNextChord = showNextChord && noteFilter !== 'scale'
 
   function updateProgression(nextProgression: SoloingStep[], nextSelectedStepId: string) {
@@ -75,19 +76,25 @@ export function BluesSoloing() {
           </>}
         </div>
         <div className="soloing-workbench-controls">
-          <button
-            className={`overlay-toggle${effectiveShowNextChord ? ' is-active' : ''}`}
-            type="button"
-            aria-pressed={effectiveShowNextChord}
-            disabled={!nextStep || noteFilter === 'scale'}
-            onClick={() => setShowNextChord(shown => !shown)}
-          >
-            <i aria-hidden="true" />
-            <span>
-              <b>{noteFilter === 'scale' ? 'Next chord unavailable' : showNextChord ? 'Hide next chord' : 'Show next chord'}</b>
-              <small>{noteFilter === 'scale' ? 'Choose Both or Chord' : nextStep ? `Step ${(selectedIndex + 1) % progression.length + 1}` : 'Add another chord'}</small>
-            </span>
-          </button>
+          <div className="soloing-next-control">
+            <span>Look ahead</span>
+            <button
+              className={`overlay-toggle${effectiveShowNextChord ? ' is-active' : ''}`}
+              type="button"
+              aria-label={noteFilter === 'scale'
+                ? 'Next chord unavailable in Scale view'
+                : `${showNextChord ? 'Hide' : 'Show'} next chord${nextStepNumber ? `, step ${nextStepNumber}` : ''}`}
+              aria-pressed={effectiveShowNextChord}
+              disabled={!nextStep || noteFilter === 'scale'}
+              onClick={() => setShowNextChord(shown => !shown)}
+            >
+              <i aria-hidden="true" />
+              <span>
+                <b>Next chord</b>
+                <small>{noteFilter === 'scale' ? 'Both or Chord' : nextStepNumber ? `Step ${nextStepNumber}` : 'Add a chord'}</small>
+              </span>
+            </button>
+          </div>
           <fieldset className="label-mode-picker soloing-note-filter">
             <legend>Notes shown</legend>
             <div>

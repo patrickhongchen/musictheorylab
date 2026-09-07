@@ -36,6 +36,9 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Next chord: cobalt `#4666b0` dashed outer halo. Shared tones retain their base marker and add the halo.
 - Role treatments compose independently so a current/next/outside tone shows the current marker, amber diamond, and blue halo together.
 - `Both` shows the union of the selected scale and chord tones, `Chord` limits the display to current plus optionally next chord tones, and `Scale` presents a neutral scale-only map.
+- The selected harmony, view controls, and marker key occupy separate horizontal bands so long chord/scale names cannot collide with controls.
+- The next-chord control uses a short, persistent `Next chord` label; its switch and accessible name communicate whether the overlay is shown or hidden.
+- The marker key uses only the marker symbol and role name visually; treatment details remain in its accessible label.
 - On the staff, chord tones outside the scale are inserted at their chromatic pitch position inside the tonic-to-tonic run.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.
