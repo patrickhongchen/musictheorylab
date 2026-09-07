@@ -3,9 +3,10 @@ import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflo
 import type { SoloingStaffModel, SoloingStaffTone } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
 
-const SCALE_COLOR = '#858d85'
+const SCALE_COLOR = '#252925'
 const CURRENT_COLOR = '#22685b'
 const NEXT_COLOR = '#b55c2a'
+const PAPER_COLOR = '#faf9f6'
 
 function vexKey(tone: SoloingStaffTone) {
   const { pitch } = tone
@@ -34,19 +35,15 @@ function appendText(svg: SVGSVGElement, x: number, y: number, text: string, opti
   svg.append(label)
 }
 
-function appendRing(svg: SVGSVGElement, x: number, y: number, radius: number, dashed: boolean) {
+function appendRing(svg: SVGSVGElement, x: number, y: number, radius: number, color: string) {
   const ring = document.createElementNS(svg.namespaceURI, 'ellipse')
   ring.setAttribute('cx', String(x))
   ring.setAttribute('cy', String(y))
   ring.setAttribute('rx', String(radius))
   ring.setAttribute('ry', String(radius - 1.5))
   ring.setAttribute('fill', 'none')
-  ring.setAttribute('stroke', NEXT_COLOR)
-  ring.setAttribute('stroke-width', dashed ? '2' : '2.4')
-  if (dashed) {
-    ring.setAttribute('stroke-dasharray', '3 3')
-    ring.setAttribute('stroke-linecap', 'round')
-  }
+  ring.setAttribute('stroke', color)
+  ring.setAttribute('stroke-width', '2.4')
   svg.append(ring)
 }
 
@@ -104,8 +101,14 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
 
       const notes = visibleTones.map(tone => {
         const note = new StaveNote({ keys: [vexKey(tone)], duration: 'q' })
-        const color = tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR
-        note.setKeyStyle(0, { fillStyle: color, strokeStyle: color, lineWidth: 1.4 })
+        const isCurrentOutsideScale = tone.isCurrentChordTone && tone.isOutsideScale
+        const isNextOnlyOutsideScale = !tone.isCurrentChordTone && tone.isNextChordTone && tone.isOutsideScale
+        const color = tone.isCurrentChordTone ? CURRENT_COLOR : isNextOnlyOutsideScale ? NEXT_COLOR : SCALE_COLOR
+        note.setKeyStyle(0, {
+          fillStyle: isCurrentOutsideScale || isNextOnlyOutsideScale ? PAPER_COLOR : color,
+          strokeStyle: color,
+          lineWidth: isCurrentOutsideScale || isNextOnlyOutsideScale ? 2.2 : 1.4,
+        })
         return note
       })
       const voice = new Voice({ numBeats: notes.length, beatValue: 4 }).addTickables(notes)
@@ -128,12 +131,12 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
         const y = note.getYs()[0]
 
         // An orange outline means the pitch is available in the next chord.
-        if (showNextChord && tone.isNextChordTone) appendRing(svg, x, y, 10.5, false)
-        // A wider dashed outline flags a chord tone that the selected scale omits.
-        if (tone.isOutsideScale) appendRing(svg, x, y, 14, true)
+        if (showNextChord && tone.isNextChordTone) appendRing(svg, x, y, 11, NEXT_COLOR)
+        // A green outline flags a current-chord tone that the selected scale omits.
+        if (tone.isCurrentChordTone && tone.isOutsideScale) appendRing(svg, x, y, 14, CURRENT_COLOR)
 
         appendText(svg, x, 189, displayNote(toneDegree(tone)), {
-          color: tone.isOutsideScale ? NEXT_COLOR : tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR,
+          color: tone.isCurrentChordTone ? CURRENT_COLOR : tone.isOutsideScale ? NEXT_COLOR : SCALE_COLOR,
           family: "Georgia, 'Times New Roman', serif",
           size: 17,
           weight: tone.isCurrentChordTone ? '700' : undefined,
@@ -192,7 +195,7 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
   const nextDescription = showNextChord && model.nextChord
     ? ` Orange outlines mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
     : ''
-  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic. Solid teal notes belong to the current chord, ${displayNote(model.currentChord.name)}. Dashed orange notes are chord tones outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
+  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic. Black notes belong to the selected scale. Solid green notes belong to the current chord, ${displayNote(model.currentChord.name)}; green outlines mark its tones outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"

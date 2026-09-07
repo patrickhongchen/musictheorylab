@@ -11,7 +11,7 @@ This pass supersedes the fixed 12-bar Blues Soloing design. It implements the co
 | Editor | Chord root/type plus independent scale root/type | Four direct selects with the requested six qualities and seven scales |
 | Current sound | Current and next harmony side by side | Live summary with a wrapping immediate-next chord |
 | Staff | Scale from tonic to tonic with chord emphasis | VexFlow notation: scale tones, current chord tones, and separated out-of-scale chord tones |
-| Fretboard | One legible full-neck map | Standard tuning, frets 0–22, local horizontal scroll, Notes/Degrees labels |
+| Fretboard | One legible full-neck map | Standard tuning, frets 0–22, local horizontal scroll, Notes/Degrees labels; black scale tones, green chord tones, and green-outlined outside tones |
 | Overlay | Optional look-ahead | Next-chord toggle adds orange outlines on both staff and fretboard |
 | Responsive | Compact mobile controls and locally scrolling diagrams | Verified at 390 × 844 with no document-level horizontal overflow |
 

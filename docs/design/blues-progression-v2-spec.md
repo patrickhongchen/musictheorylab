@@ -28,10 +28,10 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Background: warm paper `#faf9f6`.
 - Text: ink `#252925`, muted `#656961`.
 - Lines: `#d9dbd3` with stronger section rules where hierarchy needs them.
-- Current chord: solid teal `#22685b`.
-- Scale-only tone: paper fill with neutral outline.
-- Current chord tone outside the selected scale: orange dashed outline.
-- Next chord: orange outline; shared current/next tone: teal fill with a dark/orange outer ring.
+- Selected-scale tone: solid ink `#252925`.
+- Current chord tone inside the scale: solid green `#22685b`.
+- Current chord tone outside the selected scale: paper fill with a green outline.
+- Next chord: orange outline; shared current/next tone: green fill with an orange outer ring.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.
 

@@ -6,7 +6,7 @@ export type SoloingLabelMode = 'notes' | 'degrees'
 
 const CURRENT_COLOR = '#22685b'
 const NEXT_COLOR = '#b55c2a'
-const SCALE_COLOR = '#9da69e'
+const SCALE_COLOR = '#252925'
 const PAPER_COLOR = '#faf9f6'
 
 function isVisible(position: SoloingFretPosition, showNextChord: boolean) {
@@ -34,18 +34,18 @@ interface LegendMarkerProps {
 
 function LegendMarker({ kind }: LegendMarkerProps) {
   const common = { display: 'block', width: 15, height: 15, borderRadius: '50%' }
-  if (kind === 'scale') return <i aria-hidden="true" style={{ ...common, width: 8, height: 8, margin: 3.5, background: SCALE_COLOR, opacity: 0.58 }} />
-  if (kind === 'current') return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR, border: `2px solid ${PAPER_COLOR}` }} />
+  if (kind === 'scale') return <i aria-hidden="true" style={{ ...common, background: SCALE_COLOR }} />
+  if (kind === 'current') return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR }} />
   if (kind === 'next') return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${NEXT_COLOR}` }} />
-  return <i aria-hidden="true" style={{ ...common, background: CURRENT_COLOR, border: `2px dashed ${NEXT_COLOR}` }} />
+  return <i aria-hidden="true" style={{ ...common, background: PAPER_COLOR, border: `2px solid ${CURRENT_COLOR}` }} />
 }
 
 export function SoloingVisualLegend({ showNextChord = false }: { readonly showNextChord?: boolean }) {
   const items = [
-    { kind: 'scale' as const, label: 'Scale tone', detail: 'Selected scale' },
-    { kind: 'current' as const, label: 'Current chord', detail: 'Solid teal' },
+    { kind: 'scale' as const, label: 'Scale tone', detail: 'Black circle' },
+    { kind: 'current' as const, label: 'Current chord', detail: 'Solid green' },
     ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Orange outline' }] : []),
-    { kind: 'outside' as const, label: 'Outside scale', detail: 'Dashed orange' },
+    { kind: 'outside' as const, label: 'Outside scale', detail: 'Green outline' },
   ]
   return <div className="transition-legend" aria-label="Soloing visualization legend">
     {items.map(item => <span key={item.kind}>
@@ -96,7 +96,7 @@ export function SoloingFretboardView({
     >
       <title id={titleId}>{displayNote(currentChord.name)} chord tones over {displayNote(scale.name)} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. Small neutral dots are scale-only notes, solid teal markers are current-chord tones, and dashed orange markers are chord tones outside the selected scale. {showNextChord && nextChord ? `Orange outlines show tones in the next chord, ${displayNote(nextChord.name)}; a teal marker with an orange outline is shared by both chords.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. Black circles are selected-scale tones, solid green markers are current-chord tones inside the scale, and green outlines are current-chord tones outside the selected scale. {showNextChord && nextChord ? `Orange outlines show tones in the next chord, ${displayNote(nextChord.name)}; a green marker with an orange outline is shared by both chords.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -124,38 +124,32 @@ export function SoloingFretboardView({
       {visiblePositions.map(position => {
         const isCurrent = Boolean(position.currentChordTone)
         const isNext = showNextChord && Boolean(position.nextChordTone)
-        const isScaleOnly = Boolean(position.scaleTone) && !isCurrent && !isNext
+        const isScale = Boolean(position.scaleTone)
+        const isCurrentOutsideScale = isCurrent && !isScale
+        const isFilled = isScale || (isCurrent && !isCurrentOutsideScale)
         const label = markerLabel(position, labelMode, showNextChord)
         const x = fretX(position.fret)
         const y = stringY(position.string)
 
-        if (isScaleOnly) {
-          return <g key={`${position.string}-${position.fret}`} transform={`translate(${x}, ${y})`}>
-            <circle r="5" fill={SCALE_COLOR} opacity="0.54" />
-          </g>
-        }
-
         return <g key={`${position.string}-${position.fret}`} className="transition-position" transform={`translate(${x}, ${y})`}>
           <circle
             className="transition-marker"
-            r="14"
-            fill={isCurrent ? CURRENT_COLOR : PAPER_COLOR}
-            stroke={isNext ? NEXT_COLOR : isCurrent ? PAPER_COLOR : SCALE_COLOR}
-            strokeWidth={isNext ? 2.8 : 2}
+            r={isCurrent ? 14 : 12}
+            fill={isCurrent && !isCurrentOutsideScale ? CURRENT_COLOR : isScale ? SCALE_COLOR : PAPER_COLOR}
+            stroke={isCurrentOutsideScale ? CURRENT_COLOR : isFilled ? PAPER_COLOR : NEXT_COLOR}
+            strokeWidth={isCurrentOutsideScale ? 2.8 : 2}
           />
-          {position.isOutsideScale && <circle
+          {isNext && <circle
             r="17"
             fill="none"
             stroke={NEXT_COLOR}
-            strokeWidth="2"
-            strokeDasharray="3 3"
-            strokeLinecap="round"
+            strokeWidth="2.4"
           />}
           <text
             textAnchor="middle"
             dominantBaseline="central"
             className="transition-label"
-            fill={isCurrent ? '#fff' : NEXT_COLOR}
+            fill={isFilled ? '#fff' : isCurrentOutsideScale ? CURRENT_COLOR : NEXT_COLOR}
             fontSize="10"
             fontWeight="700"
           >{label}</text>
