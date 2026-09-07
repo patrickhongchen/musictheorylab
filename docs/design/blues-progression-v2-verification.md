@@ -10,17 +10,18 @@ This pass supersedes the fixed 12-bar Blues Soloing design. It implements the co
 | Progression | Selectable numbered chord/scale cards | Horizontal rail with stable selection, add, move, duplicate, and delete |
 | Editor | Chord root/type plus independent scale root/type | Four direct selects with the requested six qualities and seven scales |
 | Current sound | Current and next harmony side by side | Live summary with a wrapping immediate-next chord |
-| Staff | Scale from tonic to tonic with chord emphasis | VexFlow notation: scale tones and green current-chord tones combined in ascending pitch order, with amber diamonds marking out-of-scale tones |
+| Staff | Scale from tonic to tonic with chord emphasis | VexFlow notation with a shared Both/Chord/Scale filter, ascending pitch order, and amber diamonds marking out-of-scale chord tones |
 | Fretboard | One legible full-neck map | Standard tuning, frets 0–22, local horizontal scroll, Notes/Degrees labels; equal-size neutral scale and mint/green current-chord markers, with amber-diamond out-of-scale tones |
 | Overlay | Optional look-ahead | Next-chord toggle adds independent blue dashed halos on both staff and fretboard |
-| Responsive | Compact mobile controls and locally scrolling diagrams | Verified at 390 × 844 with no document-level horizontal overflow |
+| Responsive | Compact mobile controls and locally scrolling diagrams | Verified in a 390px-wide browser capture with wrapped filter controls and local diagram scrolling |
 
 The concepts supplied the visual hierarchy, spacing, typography, palette, and interaction grouping. Tonal and VexFlow remain the authority for pitch spelling and notation, correcting the illustrative note content in the generated concepts.
 
 ## Interaction verification
 
 - Selected and edited a chord and its independent scale.
-- Toggled the immediate next chord and switched Notes/Degrees labels.
+- Toggled the immediate next chord, switched Notes/Degrees labels, and exercised Both/Chord/Scale filtering across the staff and fretboard.
+- Verified Scale mode disables chord overlays without discarding the next-chord preference, which returns in Both or Chord mode.
 - Added, reordered, duplicated, and deleted progression steps while preserving selection.
 - Confirmed the final progression step previews step one.
 - Confirmed staff and fretboard descriptions update with all state changes.

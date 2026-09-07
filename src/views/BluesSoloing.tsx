@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { SoloingFretboardView, SoloingVisualLegend, type SoloingLabelMode } from '../components/SoloingFretboardView'
 import { SoloingProgressionEditor } from '../components/SoloingProgressionEditor'
+import type { SoloingNoteFilter } from '../components/soloingVisualTypes'
 import {
   createSeedSoloingProgression,
   createSoloingFretboard,
@@ -18,6 +19,7 @@ export function BluesSoloing() {
   const [selectedStepId, setSelectedStepId] = useState('seed-d7')
   const [showNextChord, setShowNextChord] = useState(false)
   const [labelMode, setLabelMode] = useState<SoloingLabelMode>('notes')
+  const [noteFilter, setNoteFilter] = useState<SoloingNoteFilter>('both')
 
   const selectedIndex = Math.max(0, progression.findIndex(step => step.id === selectedStepId))
   const selectedStep = progression[selectedIndex] ?? progression[0]
@@ -34,6 +36,7 @@ export function BluesSoloing() {
     () => nextStep ? createSoloingScale(nextStep.scale.root, nextStep.scale.type) : undefined,
     [nextStep],
   )
+  const effectiveShowNextChord = showNextChord && noteFilter !== 'scale'
 
   function updateProgression(nextProgression: SoloingStep[], nextSelectedStepId: string) {
     setProgression(nextProgression)
@@ -73,18 +76,26 @@ export function BluesSoloing() {
         </div>
         <div className="soloing-workbench-controls">
           <button
-            className={`overlay-toggle${showNextChord ? ' is-active' : ''}`}
+            className={`overlay-toggle${effectiveShowNextChord ? ' is-active' : ''}`}
             type="button"
-            aria-pressed={showNextChord}
-            disabled={!nextStep}
+            aria-pressed={effectiveShowNextChord}
+            disabled={!nextStep || noteFilter === 'scale'}
             onClick={() => setShowNextChord(shown => !shown)}
           >
             <i aria-hidden="true" />
             <span>
-              <b>{showNextChord ? 'Hide next chord' : 'Show next chord'}</b>
-              <small>{nextStep ? `Step ${(selectedIndex + 1) % progression.length + 1}` : 'Add another chord'}</small>
+              <b>{noteFilter === 'scale' ? 'Next chord unavailable' : showNextChord ? 'Hide next chord' : 'Show next chord'}</b>
+              <small>{noteFilter === 'scale' ? 'Choose Both or Chord' : nextStep ? `Step ${(selectedIndex + 1) % progression.length + 1}` : 'Add another chord'}</small>
             </span>
           </button>
+          <fieldset className="label-mode-picker soloing-note-filter">
+            <legend>Notes shown</legend>
+            <div>
+              <label><input type="radio" name="soloing-note-filter" checked={noteFilter === 'both'} onChange={() => setNoteFilter('both')} /><span>Both</span></label>
+              <label><input type="radio" name="soloing-note-filter" checked={noteFilter === 'chord'} onChange={() => setNoteFilter('chord')} /><span>Chord</span></label>
+              <label><input type="radio" name="soloing-note-filter" checked={noteFilter === 'scale'} onChange={() => setNoteFilter('scale')} /><span>Scale</span></label>
+            </div>
+          </fieldset>
           <fieldset className="label-mode-picker soloing-label-picker">
             <legend>Marker labels</legend>
             <div>
@@ -96,7 +107,7 @@ export function BluesSoloing() {
       </div>
 
       <div className="soloing-legend-row">
-        <SoloingVisualLegend showNextChord={showNextChord} />
+        <SoloingVisualLegend showNextChord={effectiveShowNextChord} noteFilter={noteFilter} />
       </div>
 
       <section className="soloing-visual-section" aria-labelledby="soloing-staff-heading">
@@ -105,10 +116,14 @@ export function BluesSoloing() {
             <h3 id="soloing-staff-heading">On the staff</h3>
             <p>{displayNote(staffModel.scale.name)} from tonic to tonic</p>
           </div>
-          <span>Chord tones are emphasized in pitch order within the scale.</span>
+          <span>{noteFilter === 'scale'
+            ? 'Showing the selected scale without chord emphasis.'
+            : noteFilter === 'chord'
+              ? 'Showing chord tones only.'
+              : 'Chord tones are emphasized in pitch order within the scale.'}</span>
         </div>
         <Suspense fallback={<div className="blues-staff-loading">Preparing the staff…</div>}>
-          <SoloingStaffView model={staffModel} showNextChord={showNextChord} />
+          <SoloingStaffView model={staffModel} showNextChord={effectiveShowNextChord} noteFilter={noteFilter} />
         </Suspense>
       </section>
 
@@ -126,7 +141,8 @@ export function BluesSoloing() {
           currentChord={staffModel.currentChord}
           nextChord={staffModel.nextChord}
           labelMode={labelMode}
-          showNextChord={showNextChord}
+          showNextChord={effectiveShowNextChord}
+          noteFilter={noteFilter}
         />
       </section>
     </section>}

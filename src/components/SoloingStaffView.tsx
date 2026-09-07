@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow/bravura'
 import type { SoloingStaffModel, SoloingStaffTone } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
+import type { SoloingNoteFilter } from './soloingVisualTypes'
 
 const SCALE_COLOR = '#252925'
 const CURRENT_COLOR = '#176b5b'
@@ -13,8 +14,10 @@ function vexKey(tone: SoloingStaffTone) {
   return `${pitch.letter.toLowerCase()}${pitch.accidental}/${pitch.octave}`
 }
 
-function toneDegree(tone: SoloingStaffTone) {
-  return tone.scaleTone?.label ?? tone.currentChordTone?.label ?? tone.nextChordTone?.label ?? ''
+function toneDegree(tone: SoloingStaffTone, noteFilter: SoloingNoteFilter) {
+  if (noteFilter === 'scale') return tone.scaleTone?.label ?? ''
+  if (noteFilter === 'both') return tone.scaleTone?.label ?? tone.currentChordTone?.label ?? tone.nextChordTone?.label ?? ''
+  return tone.currentChordTone?.label ?? tone.nextChordTone?.label ?? tone.scaleTone?.label ?? ''
 }
 
 function appendText(svg: SVGSVGElement, x: number, y: number, text: string, options: {
@@ -60,36 +63,37 @@ function appendOutsideDiamond(svg: SVGSVGElement, x: number, y: number) {
   svg.append(diamond)
 }
 
-function describeTone(tone: SoloingStaffTone, showNextChord: boolean) {
+function describeTone(tone: SoloingStaffTone, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
   const roles: string[] = []
-  if (tone.isScaleTone) roles.push(`degree ${displayNote(tone.scaleTone?.label ?? '')} of the selected scale`)
-  if (tone.isCurrentChordTone) roles.push(`degree ${displayNote(tone.currentChordTone?.label ?? '')} of the current chord`)
-  if (showNextChord && tone.isNextChordTone) roles.push(`degree ${displayNote(tone.nextChordTone?.label ?? '')} of the next chord`)
-  if (tone.isOutsideScale) roles.push('outside the selected scale')
+  if (noteFilter !== 'chord' && tone.isScaleTone) roles.push(`degree ${displayNote(tone.scaleTone?.label ?? '')} of the selected scale`)
+  if (noteFilter !== 'scale' && tone.isCurrentChordTone) roles.push(`degree ${displayNote(tone.currentChordTone?.label ?? '')} of the current chord`)
+  if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) roles.push(`degree ${displayNote(tone.nextChordTone?.label ?? '')} of the next chord`)
+  if (noteFilter !== 'scale' && tone.isOutsideScale) roles.push('outside the selected scale')
   return `${displayNote(tone.pitch.scientific)}: ${roles.join(', ')}`
 }
 
 export interface SoloingStaffViewProps {
   readonly model: SoloingStaffModel
   readonly showNextChord?: boolean
+  readonly noteFilter?: SoloingNoteFilter
 }
 
 /**
  * Engraves the already-classified staff model. Pitch placement and membership are
  * deliberately supplied by the music engine rather than inferred in this view.
  */
-export default function SoloingStaffView({ model, showNextChord = false }: SoloingStaffViewProps) {
+export default function SoloingStaffView({ model, showNextChord = false, noteFilter = 'both' }: SoloingStaffViewProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState(false)
 
-  const outsideTones = useMemo(() => model.outsideChordTones.filter(tone => (
-    tone.isCurrentChordTone || (showNextChord && tone.isNextChordTone)
-  )), [model.outsideChordTones, showNextChord])
-  const visibleTones = useMemo(
-    () => [...model.scaleTones, ...outsideTones]
-      .sort((left, right) => left.pitch.midi - right.pitch.midi),
-    [model.scaleTones, outsideTones],
-  )
+  const visibleTones = useMemo(() => {
+    const allTones = [...model.scaleTones, ...model.outsideChordTones]
+    return allTones.filter(tone => {
+      if (noteFilter === 'scale') return tone.isScaleTone
+      if (noteFilter === 'chord') return tone.isCurrentChordTone || (showNextChord && tone.isNextChordTone)
+      return tone.isScaleTone || tone.isCurrentChordTone || (showNextChord && tone.isNextChordTone)
+    }).sort((left, right) => left.pitch.midi - right.pitch.midi)
+  }, [model.outsideChordTones, model.scaleTones, noteFilter, showNextChord])
 
   useEffect(() => {
     const host = hostRef.current
@@ -115,7 +119,7 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
 
       const notes = visibleTones.map(tone => {
         const note = new StaveNote({ keys: [vexKey(tone)], duration: 'q' })
-        const color = tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR
+        const color = noteFilter !== 'scale' && tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR
         note.setKeyStyle(0, {
           fillStyle: color,
           strokeStyle: color,
@@ -142,14 +146,14 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
         const x = note.getNoteHeadBeginX() + 4
         const y = note.getYs()[0]
 
-        if (showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
-        if (tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
+        if (noteFilter !== 'scale' && showNextChord && tone.isNextChordTone) appendNextHalo(svg, x, y, 12)
+        if (noteFilter !== 'scale' && tone.isOutsideScale) appendOutsideDiamond(svg, x + 13, 179)
 
-        appendText(svg, x, 189, displayNote(toneDegree(tone)), {
-          color: tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR,
+        appendText(svg, x, 189, displayNote(toneDegree(tone, noteFilter)), {
+          color: noteFilter !== 'scale' && tone.isCurrentChordTone ? CURRENT_COLOR : SCALE_COLOR,
           family: "Georgia, 'Times New Roman', serif",
           size: 17,
-          weight: tone.isCurrentChordTone ? '700' : undefined,
+          weight: noteFilter !== 'scale' && tone.isCurrentChordTone ? '700' : undefined,
         })
         appendText(svg, x, 211, displayNote(tone.pitch.scientific), {
           color: '#656961',
@@ -178,12 +182,17 @@ export default function SoloingStaffView({ model, showNextChord = false }: Soloi
       observer.disconnect()
       host.replaceChildren()
     }
-  }, [model, showNextChord, visibleTones])
+  }, [model, noteFilter, showNextChord, visibleTones])
 
   const nextDescription = showNextChord && model.nextChord
     ? ` Blue dashed halos mark tones in the next chord, ${displayNote(model.nextChord.name)}.`
     : ''
-  const description = `${displayNote(model.scale.name)}, ascending from tonic to tonic with chord tones placed in pitch order. Black notes belong to the selected scale. Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord)).join('; ')}.`
+  const markerDescription = noteFilter === 'scale'
+    ? 'Black notes belong to the selected scale.'
+    : noteFilter === 'chord'
+      ? `Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.`
+      : `Black notes belong to the selected scale. Green notes belong to the current chord, ${displayNote(model.currentChord.name)}; amber diamonds mark chord tones outside the selected scale.`
+  const description = `${displayNote(model.scale.name)}, filtered to ${noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}, in ascending pitch order. ${markerDescription}${nextDescription} ${visibleTones.map(tone => describeTone(tone, showNextChord, noteFilter)).join('; ')}.`
 
   return <div
     className="blues-staff-scroll scale-staff-scroll"

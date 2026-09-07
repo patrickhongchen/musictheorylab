@@ -550,6 +550,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .soloing-sound-summary > i { color: var(--muted); font-style: normal; }
 .soloing-sound-summary > em { align-self: stretch; width: 1px; margin: 0 8px; background: var(--line); }
 .soloing-workbench-controls { display: flex; align-items: flex-end; gap: 12px; }
+.soloing-workbench-controls .overlay-toggle:disabled { cursor: not-allowed; opacity: .48; }
+.soloing-note-filter { width: 213px; }
+.soloing-note-filter label { min-width: 71px; }
+.soloing-note-filter label + label { margin-left: -1px; }
 .soloing-label-picker { width: 152px; }
 .soloing-label-picker legend { color: var(--muted); }
 .soloing-label-picker label { min-width: 76px; }
@@ -588,8 +592,9 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .soloing-workbench-heading { display: block; }
   .soloing-sound-summary { margin-top: 13px; display: grid; grid-template-columns: 58px auto 12px minmax(0, 1fr); gap: 7px 8px; align-items: baseline; }
   .soloing-sound-summary > em { grid-column: 1 / -1; width: 100%; height: 1px; margin: 2px 0; }
-  .soloing-workbench-controls { margin-top: 15px; justify-content: space-between; }
+  .soloing-workbench-controls { margin-top: 15px; flex-wrap: wrap; justify-content: flex-start; }
   .soloing-workbench-controls .overlay-toggle { min-height: 44px; }
+  .soloing-note-filter { width: 213px; }
   .soloing-legend-row { justify-content: flex-start; padding: 12px 0; }
   .soloing-legend-row .transition-legend { justify-content: flex-start; gap: 12px 20px; }
   .soloing-visual-heading { display: block; }
@@ -601,7 +606,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 @media (max-width: 420px) {
   .soloing-progression-heading { align-items: flex-end; }
   .soloing-workbench-controls { display: grid; grid-template-columns: 1fr; }
+  .soloing-note-filter,
   .soloing-label-picker { width: 100%; display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; }
+  .soloing-note-filter > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .soloing-note-filter legend,
   .soloing-label-picker legend { margin: 0; }
   .soloing-label-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

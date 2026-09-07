@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import type { SoloingChord, SoloingFretboardModel, SoloingFretPosition, SoloingScale } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
+import type { SoloingNoteFilter } from './soloingVisualTypes'
 
 export type SoloingLabelMode = 'notes' | 'degrees'
 
@@ -11,22 +12,26 @@ const NEXT_COLOR = '#4666b0'
 const SCALE_COLOR = '#252925'
 const PAPER_COLOR = '#faf9f6'
 
-function isVisible(position: SoloingFretPosition, showNextChord: boolean) {
+function isVisible(position: SoloingFretPosition, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
+  if (noteFilter === 'scale') return Boolean(position.scaleTone)
+  if (noteFilter === 'chord') return Boolean(position.currentChordTone || (showNextChord && position.nextChordTone))
   return Boolean(position.scaleTone || position.currentChordTone || (showNextChord && position.nextChordTone))
 }
 
-function markerLabel(position: SoloingFretPosition, labelMode: SoloingLabelMode, showNextChord: boolean) {
+function markerLabel(position: SoloingFretPosition, labelMode: SoloingLabelMode, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
   if (labelMode === 'notes') return displayNote(position.pitchClass.name)
-  const tone = position.currentChordTone ?? (showNextChord ? position.nextChordTone : undefined) ?? position.scaleTone
+  const tone = noteFilter === 'scale'
+    ? position.scaleTone
+    : position.currentChordTone ?? (showNextChord ? position.nextChordTone : undefined) ?? position.scaleTone
   return displayNote(tone?.label ?? '')
 }
 
-function spokenRole(position: SoloingFretPosition, currentChord: SoloingChord, nextChord: SoloingChord | undefined, showNextChord: boolean) {
+function spokenRole(position: SoloingFretPosition, currentChord: SoloingChord, nextChord: SoloingChord | undefined, showNextChord: boolean, noteFilter: SoloingNoteFilter) {
   const roles: string[] = []
-  if (position.scaleTone) roles.push(`degree ${displayNote(position.scaleTone.label)} of the selected scale`)
-  if (position.currentChordTone) roles.push(`degree ${displayNote(position.currentChordTone.label)} of current chord ${displayNote(currentChord.name)}`)
-  if (showNextChord && nextChord && position.nextChordTone) roles.push(`degree ${displayNote(position.nextChordTone.label)} of next chord ${displayNote(nextChord.name)}`)
-  if (position.isOutsideScale) roles.push('outside the selected scale')
+  if (noteFilter !== 'chord' && position.scaleTone) roles.push(`degree ${displayNote(position.scaleTone.label)} of the selected scale`)
+  if (noteFilter !== 'scale' && position.currentChordTone) roles.push(`degree ${displayNote(position.currentChordTone.label)} of current chord ${displayNote(currentChord.name)}`)
+  if (noteFilter !== 'scale' && showNextChord && nextChord && position.nextChordTone) roles.push(`degree ${displayNote(position.nextChordTone.label)} of next chord ${displayNote(nextChord.name)}`)
+  if (noteFilter !== 'scale' && position.isOutsideScale) roles.push('outside the selected scale')
   return roles.join(', ')
 }
 
@@ -50,13 +55,15 @@ function LegendMarker({ kind }: LegendMarkerProps) {
   </svg>
 }
 
-export function SoloingVisualLegend({ showNextChord = false }: { readonly showNextChord?: boolean }) {
-  const items = [
-    { kind: 'scale' as const, label: 'Scale tone', detail: 'Ink outline' },
-    { kind: 'current' as const, label: 'Current chord', detail: 'Mint + green' },
-    { kind: 'outside' as const, label: 'Outside scale', detail: 'Amber diamond' },
-    ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Blue dashed halo' }] : []),
-  ]
+export function SoloingVisualLegend({ showNextChord = false, noteFilter = 'both' }: { readonly showNextChord?: boolean; readonly noteFilter?: SoloingNoteFilter }) {
+  const items = noteFilter === 'scale'
+    ? [{ kind: 'scale' as const, label: 'Scale tone', detail: 'Ink outline' }]
+    : [
+      ...(noteFilter === 'both' ? [{ kind: 'scale' as const, label: 'Scale tone', detail: 'Ink outline' }] : []),
+      { kind: 'current' as const, label: 'Current chord', detail: 'Mint + green' },
+      { kind: 'outside' as const, label: 'Outside scale', detail: 'Amber diamond' },
+      ...(showNextChord ? [{ kind: 'next' as const, label: 'Next chord', detail: 'Blue dashed halo' }] : []),
+    ]
   return <div className="transition-legend" aria-label="Soloing visualization legend">
     {items.map(item => <span key={item.kind}>
       <LegendMarker kind={item.kind} />
@@ -73,6 +80,7 @@ export interface SoloingFretboardViewProps {
   readonly nextChord?: SoloingChord
   readonly labelMode: SoloingLabelMode
   readonly showNextChord?: boolean
+  readonly noteFilter?: SoloingNoteFilter
 }
 
 /** A pure SVG adapter for the fully classified model from the soloing engine. */
@@ -83,6 +91,7 @@ export function SoloingFretboardView({
   nextChord,
   labelMode,
   showNextChord = false,
+  noteFilter = 'both',
 }: SoloingFretboardViewProps) {
   const titleId = useId()
   const descriptionId = useId()
@@ -93,8 +102,13 @@ export function SoloingFretboardView({
   const viewWidth = end + 24
   const fretX = (fret: number) => fret === 0 ? openX : nut + (fret - 0.5) * step
   const stringY = (string: number) => 46 + (string - 1) * 36
-  const visiblePositions = model.positions.filter(position => isVisible(position, showNextChord))
+  const visiblePositions = model.positions.filter(position => isVisible(position, showNextChord, noteFilter))
   const fretNumbers = Array.from({ length: model.fretEnd - model.fretStart + 1 }, (_, index) => model.fretStart + index)
+  const markerDescription = noteFilter === 'scale'
+    ? 'Paper circles with ink borders are selected-scale tones.'
+    : noteFilter === 'chord'
+      ? 'Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale.'
+      : 'Paper circles with ink borders are selected-scale tones outside the current chord. Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale.'
 
   return <div className="transition-fretboard-scroll fretboard-scroll" tabIndex={0} role="region" aria-label="Full guitar fretboard, scroll horizontally to explore frets zero through twenty-two">
     <svg
@@ -104,9 +118,9 @@ export function SoloingFretboardView({
       role="img"
       aria-labelledby={`${titleId} ${descriptionId}`}
     >
-      <title id={titleId}>{displayNote(currentChord.name)} chord tones over {displayNote(scale.name)} on guitar</title>
+      <title id={titleId}>{noteFilter === 'scale' ? displayNote(scale.name) : noteFilter === 'chord' ? `${displayNote(currentChord.name)} chord tones` : `${displayNote(currentChord.name)} chord tones over ${displayNote(scale.name)}`} on guitar</title>
       <desc id={descriptionId}>
-        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. All note markers are the same size. Paper circles with ink borders are selected-scale tones outside the current chord. Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale. {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord)}`).join('; ')}.
+        High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. The view is filtered to {noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}. All note markers are the same size. {markerDescription} {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : noteFilter === 'scale' ? 'Chord overlays are hidden in Scale view.' : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord, noteFilter)}`).join('; ')}.
       </desc>
 
       <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
@@ -132,11 +146,11 @@ export function SoloingFretboardView({
       {fretNumbers.map(fret => <text key={fret} x={fretX(fret)} y="260" textAnchor="middle" className="fret-label">{fret}</text>)}
 
       {visiblePositions.map(position => {
-        const isCurrent = Boolean(position.currentChordTone)
-        const isNext = showNextChord && Boolean(position.nextChordTone)
+        const isCurrent = noteFilter !== 'scale' && Boolean(position.currentChordTone)
+        const isNext = noteFilter !== 'scale' && showNextChord && Boolean(position.nextChordTone)
         const isScale = Boolean(position.scaleTone)
-        const isOutsideScale = !isScale
-        const label = markerLabel(position, labelMode, showNextChord)
+        const isOutsideScale = noteFilter !== 'scale' && !isScale
+        const label = markerLabel(position, labelMode, showNextChord, noteFilter)
         const x = fretX(position.fret)
         const y = stringY(position.string)
 

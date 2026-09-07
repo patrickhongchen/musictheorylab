@@ -9,8 +9,10 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - The user builds an ordered progression of independently editable chord-scale steps.
 - Each step owns a chord root, chord quality, scale root, and scale type.
 - The selected step drives the staff and fretboard from one shared theory model.
+- A `Notes shown` segmented filter switches both visualizers between `Both`, `Chord`, and `Scale` note sets.
 - The next-chord toggle overlays only the immediate next chord, wrapping from the last step to the first.
-- Chord tones outside the selected scale are always shown explicitly.
+- `Scale` mode removes chord emphasis and temporarily disables the next-chord overlay; returning to `Both` or `Chord` restores the user's overlay preference.
+- Chord tones outside the selected scale are shown explicitly whenever chord tones are included.
 
 ## Visible copy and order
 
@@ -33,6 +35,7 @@ Mobile concept: `blues-progression-mobile-v2.png`
 - Chord tone outside the selected scale: amber `#c56a1a` diamond attached to the marker or placed beside the staff degree.
 - Next chord: cobalt `#4666b0` dashed outer halo. Shared tones retain their base marker and add the halo.
 - Role treatments compose independently so a current/next/outside tone shows the current marker, amber diamond, and blue halo together.
+- `Both` shows the union of the selected scale and chord tones, `Chord` limits the display to current plus optionally next chord tones, and `Scale` presents a neutral scale-only map.
 - On the staff, chord tones outside the scale are inserted at their chromatic pitch position inside the tonic-to-tonic run.
 - Display type uses Georgia; UI controls use the system sans-serif stack.
 - Open rails and bands are preferred to nested cards. Controls retain 5px radii and at least 44px touch targets.
