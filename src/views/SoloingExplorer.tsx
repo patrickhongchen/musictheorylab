@@ -8,6 +8,7 @@ import {
   createSoloingScale,
   createSoloingStaffModel,
   getNextSoloingStep,
+  SEED_SOLOING_PROGRESSION,
   type SoloingStep,
 } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
@@ -16,7 +17,7 @@ const SoloingStaffView = lazy(() => import('../components/SoloingStaffView'))
 
 export function SoloingExplorer() {
   const [progression, setProgression] = useState<SoloingStep[]>(createSeedSoloingProgression)
-  const [selectedStepId, setSelectedStepId] = useState('seed-d7')
+  const [selectedStepId, setSelectedStepId] = useState(SEED_SOLOING_PROGRESSION[0]?.id ?? '')
   const [showNextChord, setShowNextChord] = useState(false)
   const [labelMode, setLabelMode] = useState<SoloingLabelMode>('notes')
   const [noteFilter, setNoteFilter] = useState<SoloingNoteFilter>('both')
