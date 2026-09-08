@@ -24,6 +24,12 @@ npm run preview      # Serve the production build locally
 
 Deploy `dist/` to any static host. Relative asset paths support subdirectory hosting. Notation fonts are bundled and sound is synthesized locally, with no font CDN or sample server. Serve the app through HTTP(S).
 
+## Hosting portability
+
+ChatGPT Sites hosts the application as static files; the application does not depend on Sites services. GitHub remains the canonical source, and Sites receives a deployment mirror of the same source. Run `npm ci` and `npm run build` to produce the standard `dist/` directory for any compatible static host.
+
+The only Sites configuration is `.openai/hosting.json`: `project_id` identifies the hosting destination and `static.directory` selects `dist/`. To migrate, delete that file and publish `dist/` to the new host. No application code, dependencies, environment variables, or build scripts need changing.
+
 ## Labs
 
 | Lab | URL | Behavior |
@@ -79,4 +85,4 @@ The VexFlow Bravura chunk includes embedded notation fonts and exceeds Vite's ad
 
 The design uses a warm paper background, serif headings and musical names, system sans-serif controls and explanatory text, and colored markers reinforced by labels and shapes. Shared font tokens keep HTML and SVG annotations consistent without changing VexFlow's music glyphs.
 
-Historical concepts, screenshots, and implementation notes live in [`docs/design/`](docs/design/). They document earlier iterations and are not a specification of the current Soloing interface. There is no backend, authentication, persistence, or deployment service in this project.
+Historical concepts, screenshots, and implementation notes live in [`docs/design/`](docs/design/). They document earlier iterations and are not a specification of the current Soloing interface. There is no application backend, authentication, or persistence.
