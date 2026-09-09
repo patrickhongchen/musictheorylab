@@ -1,14 +1,14 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { classifyCagedForm } from '../music/cagedPositions'
 import { PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
-import { shapeColor, shapeSummary, TriadShapeFretboard } from '../components/TriadShapeFretboard'
+import { fretLabel, shapeColor, shapeInspection, TriadShapeFretboard } from '../components/TriadShapeFretboard'
 import { transposePitchClassName } from '../music/pitches'
 import { createSpreadTriadShapes } from '../music/spreadTriadShapes'
 import { createTriadShapesOnStrings, groupTriadShapeRepeats, triadShapeFamilyId, type TriadShape } from '../music/triadShapes'
 import { createTriad } from '../music/triads'
 import type { ChordQuality } from '../music/types'
 import { TRIAD_VOICING_PATTERNS, type VoicingLayout } from '../music/voicingPatterns'
-import { chordIntervalLabel, displayNote } from '../presentation/notes'
+import { displayNote } from '../presentation/notes'
 
 const FRET_COUNT = 22
 const ROOTS = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B']
@@ -20,11 +20,7 @@ const PRESETS: { label: string; chords: ChordChoice[] }[] = [
   { label: 'Dm → G → C', chords: [{ root: 'D', quality: 'minor' }, { root: 'G', quality: 'major' }, { root: 'C', quality: 'major' }] },
 ]
 const STRING_NAMES = ['E', 'B', 'G', 'D', 'A', 'E']
-function fretLabel(fret: number) {
-  if (fret === 0) return 'open'
-  const suffix = fret % 100 >= 11 && fret % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[fret % 10] ?? 'th')
-  return `${fret}${suffix} fret`
-}
+
 const lowToHighStringOrder = (left: TriadShape, right: TriadShape) => (
   right.notes[0].string - left.notes[0].string
   || Math.min(...left.notes.map(note => note.fret)) - Math.min(...right.notes.map(note => note.fret))
@@ -75,6 +71,7 @@ export function VoiceLeadingExplorer() {
   const visibleShapes = allShapes.filter(shape => !hiddenChords.includes(shape.triad.id))
   const hovered = visibleShapes.find(shape => triadShapeFamilyId(shape) === hoveredId)
   const active = hovered ?? selected[selected.length - 1]
+  const inspection = active ? shapeInspection(active, allShapes.filter(shape => triadShapeFamilyId(shape) === triadShapeFamilyId(active))) : undefined
   const presetIndex = PRESETS.findIndex(preset => JSON.stringify(preset.chords) === JSON.stringify(chords))
   function resetSelection() { setSelectedIds([]); setHoveredId(undefined) }
   function toggleShape(shape: TriadShape) {
@@ -185,9 +182,18 @@ export function VoiceLeadingExplorer() {
       </div>
       <p className="voice-map-help">Colors identify chords without repeating chord names across the fretboard. Hover or select a shape to reveal its actual notes and intervals. Click shapes or cards to pin several; click again to unpin. Pinned shapes stay on the board; dotted rings mark the same string and fret in another chord.</p>
       <div className="voice-selection" role="status">
-        <div><strong>{active ? shapeSummary(active) : 'Hover or select a connected shape to inspect its inversion.'}</strong>
-          {selected.length > 0 && <small>{selected.length} pinned {selected.length === 1 ? 'shape' : 'shapes'}</small>}</div>
-        {selected.length > 0 && <button type="button" onClick={resetSelection}>Clear all selections</button>}
+        <div className="voice-inspection" style={{ '--shape-color': active ? shapeColor(active) : 'var(--line)' } as CSSProperties}>
+          <div className="voice-inspection-heading">
+            <strong>{inspection?.title ?? 'Hover or select a shape to inspect it.'}</strong>
+            {inspection && <span className="voice-inspection-notes">{inspection.notes}</span>}
+          </div>
+          <div className="voice-inspection-location">
+            <span>{inspection?.location}</span>
+          </div>
+          <div className="voice-inspection-form">{inspection?.form ? `${inspection.form}-shape` : ''}</div>
+          <small>{selected.length > 0 ? `${selected.length} pinned ${selected.length === 1 ? 'shape' : 'shapes'}` : ''}</small>
+        </div>
+        <button type="button" onClick={resetSelection} style={{ visibility: selected.length > 0 ? 'visible' : 'hidden' }} disabled={selected.length === 0}>Clear all selections</button>
       </div>
       {allShapes.length === 0
         ? <p className="voice-map-help">No voicings were found for this bass string in the current progression.</p>
@@ -198,22 +204,21 @@ export function VoiceLeadingExplorer() {
         ? <><p>Three adjacent strings per shape · standard tuning</p><p>Close-position triads · octave repeats highlight together.</p></>
         : <><p>Skipped strings allowed · standard tuning</p><p>Spread triads · ergonomic CAGED-position voicings.</p></>}
       </div>
-      <div className="voice-shape-catalog" aria-label="Select any available shape">
-        {distinct.filter(triad => !hiddenChords.includes(triad.id)).map(triad => {
-          const triadShapes = visibleShapes.filter(shape => shape.triad.id === triad.id)
-          return <details key={triad.id} open>
-          <summary>{displayNote(triad.chordName)} · {triadShapes.length} fretboard positions</summary>
-          {triadShapes.length === 0
-            ? <p className="voice-catalog-empty">No voicings found for this bass string.</p>
-            : <div className="voice-shape-grid">{TRIAD_VOICING_PATTERNS[voicingLayout].map(pattern => {
-            const shapes = visibleShapes.filter(shape => shape.triad.id === triad.id && shape.inversion.index === pattern.inversion.index).sort(lowToHighStringOrder)
-            const roleOrder = pattern.bassToTop.map(role => chordIntervalLabel(role, triad.quality)).join(' → ')
-            const repeatGroups = groupTriadShapeRepeats(shapes)
-            return <section className="voice-inversion-group" key={pattern.id} aria-label={`${pattern.inversion.name}, ${shapes.length} positions`}>
-              <header><strong>{pattern.inversion.name}</strong><small>Bass → top · {roleOrder}</small></header>
-              <div className="voice-inversion-list">{repeatGroups.length === 0
-                ? <p className="voice-inversion-empty">No shape in this position.</p>
-                : repeatGroups.map(repeats => {
+      <div className="voice-shape-catalog voice-shape-grid" aria-label="Select any available shape">
+        {TRIAD_VOICING_PATTERNS[voicingLayout].map(pattern => {
+          const visibleTriads = distinct.filter(triad => !hiddenChords.includes(triad.id))
+          // Role names remain accurate when major, minor and altered chords share a column.
+          const roleOrder = pattern.bassToTop.map(role => ({ root: 'Root', third: 'Third', fifth: 'Fifth' })[role]).join(' → ')
+          return <section className="voice-inversion-group" key={pattern.id} aria-labelledby={`catalog-${pattern.id}`}>
+            <header><h3 id={`catalog-${pattern.id}`}>{pattern.inversion.name}</h3><small>{roleOrder}</small></header>
+            {visibleTriads.map(triad => {
+              const shapes = visibleShapes.filter(shape => shape.triad.id === triad.id && shape.inversion.index === pattern.inversion.index).sort(lowToHighStringOrder)
+              const repeatGroups = groupTriadShapeRepeats(shapes)
+              return <details key={triad.id} open>
+                <summary>{displayNote(triad.chordName)} · {shapes.length} fretboard positions</summary>
+                <div className="voice-inversion-list">{repeatGroups.length === 0
+                  ? <p className="voice-inversion-empty">No shape in this position.</p>
+                  : repeatGroups.map(repeats => {
                 const shape = repeats[0]
                 const bass = shape.notes[shape.notes.length - 1]
                 return <button key={shape.id} type="button"
@@ -225,10 +230,11 @@ export function VoiceLeadingExplorer() {
                   <strong>{STRING_NAMES[bass.string - 1]} ({bass.string}): {repeats.map(repeat => fretLabel(repeat.notes[repeat.notes.length - 1].fret)).join(' / ')}</strong>
                   <small>{shape.cagedForm}-shape</small>
                 </button>
-              })}</div>
-            </section>
-          })}</div>}
-        </details>})}
+                })}</div>
+              </details>
+            })}
+          </section>
+        })}
       </div>
     </section>
     <footer className="page-footer">Voice Leading<span>Recognize shapes. Find common ground.</span></footer>

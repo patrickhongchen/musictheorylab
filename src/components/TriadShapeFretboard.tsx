@@ -4,10 +4,23 @@ import { chordIntervalLabel, displayNote } from '../presentation/notes'
 import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
 
 export const shapeColor = (shape: TriadShape) => PROGRESSION_STEP_COLORS[(shape.colorIndex ?? 0) % PROGRESSION_STEP_COLORS.length]
-export const shapeSummary = (shape: TriadShape) => {
-  const position = shape.cagedPosition ? ` · ${shape.cagedPosition.form}-shape, fret ${shape.cagedPosition.anchorFret} position` : ''
-  return `${displayNote(shape.triad.chordName)} · ${shape.inversion.name}${position} · Bass→top ${[...shape.notes].reverse().map(note => `${displayNote(note.tone.pitchClass.name)} (${chordIntervalLabel(note.tone.role, shape.triad.quality)})`).join(' → ')}`
+export function fretLabel(fret: number) {
+  if (fret === 0) return 'open'
+  const suffix = fret % 100 >= 11 && fret % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[fret % 10] ?? 'th')
+  return `${fret}${suffix} fret`
 }
+export const shapeInspection = (shape: TriadShape, repeats: readonly TriadShape[]) => {
+  const bass = shape.notes[shape.notes.length - 1]
+  const stringName = STANDARD_TUNING[STANDARD_TUNING.length - bass.string].name
+  const frets = [...new Set(repeats.map(repeat => repeat.notes[repeat.notes.length - 1].fret))].sort((a, b) => a - b)
+  return {
+    title: `${displayNote(shape.triad.chordName)} · ${shape.inversion.name}`,
+    location: `${stringName} (${bass.string}): ${frets.map(fretLabel).join(' / ')}`,
+    form: shape.cagedForm ?? shape.cagedPosition?.form,
+    notes: [...shape.notes].reverse().map(note => displayNote(note.tone.pitchClass.name)).join(' → '),
+  }
+}
+
 const positionKey = (note: TriadShape['notes'][number]) => `${note.string}:${note.fret}`
 
 interface Props {
