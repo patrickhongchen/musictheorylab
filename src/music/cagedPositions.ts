@@ -80,3 +80,31 @@ export function createCagedPositions(triad: IndependentTriad, fretCount = 22): r
   }
   return positions
 }
+
+/**
+ * Label an existing voicing by its closest reference grip, without filtering it.
+ * Compare in an interior octave so nut/neck clipping cannot change repeat labels.
+ * Exact reference-tone matches win, then region fit and distance from the hand center.
+ */
+export function classifyCagedForm(triad: IndependentTriad, notes: readonly FretPosition[]): CagedForm {
+  if (notes.length === 0) throw new Error('CAGED classification requires notes')
+  const shift = 12 - Math.floor(Math.min(...notes.map(note => note.fret)) / 12) * 12
+  const normalized = notes.map(note => ({ ...note, fret: note.fret + shift }))
+  const candidates = createCagedPositions(triad, Math.max(...normalized.map(note => note.fret)) + 12)
+    .map(position => ({
+      position,
+      misses: normalized.filter(note => !position.referenceGrip.some(reference => (
+        reference.string === note.string && reference.fret === note.fret && reference.tone.role === note.tone.role
+      ))).length,
+      outside: normalized.reduce((sum, note) => sum + Math.max(0, position.minFret - note.fret, note.fret - position.maxFret), 0),
+      distance: normalized.reduce((sum, note) => sum + Math.abs(note.fret - position.handCenter), 0),
+    }))
+  // Some three-note fragments belong to two complete grips (notably C/D).
+  // Prefer the stable CAGED form order when both are exact reference subsets.
+  candidates.sort((a, b) => a.misses - b.misses || a.outside - b.outside
+    || (a.misses === 0 && b.misses === 0 ? CAGED_FORMS.indexOf(a.position.form) - CAGED_FORMS.indexOf(b.position.form) : 0)
+    || a.distance - b.distance
+    || CAGED_FORMS.indexOf(a.position.form) - CAGED_FORMS.indexOf(b.position.form)
+    || a.position.anchorFret - b.position.anchorFret)
+  return candidates[0].position.form
+}

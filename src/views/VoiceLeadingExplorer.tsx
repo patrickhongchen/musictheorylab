@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
+import { classifyCagedForm } from '../music/cagedPositions'
 import { PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
 import { shapeColor, shapeSummary, TriadShapeFretboard } from '../components/TriadShapeFretboard'
 import { transposePitchClassName } from '../music/pitches'
@@ -65,7 +66,7 @@ export function VoiceLeadingExplorer() {
         ))
       : createSpreadTriadShapes(triad, { fretCount: FRET_COUNT })
     return shapes.filter(shape => bassString === 0 || shape.notes[shape.notes.length - 1].string === bassString)
-      .map(shape => ({ ...shape, colorIndex }))
+      .map(shape => ({ ...shape, colorIndex, cagedForm: shape.cagedPosition?.form ?? classifyCagedForm(triad, shape.notes) }))
   }), [bassString, distinct, voicingLayout])
   const selected = selectedIds.flatMap(id => {
     const shape = allShapes.find(shape => triadShapeFamilyId(shape) === id)
@@ -214,19 +215,15 @@ export function VoiceLeadingExplorer() {
                 ? <p className="voice-inversion-empty">No shape in this position.</p>
                 : repeatGroups.map(repeats => {
                 const shape = repeats[0]
-                const root = shape.notes.find(note => note.tone.role === 'root')!
-                const position = shape.cagedPosition
-                const positionFrets = [...new Set(repeats.flatMap(repeat => repeat.cagedPosition ? [repeat.cagedPosition.anchorFret] : []))]
+                const bass = shape.notes[shape.notes.length - 1]
                 return <button key={shape.id} type="button"
                   data-hovered={hoveredId === triadShapeFamilyId(shape) ? 'true' : undefined}
                   style={{ '--shape-color': shapeColor(shape) } as CSSProperties} aria-pressed={selectedIds.includes(triadShapeFamilyId(shape))}
                   onMouseEnter={() => setHoveredId(triadShapeFamilyId(shape))} onMouseLeave={() => setHoveredId(undefined)}
                   onFocus={() => setHoveredId(triadShapeFamilyId(shape))} onBlur={() => setHoveredId(undefined)}
                   onClick={() => toggleShape(shape)}>
-                  <strong>{position
-                    ? `${position.form}-shape · ${positionFrets.length === 1 ? 'fret' : 'frets'} ${positionFrets.join(' / ')} ${positionFrets.length === 1 ? 'position' : 'positions'}`
-                    : `${STRING_NAMES[root.string - 1]} (${root.string}): ${repeats.map(repeat => fretLabel(repeat.notes.find(note => note.tone.role === 'root')!.fret)).join(' / ')}`}</strong>
-                  {position && <small>Root · {STRING_NAMES[root.string - 1]} string ({root.string}): {repeats.map(repeat => fretLabel(repeat.notes.find(note => note.tone.role === 'root')!.fret)).join(' / ')}</small>}
+                  <strong>{STRING_NAMES[bass.string - 1]} ({bass.string}): {repeats.map(repeat => fretLabel(repeat.notes[repeat.notes.length - 1].fret)).join(' / ')}</strong>
+                  <small>{shape.cagedForm}-shape</small>
                 </button>
               })}</div>
             </section>

@@ -1,10 +1,11 @@
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordTone, FretPosition, Inversion, Pitch, IndependentTriad } from './types'
-import type { CagedPosition } from './cagedPositions'
+import type { CagedForm, CagedPosition } from './cagedPositions'
 import { TRIAD_INVERSIONS, type VoicingLayout } from './voicingPatterns'
 
 /** A complete triad placed from the highest selected string to the lowest. */
 export interface TriadShape {
+  readonly cagedForm?: CagedForm
   readonly layout?: VoicingLayout
   readonly cagedPosition?: CagedPosition
   readonly colorIndex?: number
