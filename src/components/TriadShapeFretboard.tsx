@@ -4,13 +4,16 @@ import { chordIntervalLabel, displayNote } from '../presentation/notes'
 import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
 
 export const shapeColor = (shape: TriadShape) => PROGRESSION_STEP_COLORS[(shape.colorIndex ?? 0) % PROGRESSION_STEP_COLORS.length]
-export const shapeSummary = (shape: TriadShape) => `${displayNote(shape.triad.chordName)} · ${shape.inversion.name} · Bass→top ${[...shape.notes].reverse().map(note => `${displayNote(note.tone.pitchClass.name)} (${chordIntervalLabel(note.tone.role, shape.triad.quality)})`).join(' → ')}`
+export const shapeSummary = (shape: TriadShape) => {
+  const position = shape.cagedPosition ? ` · ${shape.cagedPosition.form}-shape, fret ${shape.cagedPosition.anchorFret} position` : ''
+  return `${displayNote(shape.triad.chordName)} · ${shape.inversion.name}${position} · Bass→top ${[...shape.notes].reverse().map(note => `${displayNote(note.tone.pitchClass.name)} (${chordIntervalLabel(note.tone.role, shape.triad.quality)})`).join(' → ')}`
+}
 const positionKey = (note: TriadShape['notes'][number]) => `${note.string}:${note.fret}`
 
 interface Props {
   allShapes: readonly TriadShape[]
   shapes: readonly TriadShape[]
-  selected: TriadShape | undefined
+  selected: readonly TriadShape[]
   hovered: TriadShape | undefined
   onHover: (shape: TriadShape | undefined) => void
   onSelect: (shape: TriadShape) => void
@@ -23,13 +26,21 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
   const end = nut + fretCount * step
   const fretX = (fret: number) => fret === 0 ? 73 : nut + (fret - 0.5) * step
   const stringY = (string: number) => 48 + (string - 1) * 46
-  const selectedRepeats = selected ? allShapes.filter(shape => triadShapeFamilyId(shape) === triadShapeFamilyId(selected)) : []
+  const selectedFamilyIds = new Set(selected.map(triadShapeFamilyId))
+  const selectedRepeats = allShapes.filter(shape => selectedFamilyIds.has(triadShapeFamilyId(shape)))
   const hoveredRepeats = hovered ? shapes.filter(shape => triadShapeFamilyId(shape) === triadShapeFamilyId(hovered)) : []
-  const selectedPositions = new Set(selectedRepeats.flatMap(shape => shape.notes.map(positionKey)))
-  const active = hovered ?? selected
+  const selectedPositions = new Map<string, Set<string>>()
+  for (const shape of selectedRepeats) {
+    for (const note of shape.notes) {
+      const key = positionKey(note)
+      const chords = selectedPositions.get(key) ?? new Set<string>()
+      chords.add(shape.triad.id)
+      selectedPositions.set(key, chords)
+    }
+  }
+  const active = hovered !== undefined || selected.length > 0
   const visible = [...shapes, ...selectedRepeats.filter(repeat => !shapes.some(shape => shape.id === repeat.id))]
   const hoveredFamilyId = hovered ? triadShapeFamilyId(hovered) : undefined
-  const selectedFamilyId = selected ? triadShapeFamilyId(selected) : undefined
   const renderShape = (shape: TriadShape, overlay = false, showDetails = overlay) => {
     const emphasized = overlay
     const color = shapeColor(shape)
@@ -44,7 +55,7 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       <polyline points={points} fill="none" stroke={color} strokeWidth={emphasized ? 4 : 2} strokeLinejoin="round" />
       {!overlay && <polyline points={points} fill="none" stroke="transparent" strokeWidth="14" />}
       {shape.notes.map(note => {
-        const shared = selected && shape.triad.id !== selected.triad.id && selectedPositions.has(positionKey(note))
+        const shared = [...(selectedPositions.get(positionKey(note)) ?? [])].some(chordId => chordId !== shape.triad.id)
         return <g key={note.string} transform={`translate(${fretX(note.fret)}, ${stringY(note.string)})`}>
           {shared && <circle r="20" fill="none" stroke="#252925" strokeWidth="2" strokeDasharray="3 3" />}
           <circle r={emphasized ? 16 : 9} fill={emphasized ? color : '#faf9f6'} stroke={color} strokeWidth="2" />
@@ -72,7 +83,7 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       </g>)}
       <line x1={nut} x2={nut} y1="46" y2="280" stroke="#464c42" strokeWidth="5" />
       {visible.map(shape => renderShape(shape))}
-      {selectedRepeats.map(shape => renderShape(shape, true, !hoveredFamilyId || hoveredFamilyId === selectedFamilyId))}
+      {selectedRepeats.map(shape => renderShape(shape, true, !hoveredFamilyId || hoveredFamilyId === triadShapeFamilyId(shape)))}
       {hoveredRepeats.filter(shape => !selectedRepeats.some(repeat => repeat.id === shape.id)).map(shape => renderShape(shape, true))}
     </svg>
   </div>

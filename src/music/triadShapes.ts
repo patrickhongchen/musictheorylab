@@ -1,19 +1,17 @@
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordTone, FretPosition, Inversion, Pitch, IndependentTriad } from './types'
+import type { CagedPosition } from './cagedPositions'
+import { TRIAD_INVERSIONS, type VoicingLayout } from './voicingPatterns'
 
-/** A complete, close-position triad placed from the highest selected string to the lowest. */
+/** A complete triad placed from the highest selected string to the lowest. */
 export interface TriadShape {
+  readonly layout?: VoicingLayout
+  readonly cagedPosition?: CagedPosition
   readonly colorIndex?: number
   readonly id: string
   readonly triad: IndependentTriad
   readonly notes: readonly FretPosition[]
   readonly inversion: Inversion
-}
-
-const INVERSIONS: Readonly<Record<ChordTone['role'], Inversion>> = {
-  root: { index: 0, name: 'Root position', figure: '' },
-  third: { index: 1, name: 'First inversion', figure: '6' },
-  fifth: { index: 2, name: 'Second inversion', figure: '6/4' },
 }
 
 function selectedAdjacentStrings(strings: readonly number[], tuning: readonly Pitch[]): readonly number[] {
@@ -80,7 +78,7 @@ export function createTriadShapesOnStrings(
           const key = notes.map(note => `${note.string}:${note.fret}`).join('|')
           if (seen.has(key)) continue
           seen.add(key)
-          const inversion = INVERSIONS[notes[notes.length - 1].tone.role]
+          const inversion = TRIAD_INVERSIONS[notes[notes.length - 1].tone.role]
           shapes.push({
             id: `${triad.id}:${selectedStrings.join('-')}:${frets.join('-')}`,
             triad,
@@ -102,7 +100,8 @@ export function createTriadShapesOnStrings(
 /** Same strings and geometry, translated only by whole octaves. */
 export function triadShapeFamilyId(shape: TriadShape): string {
   const octaveOffset = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
-  return `${shape.triad.id}:${shape.notes.map(note => `${note.string}:${note.fret - octaveOffset}`).join('|')}`
+  const layout = shape.layout === 'spread' ? `:spread:${shape.cagedPosition?.form ?? ''}` : ''
+  return `${shape.triad.id}${layout}:${shape.notes.map(note => `${note.string}:${note.fret - octaveOffset}`).join('|')}`
 }
 
 export function groupTriadShapeRepeats(shapes: readonly TriadShape[]): readonly (readonly TriadShape[])[] {

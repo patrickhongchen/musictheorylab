@@ -2,9 +2,11 @@ import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
 import { shapeColor, shapeSummary, TriadShapeFretboard } from '../components/TriadShapeFretboard'
 import { transposePitchClassName } from '../music/pitches'
-import { createTriadShapesOnStrings, groupTriadShapeRepeats, triadShapeFamilyId } from '../music/triadShapes'
+import { createSpreadTriadShapes } from '../music/spreadTriadShapes'
+import { createTriadShapesOnStrings, groupTriadShapeRepeats, triadShapeFamilyId, type TriadShape } from '../music/triadShapes'
 import { createTriad } from '../music/triads'
 import type { ChordQuality } from '../music/types'
+import { TRIAD_VOICING_PATTERNS, type VoicingLayout } from '../music/voicingPatterns'
 import { chordIntervalLabel, displayNote } from '../presentation/notes'
 
 const FRET_COUNT = 22
@@ -16,19 +18,13 @@ const PRESETS: { label: string; chords: ChordChoice[] }[] = [
   { label: 'C → G → Am → F', chords: [{ root: 'C', quality: 'major' }, { root: 'G', quality: 'major' }, { root: 'A', quality: 'minor' }, { root: 'F', quality: 'major' }] },
   { label: 'Dm → G → C', chords: [{ root: 'D', quality: 'minor' }, { root: 'G', quality: 'major' }, { root: 'C', quality: 'major' }] },
 ]
-const INVERSION_GROUPS = [
-  { index: 0, name: 'Root position', order: 'root → third → fifth' },
-  { index: 1, name: 'First inversion', order: 'third → fifth → root' },
-  { index: 2, name: 'Second inversion', order: 'fifth → root → third' },
-] as const
-
 const STRING_NAMES = ['E', 'B', 'G', 'D', 'A', 'E']
 function fretLabel(fret: number) {
   if (fret === 0) return 'open'
   const suffix = fret % 100 >= 11 && fret % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[fret % 10] ?? 'th')
   return `${fret}${suffix} fret`
 }
-const lowToHighStringOrder = (left: ReturnType<typeof createTriadShapesOnStrings>[number], right: ReturnType<typeof createTriadShapesOnStrings>[number]) => (
+const lowToHighStringOrder = (left: TriadShape, right: TriadShape) => (
   right.notes[0].string - left.notes[0].string
   || Math.min(...left.notes.map(note => note.fret)) - Math.min(...right.notes.map(note => note.fret))
   || Math.max(...left.notes.map(note => note.fret)) - Math.max(...right.notes.map(note => note.fret))
@@ -55,23 +51,37 @@ function PlusIcon() {
 export function VoiceLeadingExplorer() {
   const [chords, setChords] = useState<ChordChoice[]>(PRESETS[0].chords)
   const [transposeAmount, setTransposeAmount] = useState(2)
-  const [stringStart, setStringStart] = useState(1)
+  const [voicingLayout, setVoicingLayout] = useState<VoicingLayout>('closed')
+  const [bassString, setBassString] = useState(3)
   const [hiddenChords, setHiddenChords] = useState<string[]>([])
-  const [selectedId, setSelectedId] = useState<string>()
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [hoveredId, setHoveredId] = useState<string>()
   const triads = useMemo(() => chords.map(chord => createTriad(chord.root, chord.quality)), [chords])
   const distinct = useMemo(() => [...new Map(triads.map(triad => [triad.id, triad])).values()], [triads])
-  const allShapes = useMemo(() => distinct.flatMap((triad, colorIndex) => (
-    (stringStart === 0 ? [1, 2, 3, 4] : [stringStart]).flatMap(start => (
-      createTriadShapesOnStrings(triad, [start, start + 1, start + 2], undefined, FRET_COUNT).map(shape => ({ ...shape, colorIndex }))
-    ))
-  )), [distinct, stringStart])
-  const selected = allShapes.find(shape => triadShapeFamilyId(shape) === selectedId)
+  const allShapes = useMemo(() => distinct.flatMap((triad, colorIndex) => {
+    const shapes = voicingLayout === 'closed'
+      ? (bassString === 0 ? [1, 2, 3, 4] : [bassString - 2]).flatMap(start => (
+          createTriadShapesOnStrings(triad, [start, start + 1, start + 2], undefined, FRET_COUNT)
+        ))
+      : createSpreadTriadShapes(triad, { fretCount: FRET_COUNT })
+    return shapes.filter(shape => bassString === 0 || shape.notes[shape.notes.length - 1].string === bassString)
+      .map(shape => ({ ...shape, colorIndex }))
+  }), [bassString, distinct, voicingLayout])
+  const selected = selectedIds.flatMap(id => {
+    const shape = allShapes.find(shape => triadShapeFamilyId(shape) === id)
+    return shape ? [shape] : []
+  })
   const visibleShapes = allShapes.filter(shape => !hiddenChords.includes(shape.triad.id))
   const hovered = visibleShapes.find(shape => triadShapeFamilyId(shape) === hoveredId)
-  const active = hovered ?? selected
+  const active = hovered ?? selected[selected.length - 1]
   const presetIndex = PRESETS.findIndex(preset => JSON.stringify(preset.chords) === JSON.stringify(chords))
-  function resetSelection() { setSelectedId(undefined); setHoveredId(undefined) }
+  function resetSelection() { setSelectedIds([]); setHoveredId(undefined) }
+  function toggleShape(shape: TriadShape) {
+    const id = triadShapeFamilyId(shape)
+    setSelectedIds(current => current.includes(id) ? current.filter(selected => selected !== id) : [...current, id])
+    // A click ends the preview too, so unpinning clears the board without moving the pointer.
+    setHoveredId(undefined)
+  }
   function updateProgression(next: ChordChoice[]) { setChords(next); setHiddenChords([]); resetSelection() }
   function moveChord(index: number, nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= chords.length) return
@@ -91,9 +101,20 @@ export function VoiceLeadingExplorer() {
           {PRESETS.map((preset, index) => <option key={index} value={index}>{preset.label}</option>)}
           {presetIndex < 0 && <option value="custom">Custom progression</option>}
         </select></label>
-        <label>String range<select value={stringStart} onChange={event => { setStringStart(Number(event.target.value)); resetSelection() }}>
-          <option value={0}>All · four three-string groups</option>
-          {[1, 2, 3, 4].map(start => <option key={start} value={start}>Strings {start}–{start + 2}</option>)}
+        <label>Voicing<select value={voicingLayout} onChange={event => {
+          const layout = event.target.value as VoicingLayout
+          setVoicingLayout(layout)
+          if (layout === 'spread' && bassString === 3) setBassString(0)
+          resetSelection()
+        }}>
+          <option value="closed">Closed</option>
+          <option value="spread">Spread</option>
+        </select></label>
+        <label>Bass note<select value={bassString} onChange={event => { setBassString(Number(event.target.value)); resetSelection() }}>
+          <option value={0}>All</option>
+          {(voicingLayout === 'closed' ? [6, 5, 4, 3] : [6, 5, 4]).map(string => (
+            <option key={string} value={string}>{STRING_NAMES[string - 1]} string ({string})</option>
+          ))}
         </select></label>
         <div className="voice-transpose-controls">
           <label>Transpose all<select value={transposeAmount} onChange={event => setTransposeAmount(Number(event.target.value))}>
@@ -161,38 +182,56 @@ export function VoiceLeadingExplorer() {
           </button>
         </Fragment>)}
       </div>
-      <p className="voice-map-help">Colors identify chords without repeating chord names across the fretboard. Hover or select a shape to reveal its actual notes and intervals. Your selected shape stays on the board; dotted rings mark the same string and fret in another chord.</p>
+      <p className="voice-map-help">Colors identify chords without repeating chord names across the fretboard. Hover or select a shape to reveal its actual notes and intervals. Click shapes or cards to pin several; click again to unpin. Pinned shapes stay on the board; dotted rings mark the same string and fret in another chord.</p>
       <div className="voice-selection" role="status">
         <div><strong>{active ? shapeSummary(active) : 'Hover or select a connected shape to inspect its inversion.'}</strong>
-          {selected && <small>Pinned: {shapeSummary(selected)}</small>}</div>
-        {selected && <button type="button" onClick={resetSelection}>Clear selection</button>}
+          {selected.length > 0 && <small>{selected.length} pinned {selected.length === 1 ? 'shape' : 'shapes'}</small>}</div>
+        {selected.length > 0 && <button type="button" onClick={resetSelection}>Clear all selections</button>}
       </div>
-      {visibleShapes.length === 0 && <p className="voice-map-help">No chords enabled. Toggle a chord above or choose All chords.{selected ? ' Your pinned shape is still shown.' : ''}</p>}
+      {allShapes.length === 0
+        ? <p className="voice-map-help">No voicings were found for this bass string in the current progression.</p>
+        : visibleShapes.length === 0 && <p className="voice-map-help">No chords enabled. Toggle a chord above or choose All chords.{selected.length > 0 ? ' Your pinned shapes are still shown.' : ''}</p>}
       <TriadShapeFretboard allShapes={allShapes} shapes={visibleShapes} selected={selected} hovered={hovered} fretCount={FRET_COUNT}
-        onHover={shape => setHoveredId(shape ? triadShapeFamilyId(shape) : undefined)} onSelect={shape => setSelectedId(triadShapeFamilyId(shape))} />
-      <div className="fretboard-caption"><p>Three adjacent strings per shape · standard tuning</p><p>Close-position triads only · octave repeats highlight together.</p></div>
+        onHover={shape => setHoveredId(shape ? triadShapeFamilyId(shape) : undefined)} onSelect={toggleShape} />
+      <div className="fretboard-caption">{voicingLayout === 'closed'
+        ? <><p>Three adjacent strings per shape · standard tuning</p><p>Close-position triads · octave repeats highlight together.</p></>
+        : <><p>Skipped strings allowed · standard tuning</p><p>Spread triads · ergonomic CAGED-position voicings.</p></>}
+      </div>
       <div className="voice-shape-catalog" aria-label="Select any available shape">
-        {distinct.filter(triad => !hiddenChords.includes(triad.id)).map(triad => <details key={triad.id} open>
-          <summary>{displayNote(triad.chordName)} · {visibleShapes.filter(shape => shape.triad.id === triad.id).length} fretboard positions</summary>
-          <div className="voice-shape-grid">{INVERSION_GROUPS.map(group => {
-            const shapes = visibleShapes.filter(shape => shape.triad.id === triad.id && shape.inversion.index === group.index).sort(lowToHighStringOrder)
-            const roleOrder = group.order.split(' → ').map(role => chordIntervalLabel(role as 'root' | 'third' | 'fifth', triad.quality)).join(' → ')
-            return <section className="voice-inversion-group" key={group.index} aria-label={`${group.name}, ${shapes.length} positions`}>
-              <header><strong>{group.name}</strong><small>Bass → top · {roleOrder}</small></header>
-              <div className="voice-inversion-list">{groupTriadShapeRepeats(shapes).map(repeats => {
+        {distinct.filter(triad => !hiddenChords.includes(triad.id)).map(triad => {
+          const triadShapes = visibleShapes.filter(shape => shape.triad.id === triad.id)
+          return <details key={triad.id} open>
+          <summary>{displayNote(triad.chordName)} · {triadShapes.length} fretboard positions</summary>
+          {triadShapes.length === 0
+            ? <p className="voice-catalog-empty">No voicings found for this bass string.</p>
+            : <div className="voice-shape-grid">{TRIAD_VOICING_PATTERNS[voicingLayout].map(pattern => {
+            const shapes = visibleShapes.filter(shape => shape.triad.id === triad.id && shape.inversion.index === pattern.inversion.index).sort(lowToHighStringOrder)
+            const roleOrder = pattern.bassToTop.map(role => chordIntervalLabel(role, triad.quality)).join(' → ')
+            const repeatGroups = groupTriadShapeRepeats(shapes)
+            return <section className="voice-inversion-group" key={pattern.id} aria-label={`${pattern.inversion.name}, ${shapes.length} positions`}>
+              <header><strong>{pattern.inversion.name}</strong><small>Bass → top · {roleOrder}</small></header>
+              <div className="voice-inversion-list">{repeatGroups.length === 0
+                ? <p className="voice-inversion-empty">No shape in this position.</p>
+                : repeatGroups.map(repeats => {
                 const shape = repeats[0]
                 const root = shape.notes.find(note => note.tone.role === 'root')!
+                const position = shape.cagedPosition
+                const positionFrets = [...new Set(repeats.flatMap(repeat => repeat.cagedPosition ? [repeat.cagedPosition.anchorFret] : []))]
                 return <button key={shape.id} type="button"
-                  style={{ '--shape-color': shapeColor(shape) } as CSSProperties} aria-pressed={selectedId === triadShapeFamilyId(shape)}
+                  data-hovered={hoveredId === triadShapeFamilyId(shape) ? 'true' : undefined}
+                  style={{ '--shape-color': shapeColor(shape) } as CSSProperties} aria-pressed={selectedIds.includes(triadShapeFamilyId(shape))}
                   onMouseEnter={() => setHoveredId(triadShapeFamilyId(shape))} onMouseLeave={() => setHoveredId(undefined)}
                   onFocus={() => setHoveredId(triadShapeFamilyId(shape))} onBlur={() => setHoveredId(undefined)}
-                  onClick={() => setSelectedId(triadShapeFamilyId(shape))}>
-                  <strong>{STRING_NAMES[root.string - 1]} ({root.string}): {repeats.map(repeat => fretLabel(repeat.notes.find(note => note.tone.role === 'root')!.fret)).join(' / ')}</strong>
+                  onClick={() => toggleShape(shape)}>
+                  <strong>{position
+                    ? `${position.form}-shape · ${positionFrets.length === 1 ? 'fret' : 'frets'} ${positionFrets.join(' / ')} ${positionFrets.length === 1 ? 'position' : 'positions'}`
+                    : `${STRING_NAMES[root.string - 1]} (${root.string}): ${repeats.map(repeat => fretLabel(repeat.notes.find(note => note.tone.role === 'root')!.fret)).join(' / ')}`}</strong>
+                  {position && <small>Root · {STRING_NAMES[root.string - 1]} string ({root.string}): {repeats.map(repeat => fretLabel(repeat.notes.find(note => note.tone.role === 'root')!.fret)).join(' / ')}</small>}
                 </button>
               })}</div>
             </section>
-          })}</div>
-        </details>)}
+          })}</div>}
+        </details>})}
       </div>
     </section>
     <footer className="page-footer">Voice Leading<span>Recognize shapes. Find common ground.</span></footer>
