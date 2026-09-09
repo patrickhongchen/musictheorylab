@@ -32,14 +32,16 @@ export interface PentatonicScale {
   readonly tones: readonly PentatonicScaleTone[]
 }
 export interface ChordTone { readonly pitchClass: PitchClass; readonly role: ChordToneRole; readonly interval: string }
-export interface Triad {
+export interface IndependentTriad {
   readonly id: string
   readonly root: PitchClass
   readonly chordName: string
-  readonly romanNumeral: RomanNumeral
-  readonly scaleDegree: ScaleDegree
   readonly quality: ChordQuality
   readonly tones: readonly ChordTone[]
+}
+export interface Triad extends IndependentTriad {
+  readonly romanNumeral: RomanNumeral
+  readonly scaleDegree: ScaleDegree
 }
 export interface VoicedNote { readonly pitch: Pitch; readonly role: ChordToneRole }
 export interface Inversion { readonly index: 0 | 1 | 2; readonly name: string; readonly figure: '' | '6' | '6/4' }

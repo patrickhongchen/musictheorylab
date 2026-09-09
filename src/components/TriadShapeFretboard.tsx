@@ -1,0 +1,83 @@
+import { useId } from 'react'
+import { STANDARD_TUNING } from '../music/fretboard'
+import { triadShapeFamilyId, type TriadShape } from '../music/triadShapes'
+import { chordIntervalLabel, displayNote } from '../presentation/notes'
+import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
+
+export const shapeColor = (shape: TriadShape) => PROGRESSION_STEP_COLORS[(shape.colorIndex ?? 0) % PROGRESSION_STEP_COLORS.length]
+export const shapeSummary = (shape: TriadShape) => `${displayNote(shape.triad.chordName)} · ${shape.inversion.name} · Bass→top ${[...shape.notes].reverse().map(note => `${displayNote(note.tone.pitchClass.name)} (${chordIntervalLabel(note.tone.role, shape.triad.quality)})`).join(' → ')}`
+const positionKey = (note: TriadShape['notes'][number]) => `${note.string}:${note.fret}`
+
+interface Props {
+  allShapes: readonly TriadShape[]
+  shapes: readonly TriadShape[]
+  selected: TriadShape | undefined
+  hovered: TriadShape | undefined
+  onHover: (shape: TriadShape | undefined) => void
+  onSelect: (shape: TriadShape) => void
+  fretCount: number
+}
+
+export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHover, onSelect, fretCount }: Props) {
+  const titleId = useId()
+  const nut = 102
+  const step = 70
+  const end = nut + fretCount * step
+  const fretX = (fret: number) => fret === 0 ? 73 : nut + (fret - 0.5) * step
+  const stringY = (string: number) => 48 + (string - 1) * 46
+  const selectedRepeats = selected ? allShapes.filter(shape => triadShapeFamilyId(shape) === triadShapeFamilyId(selected)) : []
+  const hoveredRepeats = hovered ? shapes.filter(shape => triadShapeFamilyId(shape) === triadShapeFamilyId(hovered)) : []
+  const selectedPositions = new Set(selectedRepeats.flatMap(shape => shape.notes.map(positionKey)))
+  const active = hovered ?? selected
+  const visible = [...shapes, ...selectedRepeats.filter(repeat => !shapes.some(shape => shape.id === repeat.id))]
+  const renderShape = (shape: TriadShape, overlay = false) => {
+    const emphasized = overlay || selectedRepeats.some(repeat => repeat.id === shape.id)
+    const color = shapeColor(shape)
+    const points = shape.notes.map(note => `${fretX(note.fret)},${stringY(note.string)}`).join(' ')
+    return <g key={`${shape.id}-${overlay}`} className="triad-map-shape"
+      opacity={emphasized ? 1 : active ? 0.6 : 0.8}
+      pointerEvents={overlay ? 'none' : undefined}
+      onMouseEnter={overlay ? undefined : () => onHover(shape)}
+      onMouseLeave={overlay ? undefined : () => onHover(undefined)}
+      onClick={overlay ? undefined : () => onSelect(shape)}>
+      <title>{shapeSummary(shape)}</title>
+      {emphasized && <polyline points={points} fill="none" stroke="#faf9f6" strokeWidth="11" strokeLinejoin="round" />}
+      <polyline points={points} fill="none" stroke={color} strokeWidth={emphasized ? 4 : 2} strokeLinejoin="round" />
+      {!overlay && <polyline points={points} fill="none" stroke="transparent" strokeWidth="14" />}
+      {shape.notes.map((note, index) => {
+        const shared = selected && shape.triad.id !== selected.triad.id && selectedPositions.has(positionKey(note))
+        const isBass = index === shape.notes.length - 1
+        return <g key={note.string} transform={`translate(${fretX(note.fret)}, ${stringY(note.string)})`}>
+          {shared && <circle r="20" fill="none" stroke="#252925" strokeWidth="2" strokeDasharray="3 3" />}
+          <circle r={emphasized ? 16 : 9} fill={emphasized ? color : '#faf9f6'} stroke={color} strokeWidth="2" />
+          {emphasized && <>
+            <text textAnchor="middle" y="4" fill="white" fontSize="11" fontWeight="700">{chordIntervalLabel(note.tone.role, shape.triad.quality)}</text>
+            <text x="0" y="-22" textAnchor="middle" fill={color} fontSize="10" fontWeight="700" stroke="#faf9f6" strokeWidth="3" paintOrder="stroke">
+              {isBass ? `Bass ${displayNote(note.tone.pitchClass.name)}` : displayNote(note.tone.pitchClass.name)}
+            </text>
+          </>}
+          {index === 0 && !emphasized && <text x="0" y="-14" textAnchor="middle" fill={color} fontSize="11" fontWeight="700" stroke="#faf9f6" strokeWidth="3" paintOrder="stroke">{displayNote(shape.triad.root.name)}{({ major: '', minor: 'm', diminished: '°', augmented: '+' })[shape.triad.quality]}</text>}
+        </g>
+      })}
+    </g>
+  }
+  return <div className="fretboard-scroll" tabIndex={0} role="region" aria-label="Triad shape fretboard, scroll horizontally to fret 22">
+    <svg className="fretboard triad-shape-board" style={{ minWidth: end + 24 }} viewBox={`0 0 ${end + 24} 322`} role="img" aria-labelledby={titleId}>
+      <title id={titleId}>All visible triad shapes. High E at top. Select shapes here or use the shape buttons below.</title>
+      <rect x={nut} y="48" width={end - nut} height="230" fill="#f3f1eb" />
+      {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret <= fretCount).map(fret => <circle key={fret} cx={fretX(fret)} cy="163" r="4" fill="#d3d1c7" />)}
+      {Array.from({ length: fretCount + 1 }, (_, fret) => <g key={fret}>
+        {fret > 0 && <line x1={nut + fret * step} x2={nut + fret * step} y1="48" y2="278" stroke="#c6c7bd" />}
+        <text x={fretX(fret)} y="310" textAnchor="middle" className="fret-label">{fret}</text>
+      </g>)}
+      {[...STANDARD_TUNING].reverse().map((note, index) => <g key={note.scientific}>
+        <line x1="55" x2={end} y1={stringY(index + 1)} y2={stringY(index + 1)} stroke="#a6a99f" strokeWidth={0.8 + index * 0.2} />
+        <text x="9" y={stringY(index + 1) + 5} className="string-label">{displayNote(note.name)}<tspan dx="5" className="string-number">({index + 1})</tspan></text>
+      </g>)}
+      <line x1={nut} x2={nut} y1="46" y2="280" stroke="#464c42" strokeWidth="5" />
+      {visible.map(shape => renderShape(shape))}
+      {selectedRepeats.map(shape => renderShape(shape, true))}
+      {hoveredRepeats.filter(shape => !selectedRepeats.some(repeat => repeat.id === shape.id)).map(shape => renderShape(shape, true))}
+    </svg>
+  </div>
+}

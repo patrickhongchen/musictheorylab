@@ -6,10 +6,13 @@ import { ProgressionBuilder } from './views/ProgressionBuilder'
 import { ScaleExplorer } from './views/ScaleExplorer'
 import { SoloingExplorer } from './views/SoloingExplorer'
 
+import { VoiceLeadingExplorer } from './views/VoiceLeadingExplorer'
+
 const LAB_VIEWS = {
   explorer: TriadExplorer,
   progression: ProgressionBuilder,
   scales: ScaleExplorer,
+  'voice-leading': VoiceLeadingExplorer,
   blues: SoloingExplorer,
 } satisfies Record<LabPage, ComponentType>
 

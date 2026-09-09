@@ -1,6 +1,7 @@
 export const LABS = [
   { id: 'explorer', label: 'Explorer', title: 'Diatonic Triad Explorer' },
   { id: 'progression', label: 'Progression Builder', title: 'Progression Builder' },
+  { id: 'voice-leading', label: 'Voice Leading', title: 'Voice Leading' },
   { id: 'scales', label: 'Scales', title: 'Pentatonic Scale Map' },
   // Preserve existing bookmarks for the original blues lab.
   { id: 'blues', label: 'Soloing', title: 'Soloing' },

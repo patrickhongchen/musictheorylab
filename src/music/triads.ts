@@ -1,6 +1,7 @@
-import { ChordType, Interval } from 'tonal'
+import { ChordType, Interval, Note } from 'tonal'
+import { pitchClass } from './pitches'
 import { romanNumeral } from './romanNumerals'
-import type { ChordQuality, ChordToneRole, Scale, ScaleDegree, Triad } from './types'
+import type { ChordQuality, ChordToneRole, Scale, ScaleDegree, Triad, IndependentTriad } from './types'
 
 const ROLES: readonly ChordToneRole[] = ['root', 'third', 'fifth']
 const QUALITIES: readonly string[] = ['major', 'minor', 'diminished', 'augmented']
@@ -21,4 +22,21 @@ export function diatonicTriads(scale: Scale): Triad[] {
       tones: notes.map((pitchClass, toneIndex) => ({ pitchClass, role: ROLES[toneIndex], interval: intervals[toneIndex] })),
     }
   })
+}
+
+/** Build a triad from its own root and quality, without a parent scale. */
+export function createTriad(rootName: string, quality: ChordQuality): IndependentTriad {
+  const root = pitchClass(rootName)
+  const intervals = {
+    major: ['1P', '3M', '5P'],
+    minor: ['1P', '3m', '5P'],
+    diminished: ['1P', '3m', '5d'],
+    augmented: ['1P', '3M', '5A'],
+  }[quality]
+  return {
+    id: `${root.name}:${quality}`, root, quality, chordName: `${root.name} ${quality}`,
+    tones: intervals.map((interval, index) => ({
+      pitchClass: pitchClass(Note.transpose(root.name, interval)), role: ROLES[index], interval,
+    })),
+  }
 }
