@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createPentatonicScale, createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
 import { ascendingPentatonicPitches, ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
-import { pitch, pitchAtMidi, pitchClass } from './pitches'
+import { pitch, pitchAtMidi, pitchClass, transposePitchClassName } from './pitches'
 import { createFretboard, createPentatonicScaleFretboard, createProgressionFretboard, createProgressionFretboards, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
@@ -27,6 +27,12 @@ describe('C major / G acceptance case', () => {
 })
 
 describe('transposition and spelling', () => {
+  it('transposes pitch classes in either direction with simple spellings', () => {
+    expect(['C', 'F', 'G'].map(note => transposePitchClassName(note, 2))).toEqual(['D', 'G', 'A'])
+    expect(['C', 'F', 'G'].map(note => transposePitchClassName(note, -1))).toEqual(['B', 'E', 'F#'])
+    expect(() => transposePitchClassName('C', 1.5)).toThrow('integer')
+  })
+
   it.each([
     ['D', 'A', ['D major', 'F# minor', 'A major'], [['D4', 'F#4', 'A4'], ['C#4', 'F#4', 'A4'], ['C#4', 'E4', 'A4']]],
     ['Eb', 'Bb', ['Eb major', 'G minor', 'Bb major'], [['Eb4', 'G4', 'Bb4'], ['D4', 'G4', 'Bb4'], ['D4', 'F4', 'Bb4']]],

@@ -1,10 +1,19 @@
 import { Note } from 'tonal'
 import type { Pitch, PitchClass } from './types'
 
+export const CHROMATIC_PITCH_CLASS_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
+
 export function pitchClass(name: string): PitchClass {
   const note = Note.get(name)
   if (note.empty) throw new Error(`Invalid note: ${name}`)
   return { name: note.pc, letter: note.letter, accidental: note.acc, chroma: note.chroma }
+}
+
+/** Transpose a pitch-class name to a simple, fretboard-friendly spelling. */
+export function transposePitchClassName(name: string, semitones: number): string {
+  if (!Number.isInteger(semitones)) throw new Error('Transpose interval must be an integer number of semitones')
+  const chroma = pitchClass(name).chroma
+  return CHROMATIC_PITCH_CLASS_NAMES[(chroma + semitones % 12 + 12) % 12]
 }
 
 export function pitch(name: string): Pitch {

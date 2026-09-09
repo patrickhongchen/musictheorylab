@@ -1,4 +1,3 @@
-import { useId } from 'react'
 import { STANDARD_TUNING } from '../music/fretboard'
 import { triadShapeFamilyId, type TriadShape } from '../music/triadShapes'
 import { chordIntervalLabel, displayNote } from '../presentation/notes'
@@ -19,7 +18,6 @@ interface Props {
 }
 
 export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHover, onSelect, fretCount }: Props) {
-  const titleId = useId()
   const nut = 102
   const step = 70
   const end = nut + fretCount * step
@@ -30,8 +28,10 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
   const selectedPositions = new Set(selectedRepeats.flatMap(shape => shape.notes.map(positionKey)))
   const active = hovered ?? selected
   const visible = [...shapes, ...selectedRepeats.filter(repeat => !shapes.some(shape => shape.id === repeat.id))]
-  const renderShape = (shape: TriadShape, overlay = false) => {
-    const emphasized = overlay || selectedRepeats.some(repeat => repeat.id === shape.id)
+  const hoveredFamilyId = hovered ? triadShapeFamilyId(hovered) : undefined
+  const selectedFamilyId = selected ? triadShapeFamilyId(selected) : undefined
+  const renderShape = (shape: TriadShape, overlay = false, showDetails = overlay) => {
+    const emphasized = overlay
     const color = shapeColor(shape)
     const points = shape.notes.map(note => `${fretX(note.fret)},${stringY(note.string)}`).join(' ')
     return <g key={`${shape.id}-${overlay}`} className="triad-map-shape"
@@ -40,30 +40,26 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       onMouseEnter={overlay ? undefined : () => onHover(shape)}
       onMouseLeave={overlay ? undefined : () => onHover(undefined)}
       onClick={overlay ? undefined : () => onSelect(shape)}>
-      <title>{shapeSummary(shape)}</title>
       {emphasized && <polyline points={points} fill="none" stroke="#faf9f6" strokeWidth="11" strokeLinejoin="round" />}
       <polyline points={points} fill="none" stroke={color} strokeWidth={emphasized ? 4 : 2} strokeLinejoin="round" />
       {!overlay && <polyline points={points} fill="none" stroke="transparent" strokeWidth="14" />}
-      {shape.notes.map((note, index) => {
+      {shape.notes.map(note => {
         const shared = selected && shape.triad.id !== selected.triad.id && selectedPositions.has(positionKey(note))
-        const isBass = index === shape.notes.length - 1
         return <g key={note.string} transform={`translate(${fretX(note.fret)}, ${stringY(note.string)})`}>
           {shared && <circle r="20" fill="none" stroke="#252925" strokeWidth="2" strokeDasharray="3 3" />}
           <circle r={emphasized ? 16 : 9} fill={emphasized ? color : '#faf9f6'} stroke={color} strokeWidth="2" />
-          {emphasized && <>
+          {showDetails && <>
             <text textAnchor="middle" y="4" fill="white" fontSize="11" fontWeight="700">{chordIntervalLabel(note.tone.role, shape.triad.quality)}</text>
             <text x="0" y="-22" textAnchor="middle" fill={color} fontSize="10" fontWeight="700" stroke="#faf9f6" strokeWidth="3" paintOrder="stroke">
-              {isBass ? `Bass ${displayNote(note.tone.pitchClass.name)}` : displayNote(note.tone.pitchClass.name)}
+              {displayNote(note.tone.pitchClass.name)}
             </text>
           </>}
-          {index === 0 && !emphasized && <text x="0" y="-14" textAnchor="middle" fill={color} fontSize="11" fontWeight="700" stroke="#faf9f6" strokeWidth="3" paintOrder="stroke">{displayNote(shape.triad.root.name)}{({ major: '', minor: 'm', diminished: '°', augmented: '+' })[shape.triad.quality]}</text>}
         </g>
       })}
     </g>
   }
   return <div className="fretboard-scroll" tabIndex={0} role="region" aria-label="Triad shape fretboard, scroll horizontally to fret 22">
-    <svg className="fretboard triad-shape-board" style={{ minWidth: end + 24 }} viewBox={`0 0 ${end + 24} 322`} role="img" aria-labelledby={titleId}>
-      <title id={titleId}>All visible triad shapes. High E at top. Select shapes here or use the shape buttons below.</title>
+    <svg className="fretboard triad-shape-board" style={{ minWidth: end + 24 }} viewBox={`0 0 ${end + 24} 322`} role="img" aria-label="All visible triad shapes. Colors identify chords. High E is at the top. Select a shape to reveal its notes and intervals.">
       <rect x={nut} y="48" width={end - nut} height="230" fill="#f3f1eb" />
       {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret <= fretCount).map(fret => <circle key={fret} cx={fretX(fret)} cy="163" r="4" fill="#d3d1c7" />)}
       {Array.from({ length: fretCount + 1 }, (_, fret) => <g key={fret}>
@@ -76,7 +72,7 @@ export function TriadShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       </g>)}
       <line x1={nut} x2={nut} y1="46" y2="280" stroke="#464c42" strokeWidth="5" />
       {visible.map(shape => renderShape(shape))}
-      {selectedRepeats.map(shape => renderShape(shape, true))}
+      {selectedRepeats.map(shape => renderShape(shape, true, !hoveredFamilyId || hoveredFamilyId === selectedFamilyId))}
       {hoveredRepeats.filter(shape => !selectedRepeats.some(repeat => repeat.id === shape.id)).map(shape => renderShape(shape, true))}
     </svg>
   </div>

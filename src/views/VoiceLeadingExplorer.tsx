@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PROGRESSION_STEP_COLORS } from '../components/ProgressionPathView'
 import { shapeColor, shapeSummary, TriadShapeFretboard } from '../components/TriadShapeFretboard'
+import { transposePitchClassName } from '../music/pitches'
 import { createTriadShapesOnStrings, groupTriadShapeRepeats, triadShapeFamilyId } from '../music/triadShapes'
 import { createTriad } from '../music/triads'
 import type { ChordQuality } from '../music/types'
@@ -33,8 +34,27 @@ const lowToHighStringOrder = (left: ReturnType<typeof createTriadShapesOnStrings
   || Math.max(...left.notes.map(note => note.fret)) - Math.max(...right.notes.map(note => note.fret))
 )
 
+function ArrowIcon({ direction }: { direction: 'left' | 'right' | 'up' | 'down' }) {
+  const paths = {
+    left: 'M19 12H5m7 7-7-7 7-7',
+    right: 'M5 12h14m-7-7 7 7-7 7',
+    up: 'M12 19V5m-7 7 7-7 7 7',
+    down: 'M12 5v14m7-7-7 7-7-7',
+  }
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d={paths[direction]} /></svg>
+}
+
+function TrashIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" /></svg>
+}
+
+function PlusIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+}
+
 export function VoiceLeadingExplorer() {
   const [chords, setChords] = useState<ChordChoice[]>(PRESETS[0].chords)
+  const [transposeAmount, setTransposeAmount] = useState(2)
   const [stringStart, setStringStart] = useState(1)
   const [hiddenChords, setHiddenChords] = useState<string[]>([])
   const [selectedId, setSelectedId] = useState<string>()
@@ -53,32 +73,80 @@ export function VoiceLeadingExplorer() {
   const presetIndex = PRESETS.findIndex(preset => JSON.stringify(preset.chords) === JSON.stringify(chords))
   function resetSelection() { setSelectedId(undefined); setHoveredId(undefined) }
   function updateProgression(next: ChordChoice[]) { setChords(next); setHiddenChords([]); resetSelection() }
+  function moveChord(index: number, nextIndex: number) {
+    if (nextIndex < 0 || nextIndex >= chords.length) return
+    const next = [...chords]
+    const [moved] = next.splice(index, 1)
+    next.splice(nextIndex, 0, moved)
+    updateProgression(next)
+  }
 
   return <>
     <div className="intro progression-intro">
       <div><h1>Explore every triad shape.</h1><p>Choose each chord’s root and type independently. Then explore the movement between shapes.</p></div>
     </div>
     <section className="voice-leading-controls" aria-label="Voice leading controls">
-      <label>Progression<select value={presetIndex < 0 ? 'custom' : presetIndex} onChange={event => updateProgression(PRESETS[Number(event.target.value)].chords)}>
-        {PRESETS.map((preset, index) => <option key={index} value={index}>{preset.label}</option>)}
-        {presetIndex < 0 && <option value="custom">Custom progression</option>}
-      </select></label>
-      <label>String range<select value={stringStart} onChange={event => { setStringStart(Number(event.target.value)); resetSelection() }}>
-        <option value={0}>All · four three-string groups</option>
-        {[1, 2, 3, 4].map(start => <option key={start} value={start}>Strings {start}–{start + 2}</option>)}
-      </select></label>
+      <div className="voice-settings-toolbar">
+        <label>Progression<select value={presetIndex < 0 ? 'custom' : presetIndex} onChange={event => updateProgression(PRESETS[Number(event.target.value)].chords)}>
+          {PRESETS.map((preset, index) => <option key={index} value={index}>{preset.label}</option>)}
+          {presetIndex < 0 && <option value="custom">Custom progression</option>}
+        </select></label>
+        <label>String range<select value={stringStart} onChange={event => { setStringStart(Number(event.target.value)); resetSelection() }}>
+          <option value={0}>All · four three-string groups</option>
+          {[1, 2, 3, 4].map(start => <option key={start} value={start}>Strings {start}–{start + 2}</option>)}
+        </select></label>
+        <div className="voice-transpose-controls">
+          <label>Transpose all<select value={transposeAmount} onChange={event => setTransposeAmount(Number(event.target.value))}>
+            {[
+              'Half step (1 semitone)', 'Whole step (2 semitones)', 'Minor 3rd (3 semitones)',
+              'Major 3rd (4 semitones)', 'Perfect 4th (5 semitones)', 'Tritone (6 semitones)',
+              'Perfect 5th (7 semitones)', 'Minor 6th (8 semitones)', 'Major 6th (9 semitones)',
+              'Minor 7th (10 semitones)', 'Major 7th (11 semitones)',
+            ].map((label, index) => <option key={index + 1} value={index + 1}>{label}</option>)}
+          </select></label>
+          <div className="voice-transpose-buttons" aria-label="Transpose direction">
+            <button type="button" onClick={() => updateProgression(chords.map(chord => ({ ...chord, root: transposePitchClassName(chord.root, -transposeAmount) })))}><ArrowIcon direction="down" />Down</button>
+            <button type="button" onClick={() => updateProgression(chords.map(chord => ({ ...chord, root: transposePitchClassName(chord.root, transposeAmount) })))}><ArrowIcon direction="up" />Up</button>
+          </div>
+          <span>Shifts every chord together.</span>
+        </div>
+      </div>
       <div className="voice-progression-editor">
-        <div>{chords.map((chord, index) => <fieldset key={index}>
-          <legend>Chord {index + 1}</legend>
-          <label>Root<select value={chord.root} onChange={event => updateProgression(chords.map((old, slot) => slot === index ? { ...old, root: event.target.value } : old))}>
-            {ROOTS.map(root => <option key={root} value={root}>{displayNote(root)}</option>)}
-          </select></label>
-          <label>Type<select value={chord.quality} onChange={event => updateProgression(chords.map((old, slot) => slot === index ? { ...old, quality: event.target.value as ChordQuality } : old))}>
-            {QUALITIES.map(quality => <option key={quality} value={quality}>{quality[0].toUpperCase() + quality.slice(1)}</option>)}
-          </select></label>
-        </fieldset>)}</div>
-        <button type="button" disabled={chords.length >= 8} onClick={() => updateProgression([...chords, { root: 'C', quality: 'major' }])}>Add chord</button>
-        <button type="button" disabled={chords.length <= 1} onClick={() => updateProgression(chords.slice(0, -1))}>Remove last chord</button>
+        <h2>Progression</h2>
+        <ol className="voice-chord-fields">
+          {chords.map((chord, index) => {
+            const chordName = `${displayNote(chord.root)} ${chord.quality[0].toUpperCase() + chord.quality.slice(1)}`
+            return <li className="voice-chord-item" key={index}>
+              <fieldset className="voice-chord-card">
+                <legend className="sr-only">Chord {index + 1}: {chordName}</legend>
+                <header>
+                  <span className="voice-chord-number" aria-hidden="true">{index + 1}</span>
+                  <strong>{chordName}</strong>
+                  <button className="voice-chord-delete" type="button" title={`Remove chord ${index + 1}`} aria-label={`Remove chord ${index + 1}: ${chordName}`} disabled={chords.length <= 1}
+                    onClick={() => updateProgression(chords.filter((_, slot) => slot !== index))}><TrashIcon /></button>
+                </header>
+                <div className="voice-chord-inputs">
+                  <label>Root<select value={chord.root} onChange={event => updateProgression(chords.map((old, slot) => slot === index ? { ...old, root: event.target.value } : old))}>
+                    {ROOTS.map(root => <option key={root} value={root}>{displayNote(root)}</option>)}
+                  </select></label>
+                  <label>Type<select value={chord.quality} onChange={event => updateProgression(chords.map((old, slot) => slot === index ? { ...old, quality: event.target.value as ChordQuality } : old))}>
+                    {QUALITIES.map(quality => <option key={quality} value={quality}>{quality[0].toUpperCase() + quality.slice(1)}</option>)}
+                  </select></label>
+                </div>
+                <div className="voice-chord-actions" aria-label={`Reorder chord ${index + 1}`}>
+                  <button type="button" title="Move chord left" aria-label={`Move chord ${index + 1} left`} disabled={index === 0} onClick={() => moveChord(index, index - 1)}><ArrowIcon direction="left" /></button>
+                  <button type="button" title="Move chord right" aria-label={`Move chord ${index + 1} right`} disabled={index === chords.length - 1} onClick={() => moveChord(index, index + 1)}><ArrowIcon direction="right" /></button>
+                </div>
+              </fieldset>
+              <span className="voice-sequence-arrow" aria-hidden="true"><ArrowIcon direction="right" /></span>
+            </li>
+          })}
+          <li className="voice-add-item">
+            <button className="voice-add-chord" type="button" disabled={chords.length >= 8} onClick={() => updateProgression([...chords, { root: 'C', quality: 'major' }])}>
+              <span><PlusIcon /></span>Add chord
+            </button>
+          </li>
+        </ol>
       </div>
     </section>
     <section className="voice-leading-map" aria-labelledby="voice-map-heading">
@@ -93,7 +161,7 @@ export function VoiceLeadingExplorer() {
           </button>
         </Fragment>)}
       </div>
-      <p className="voice-map-help">Toggle chords above to show any combination. Select a shape to compare it with the visible chords. Your selected shape stays on the board; dotted rings mark the same string and fret in another chord.</p>
+      <p className="voice-map-help">Colors identify chords without repeating chord names across the fretboard. Hover or select a shape to reveal its actual notes and intervals. Your selected shape stays on the board; dotted rings mark the same string and fret in another chord.</p>
       <div className="voice-selection" role="status">
         <div><strong>{active ? shapeSummary(active) : 'Hover or select a connected shape to inspect its inversion.'}</strong>
           {selected && <small>Pinned: {shapeSummary(selected)}</small>}</div>
@@ -103,10 +171,6 @@ export function VoiceLeadingExplorer() {
       <TriadShapeFretboard allShapes={allShapes} shapes={visibleShapes} selected={selected} hovered={hovered} fretCount={FRET_COUNT}
         onHover={shape => setHoveredId(shape ? triadShapeFamilyId(shape) : undefined)} onSelect={shape => setSelectedId(triadShapeFamilyId(shape))} />
       <div className="fretboard-caption"><p>Three adjacent strings per shape · standard tuning</p><p>Close-position triads only · octave repeats highlight together.</p></div>
-      <div className="voice-inversion-guide">
-        <strong>Three inversions, repeated along the neck</strong>
-        <p>Each card groups the same shape across octaves and lists its root positions. The lowest sounding note—the bass—sets the inversion: root position is root → third → fifth; first inversion is third → fifth → root; second inversion is fifth → root → third.</p>
-      </div>
       <div className="voice-shape-catalog" aria-label="Select any available shape">
         {distinct.filter(triad => !hiddenChords.includes(triad.id)).map(triad => <details key={triad.id} open>
           <summary>{displayNote(triad.chordName)} · {visibleShapes.filter(shape => shape.triad.id === triad.id).length} fretboard positions</summary>

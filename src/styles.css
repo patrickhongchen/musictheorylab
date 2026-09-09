@@ -521,16 +521,48 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
 
 /* Voice Leading: every candidate remains available, including overlapping shapes. */
-.voice-leading-controls { display: flex; flex-wrap: wrap; align-items: start; gap: 20px; padding: 20px 0; border-block: 1px solid var(--line); }
-.voice-leading-controls label { display: grid; gap: 8px; font-size: 12px; color: var(--muted); }
-.voice-leading-controls select { min-height: 40px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px; background: #faf9f6; color: var(--ink); }
-.voice-progression-editor { flex: 1 1 240px; padding: 10px 0; }
+.voice-leading-controls { padding: 0 0 30px; border-bottom: 1px solid var(--line); }
+.voice-settings-toolbar { display: grid; grid-template-columns: minmax(190px, .8fr) minmax(210px, .9fr) minmax(430px, 2fr); gap: 22px; align-items: end; padding: 18px 20px; border: 1px solid #cfd2ca; border-radius: 8px; background: rgba(255, 255, 255, .34); box-shadow: 0 8px 26px rgba(36, 43, 37, .035); }
+.voice-leading-controls label { display: grid; gap: 7px; min-width: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .01em; }
+.voice-leading-controls select { width: 100%; min-width: 0; min-height: 44px; padding: 0 36px 0 12px; border: 1px solid #bec3ba; border-radius: 5px; background-color: #faf9f6; color: var(--ink); font-size: 13px; }
+.voice-leading-controls select:hover { border-color: #8d978e; }
+.voice-transpose-controls { display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(112px, auto); gap: 10px 12px; align-items: end; min-width: 0; padding-left: 22px; border-left: 1px solid var(--line); }
+.voice-transpose-buttons { display: flex; align-items: end; }
+.voice-transpose-buttons button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid #bec3ba; background: transparent; color: var(--ink); font-size: 12px; }
+.voice-transpose-buttons button + button { margin-left: -1px; }
+.voice-transpose-buttons button:first-child { border-radius: 5px 0 0 5px; }
+.voice-transpose-buttons button:last-child { border-radius: 0 5px 5px 0; }
+.voice-transpose-buttons button:hover { position: relative; border-color: var(--root); background: #edf3ef; color: var(--root); }
+.voice-transpose-buttons svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.voice-transpose-controls > span { align-self: center; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.voice-progression-editor { padding-top: 24px; }
+.voice-progression-editor > h2 { margin-bottom: 13px; font-size: 24px; }
 .voice-progression-editor summary, .voice-shape-catalog summary { cursor: pointer; }
-.voice-progression-editor > div { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
-.voice-progression-editor fieldset { display: flex; gap: 10px; min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 4px; }
-.voice-progression-editor legend { padding: 0 4px; font-size: 12px; color: var(--muted); }
-.voice-progression-editor button, .voice-selection button { padding: 8px 12px; border: 1px solid var(--line); background: transparent; border-radius: 4px; margin-right: 8px; cursor: pointer; }
-.voice-progression-editor button:disabled { opacity: .4; cursor: default; }
+.voice-chord-fields { display: flex; flex-wrap: wrap; gap: 28px; margin: 0; padding: 0; list-style: none; }
+.voice-chord-item { position: relative; flex: 1 1 210px; min-width: 200px; max-width: 245px; }
+.voice-chord-card { height: 100%; padding: 14px; border: 1px solid #cdd1c8; border-radius: 7px; background: rgba(255, 255, 255, .23); transition: border-color 150ms, background 150ms, box-shadow 150ms, transform 150ms; }
+.voice-chord-card:hover { border-color: #aeb6ac; background: rgba(255, 255, 255, .52); }
+.voice-chord-card:focus-within { border-color: var(--root); background: rgba(255, 255, 255, .65); box-shadow: 0 8px 24px rgba(34, 104, 91, .08), inset 0 0 0 1px var(--root); transform: translateY(-1px); }
+.voice-chord-card > header { display: grid; grid-template-columns: 20px minmax(0, 1fr) 34px; align-items: center; gap: 8px; margin-bottom: 16px; }
+.voice-chord-number { color: var(--muted); font-size: 12px; }
+.voice-chord-card > header strong { min-width: 0; overflow: hidden; color: var(--ink); font: 20px/1.15 var(--font-display); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.voice-chord-delete { width: 34px; min-height: 34px; padding: 0; border: 1px solid transparent; background: transparent; color: #777d75; opacity: .72; }
+.voice-chord-delete:hover:not(:disabled) { border-color: #d4bbb2; background: #f7efec; color: #8a3f2c; opacity: 1; }
+.voice-chord-delete svg, .voice-chord-actions svg, .voice-add-chord svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.voice-chord-inputs { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 9px; }
+.voice-chord-inputs select { padding-right: 24px; padding-left: 10px; }
+.voice-chord-actions { display: flex; gap: 7px; margin-top: 12px; }
+.voice-chord-actions button { display: grid; width: 40px; min-height: 40px; place-items: center; padding: 0; border: 1px solid #c8ccc4; background: transparent; color: var(--ink); }
+.voice-chord-actions button:hover:not(:disabled) { border-color: var(--root); background: #edf3ef; color: var(--root); }
+.voice-chord-actions button:disabled, .voice-chord-delete:disabled { opacity: .28; }
+.voice-sequence-arrow { position: absolute; z-index: 1; top: 50%; right: -23px; display: grid; width: 17px; height: 17px; place-items: center; color: #7b837b; transform: translateY(-50%); }
+.voice-sequence-arrow svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.voice-add-item { position: relative; flex: 0 1 148px; min-width: 134px; }
+.voice-add-chord { display: grid; width: 100%; height: 100%; min-height: 190px; place-content: center; gap: 10px; padding: 16px; border: 1px dashed #aeb5ab; background: transparent; color: var(--root); font-size: 12px; font-weight: 650; }
+.voice-add-chord > span { display: grid; width: 42px; height: 42px; margin: 0 auto; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
+.voice-add-chord:hover:not(:disabled) { border-color: var(--root); background: #edf3ef; }
+.voice-add-chord svg { width: 21px; height: 21px; }
+.voice-selection button { padding: 8px 12px; border: 1px solid var(--line); background: transparent; border-radius: 4px; cursor: pointer; }
 .voice-leading-map { margin-top: 28px; }
 .voice-chord-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0 14px; }
 .voice-chord-strip button { --shape-color: #465149; display: grid; gap: 6px; min-width: 100px; min-height: 64px; padding: 12px 18px; border: 1px solid var(--line); border-top: 3px solid var(--shape-color); border-radius: 5px; background: transparent; color: var(--shape-color); cursor: pointer; }
@@ -542,9 +574,6 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-selection strong { font-size: 14px; font-weight: 500; }
 .voice-selection small { display: block; color: var(--muted); font-size: 12px; margin-top: 8px; }
 .triad-map-shape { cursor: pointer; }
-.voice-inversion-guide { margin-top: 22px; padding: 14px 16px; border-left: 3px solid var(--root); background: #f3f1eb; }
-.voice-inversion-guide strong { font-size: 13px; }
-.voice-inversion-guide p { max-width: 900px; margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .voice-shape-catalog { display: grid; gap: 16px; margin-top: 24px; }
 .voice-shape-catalog details { border-top: 1px solid var(--line); padding-top: 16px; }
 .voice-shape-catalog summary { font-size: 15px; }
@@ -558,12 +587,34 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-inversion-list button[aria-pressed="true"], .voice-inversion-list button:hover { background: #eeeee5; outline: 1px solid var(--shape-color); }
 .voice-inversion-list button strong { font-size: 13px; }
 .voice-inversion-list button span, .voice-inversion-list button small { font-size: 11px; line-height: 1.4; }
+@media (max-width: 1000px) {
+  .voice-settings-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .voice-transpose-controls { grid-column: 1 / -1; padding: 17px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+  .voice-chord-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .voice-chord-item, .voice-add-item { min-width: 0; max-width: none; }
+  .voice-sequence-arrow { display: none; }
+  .voice-add-chord { min-height: 86px; }
+}
 @media (max-width: 700px) {
-  .voice-leading-controls { display: grid; grid-template-columns: 1fr; }
+  .voice-settings-toolbar { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+  .voice-transpose-controls { grid-column: auto; grid-template-columns: 1fr; gap: 10px; }
+  .voice-transpose-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .voice-transpose-buttons button { width: 100%; }
+  .voice-transpose-controls > span { margin-top: -1px; }
+  .voice-chord-fields { grid-template-columns: 1fr; }
+  .voice-chord-card { padding: 15px; }
+  .voice-chord-inputs { grid-template-columns: 92px minmax(0, 1fr); }
+  .voice-leading-controls select { min-height: 46px; font-size: 16px; }
+  .voice-chord-actions button { width: 44px; min-height: 44px; }
+  .voice-add-chord { min-height: 82px; grid-auto-flow: column; gap: 11px; }
+  .voice-add-chord > span { width: 34px; height: 34px; }
   .voice-selection { align-items: start; }
   .voice-chord-strip { gap: 8px; }
   .voice-chord-strip button { min-width: 80px; padding: 10px; }
   .voice-shape-grid { grid-template-columns: 1fr; }
   .voice-inversion-group > header { min-height: 0; }
   .voice-inversion-list { max-height: none; }
+}
+@media (max-width: 360px) {
+  .voice-chord-inputs { grid-template-columns: 1fr; }
 }
