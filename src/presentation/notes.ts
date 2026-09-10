@@ -9,8 +9,9 @@ export const ROLE_STYLE: Record<ChordToneRole, { label: string; number: string; 
   fifth: { label: 'Fifth', number: '5', color: '#72558e' },
 }
 
-/** Labels a triad tone relative to its own chord rather than the parent key. */
-export function chordIntervalLabel(role: ChordToneRole, quality: ChordQuality) {
+/** Labels a chord tone relative to its own chord rather than the parent key. */
+export function chordIntervalLabel(role: ChordToneRole | 'seventh', quality: ChordQuality | 'major7') {
+  if (role === 'seventh') return '7'
   if (role === 'root') return 'R'
   if (role === 'third') return quality === 'minor' || quality === 'diminished' ? '♭3' : '3'
   if (quality === 'diminished') return '♭5'

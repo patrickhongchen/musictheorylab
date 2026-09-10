@@ -588,7 +588,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-shape-catalog details { border-bottom: 1px solid var(--line); padding: 16px 0; }
 .voice-shape-catalog summary { font-size: 15px; }
 .voice-catalog-empty { margin: 14px 3px 2px; color: var(--muted); font-size: 12px; }
-.voice-shape-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 16px 3px 3px; }
+.voice-shape-grid { display: grid; grid-template-columns: repeat(var(--inversion-columns, 3), minmax(0, 1fr)); gap: 14px; padding: 16px 3px 3px; }
 .voice-inversion-group { min-width: 0; }
 .voice-inversion-group > header { display: grid; gap: 4px; min-height: 42px; padding: 0 4px 10px; border-bottom: 1px solid var(--line); }
 .voice-inversion-group > header h3 { margin: 0; font-size: 18px; font-weight: 600; }

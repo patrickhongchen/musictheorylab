@@ -3,6 +3,10 @@ import type { ChordQuality, ChordToneRole } from '../music/types'
 import { chordIntervalLabel } from './notes'
 
 describe('chordIntervalLabel', () => {
+  it('labels all Major 7 roles', () => {
+    expect((['root', 'third', 'fifth', 'seventh'] as const).map(role => chordIntervalLabel(role, 'major7')))
+      .toEqual(['R', '3', '5', '7'])
+  })
   it.each<[ChordQuality, readonly string[]]>([
     ['major', ['R', '3', '5']],
     ['minor', ['R', '♭3', '5']],
