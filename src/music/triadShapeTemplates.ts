@@ -1,5 +1,4 @@
-import { createCagedPositions, type CagedForm, type CagedPosition } from './cagedPositions'
-import { soundingBass, type PlayableChordShape } from './chordShapes'
+import { soundingBass, type CagedForm, type PlayableChordShape } from './chordShapes'
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordQuality, ChordToneRole, IndependentTriad } from './types'
 import { TRIAD_INVERSIONS, type VoicingLayout } from './voicingPatterns'
@@ -43,8 +42,8 @@ const spread = (quality: ChordQuality, definitions: readonly SpreadDefinition[])
 )
 
 /**
- * Curated, root-relative guitar geometry captured from the former runtime
- * generators. Quality variants are deliberately explicit: altered thirds and
+ * Curated, root-relative guitar geometry. Quality variants are deliberately
+ * explicit: altered thirds and
  * fifths are data here, rather than adjustments made by placement logic.
  */
 export const TRIAD_SHAPE_TEMPLATES: readonly TriadShapeTemplate[] = [
@@ -153,17 +152,6 @@ function firstRootFret(triad: IndependentTriad, template: TriadShapeTemplate): n
   return (triad.root.chroma - open.chroma + 12) % 12
 }
 
-function spreadPosition(
-  positions: readonly CagedPosition[],
-  template: TriadShapeTemplate,
-  rootFret: number,
-): CagedPosition | undefined {
-  const anchorFret = rootFret + (template.cagedAnchorOffset ?? 0)
-  return positions.find(candidate => (
-    candidate.form === template.cagedForm && candidate.anchorFret === anchorFret
-  ))
-}
-
 function inversionForShape(shape: Parameters<typeof soundingBass>[0]) {
   const role = soundingBass(shape).tone.role
   if (role === 'seventh') throw new Error('Triad templates cannot have a seventh in the bass')
@@ -185,8 +173,7 @@ export function createTriadShapesFromTemplates(
     template.quality === triad.quality && template.voicing === voicing
   ))
   const templateOrder = new Map(templates.map((template, index) => [template.id, index]))
-  const positions = voicing === 'spread' ? createCagedPositions(triad, fretCount) : []
-  const shapes: PlayableChordShape[] = []
+  const shapes: { readonly shape: PlayableChordShape; readonly sortAnchor: number }[] = []
 
   for (const template of templates) {
     for (let rootFret = firstRootFret(triad, template); rootFret <= fretCount; rootFret += 12) {
@@ -201,35 +188,31 @@ export function createTriadShapesFromTemplates(
         !== note.tone.pitchClass.chroma
       ))) throw new Error(`Invalid triad geometry: ${triad.quality}/${template.id}`)
 
-      const cagedPosition = voicing === 'spread' ? spreadPosition(positions, template, rootFret) : undefined
-      // The grip can fit while its teaching region's root anchor falls just
-      // beyond the final fret. The former CAGED search did not expose it.
-      if (voicing === 'spread' && !cagedPosition) continue
+      const cagedAnchorFret = rootFret + (template.cagedAnchorOffset ?? 0)
+      // A spread grip belongs to a root-anchored teaching region, so omit it
+      // when that region's anchor falls beyond the final fret.
+      if (voicing === 'spread' && cagedAnchorFret > fretCount) continue
       const base = {
         id: `${triad.id}:${template.id}:${rootFret}`,
         chord: triad,
         notes,
         inversion: TRIAD_INVERSIONS.root,
-        layout: voicing,
-        cagedForm: template.cagedForm,
-        cagedPosition,
+        cagedForms: [template.cagedForm],
         templateId: template.id,
-        templateName: `${voicing === 'closed' ? 'Closed' : 'Spread'} triad · ${inversionForShape({ chord: triad, notes, id: '', inversion: TRIAD_INVERSIONS.root }).name.toLowerCase()}`,
-        rootAnchor: { string: template.rootString, fret: rootFret },
       } as const
-      shapes.push({ ...base, inversion: inversionForShape(base) })
+      shapes.push({ shape: { ...base, inversion: inversionForShape(base) }, sortAnchor: cagedAnchorFret })
     }
   }
 
   return shapes.sort((left, right) => {
     if (voicing === 'closed') {
-      return left.notes[0].string - right.notes[0].string
-        || left.notes[0].fret - right.notes[0].fret
-        || left.notes[1].fret - right.notes[1].fret
-        || left.notes[2].fret - right.notes[2].fret
+      return left.shape.notes[0].string - right.shape.notes[0].string
+        || left.shape.notes[0].fret - right.shape.notes[0].fret
+        || left.shape.notes[1].fret - right.shape.notes[1].fret
+        || left.shape.notes[2].fret - right.shape.notes[2].fret
     }
-    return left.cagedPosition!.anchorFret - right.cagedPosition!.anchorFret
-      || left.inversion.index - right.inversion.index
-      || templateOrder.get(left.templateId!)! - templateOrder.get(right.templateId!)!
-  })
+    return left.sortAnchor - right.sortAnchor
+      || left.shape.inversion.index - right.shape.inversion.index
+      || templateOrder.get(left.shape.templateId)! - templateOrder.get(right.shape.templateId)!
+  }).map(candidate => candidate.shape)
 }

@@ -1,12 +1,9 @@
-import type { MajorSeventhCagedRegion } from './majorSeventhCaged'
-import type { CagedForm, CagedPosition } from './cagedPositions'
 import { STANDARD_TUNING } from './fretboard'
-import { triadShapeFamilyId, type TriadShape } from './triadShapes'
 import type { ChordQuality, IndependentTriad, PitchClass } from './types'
-import type { VoicingLayout } from './voicingPatterns'
 
 export type VoiceLeadingQuality = ChordQuality | 'major7'
 export type PlayableChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
+export type CagedForm = 'C' | 'A' | 'G' | 'E' | 'D'
 
 export interface MajorSeventhChordTone {
   readonly pitchClass: PitchClass
@@ -45,32 +42,9 @@ export interface PlayableChordShape {
   readonly chord: PlayableChord
   readonly notes: readonly PlayableChordNote[]
   readonly inversion: ChordShapeInversion
-  readonly compatibleCagedRegions?: readonly MajorSeventhCagedRegion[]
-  readonly cagedForm?: CagedForm
-  readonly cagedPosition?: CagedPosition
-  readonly layout?: VoicingLayout | 'drop2' | 'curated'
+  readonly cagedForms: readonly CagedForm[]
   readonly colorIndex?: number
-  readonly templateId?: string
-  readonly templateName?: string
-  readonly rootAnchor?: { readonly string: number; readonly fret: number }
-  readonly mutedStrings?: readonly number[]
-  /** Precomputed only by adapters that preserve an existing shape family. */
-  readonly familyId?: string
-}
-
-/** Adapt generated triads without changing their persistent shape identity. */
-export function fromTriadShape(shape: TriadShape): PlayableChordShape {
-  return {
-    id: shape.id,
-    chord: shape.triad,
-    notes: shape.notes,
-    inversion: shape.inversion,
-    cagedForm: shape.cagedForm,
-    cagedPosition: shape.cagedPosition,
-    layout: shape.layout,
-    colorIndex: shape.colorIndex,
-    familyId: triadShapeFamilyId(shape),
-  }
+  readonly templateId: string
 }
 
 /** Lowest note by actual standard-tuning pitch, independent of array or role order. */
@@ -83,13 +57,9 @@ export function soundingBass(shape: PlayableChordShape): PlayableChordNote {
   })
 }
 
-/** Same strings and geometry, translated only by whole octaves. */
+/** Canonical template identity groups the same shape at octave repeats. */
 export function chordShapeFamilyId(shape: PlayableChordShape): string {
-  if (shape.familyId) return shape.familyId
-  if (shape.templateId) return `${shape.chord.id}:${shape.templateId}`
-  const octaveOffset = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
-  const layout = shape.layout === 'spread' ? `:spread:${shape.cagedPosition?.form ?? ''}` : ''
-  return `${shape.chord.id}${layout}:${shape.notes.map(note => `${note.string}:${note.fret - octaveOffset}`).join('|')}`
+  return `${shape.chord.id}:${shape.templateId}`
 }
 
 export function groupChordShapeRepeats(

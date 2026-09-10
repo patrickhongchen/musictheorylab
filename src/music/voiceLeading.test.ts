@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { chordShapeFamilyId, soundingBass, type PlayableChordShape } from './chordShapes'
-import { classifyCagedForm } from './cagedPositions'
+import { chordShapeFamilyId, groupChordShapeRepeats, soundingBass } from './chordShapes'
+import { STANDARD_TUNING } from './fretboard'
 import { createMajorSeventh, createMajorSeventhShapes } from './majorSeventhShapes'
-import { createSpreadTriadShapes } from './spreadTriadShapes'
-import { createTriadShapesOnStrings } from './triadShapes'
 import { createTriadShapesFromTemplates, TRIAD_SHAPE_TEMPLATES } from './triadShapeTemplates'
 import { createTriad } from './triads'
 import type { ChordQuality } from './types'
@@ -114,7 +112,7 @@ describe('Voice Leading shape routing and filtering', () => {
     const actual = createPlayableShapesForChord(createChordChoice('cmaj7', 'C', 'major7'))
 
     expect(actual.map(shape => shape.id)).toEqual(existing.map(shape => shape.id))
-    expect(actual.map(shape => shape.layout)).toEqual(existing.map(shape => shape.layout))
+    expect(actual.map(shape => shape.templateId)).toEqual(existing.map(shape => shape.templateId))
   })
 
   it('applies lowest-string filtering after generation and permits a zero-result G filter', () => {
@@ -146,44 +144,6 @@ describe('Voice Leading shape routing and filtering', () => {
 const roots = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
 const fretCounts = [22, 35] as const
 const qualities: readonly ChordQuality[] = ['major', 'minor', 'diminished', 'augmented']
-const physicalKey = (shape: { readonly notes: PlayableChordShape['notes'] }) => (
-  shape.notes.map(note => `${note.string}:${note.fret}:${note.tone.role}:${note.tone.pitchClass.chroma}`).join('|')
-)
-
-function normalizeShape(shape: PlayableChordShape) {
-  const position = shape.cagedPosition
-  return {
-    physical: physicalKey(shape),
-    inversion: [shape.inversion.index, shape.inversion.name, shape.inversion.figure],
-    layout: shape.layout ?? 'closed',
-    cagedForm: shape.cagedForm ?? shape.cagedPosition?.form,
-    cagedPosition: position && {
-      id: position.id,
-      form: position.form,
-      anchor: [position.anchorString, position.anchorFret],
-      range: [position.minFret, position.maxFret],
-      handCenter: position.handCenter,
-      fretCount: position.fretCount,
-      referenceGrip: position.referenceGrip.map(note => (
-        [note.string, note.fret, note.tone.role, note.tone.pitchClass.chroma]
-      )),
-    },
-  }
-}
-
-function normalizedFamilies(
-  shapes: readonly PlayableChordShape[],
-  familyId: (shape: PlayableChordShape) => string,
-) {
-  const families = new Map<string, string[]>()
-  for (const shape of shapes) {
-    const family = families.get(familyId(shape)) ?? []
-    family.push(physicalKey(shape))
-    families.set(familyId(shape), family)
-  }
-  return [...families.values()].map(family => family.sort()).sort((a, b) => a[0].localeCompare(b[0]))
-}
-
 describe('explicit triad shape templates', () => {
   it('defines quality-specific closed and spread geometry with stable identities', () => {
     const expectedCounts = {
@@ -207,47 +167,40 @@ describe('explicit triad shape templates', () => {
       }
     }
   })
-})
 
-describe('explicit triad-template migration equivalence', () => {
-  it.each(qualities)('matches closed %s oracle geometry, order, metadata, and repeat families', quality => {
+  it.each(qualities)('transposes %s templates directly with valid metadata and geometry', quality => {
     for (const root of roots) {
       for (const fretCount of fretCounts) {
         const triad = createTriad(root, quality)
-        const oldShapes = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
-          .flatMap(strings => createTriadShapesOnStrings(triad, strings, undefined, fretCount))
-          .map(shape => ({ ...shape, chord: triad, cagedForm: classifyCagedForm(triad, shape.notes), layout: 'closed' as const }))
-        const newShapes = createTriadShapesFromTemplates(triad, 'closed', { fretCount })
-
-        expect(newShapes.map(normalizeShape)).toEqual(oldShapes.map(normalizeShape))
-        expect(normalizedFamilies(newShapes, chordShapeFamilyId)).toEqual(normalizedFamilies(
-          oldShapes,
-          shape => {
-            const octave = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
-            return `${shape.chord.id}:${shape.notes.map(note => `${note.string}:${note.fret - octave}`).join('|')}`
-          },
-        ))
+        for (const voicing of ['closed', 'spread'] as const) {
+          const templates = TRIAD_SHAPE_TEMPLATES.filter(template => (
+            template.quality === quality && template.voicing === voicing
+          ))
+          const shapes = createTriadShapesFromTemplates(triad, voicing, { fretCount })
+          expect(shapes.length).toBeGreaterThan(0)
+          for (const shape of shapes) {
+            const template = templates.find(candidate => candidate.id === shape.templateId)
+            expect(template).toBeDefined()
+            expect(shape.cagedForms).toEqual([template!.cagedForm])
+            expect(shape.notes).toHaveLength(3)
+            expect(shape.notes.every(note => note.fret >= 0 && note.fret <= fretCount)).toBe(true)
+            expect(shape.notes.every(note => (
+              (STANDARD_TUNING[STANDARD_TUNING.length - note.string].midi + note.fret) % 12
+              === note.tone.pitchClass.chroma
+            ))).toBe(true)
+            expect(shape.inversion.index).toBe({ root: 0, third: 1, fifth: 2, seventh: 3 }[soundingBass(shape).tone.role])
+          }
+        }
       }
     }
   })
 
-  it.each(qualities)('matches spread %s oracle geometry, order, metadata, and repeat families', quality => {
-    for (const root of roots) {
-      for (const fretCount of fretCounts) {
-        const triad = createTriad(root, quality)
-        const oldShapes = createSpreadTriadShapes(triad, { fretCount })
-          .map(shape => ({ ...shape, chord: triad }))
-        const newShapes = createTriadShapesFromTemplates(triad, 'spread', { fretCount })
+  it('uses template identity for stable octave-repeat families', () => {
+    const shapes = createTriadShapesFromTemplates(createTriad('C', 'major'), 'closed', { fretCount: 35 })
+    const groups = groupChordShapeRepeats(shapes)
 
-        expect(newShapes.map(normalizeShape)).toEqual(oldShapes.map(normalizeShape))
-        expect(normalizedFamilies(newShapes, chordShapeFamilyId)).toEqual(normalizedFamilies(
-          oldShapes,
-          shape => {
-            const octave = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
-            return `${shape.chord.id}:${shape.cagedPosition?.form}:${shape.notes.map(note => `${note.string}:${note.fret - octave}`).join('|')}`
-          },
-        ))
-      }
-    }
+    expect(groups.every(group => new Set(group.map(shape => shape.templateId)).size === 1)).toBe(true)
+    expect(groups.every(group => new Set(group.map(chordShapeFamilyId)).size === 1)).toBe(true)
+    expect(groups.some(group => group.length > 1)).toBe(true)
   })
 })

@@ -1,9 +1,8 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { fromTriadShape } from '../music/chordShapes'
 import { createMajorSeventh, createMajorSeventhShapes } from '../music/majorSeventhShapes'
-import { createTriadShapesOnStrings } from '../music/triadShapes'
+import { createTriadShapesFromTemplates } from '../music/triadShapeTemplates'
 import { createTriad } from '../music/triads'
 import { ChordShapeFretboard, shapeInspection } from './ChordShapeFretboard'
 
@@ -18,8 +17,14 @@ describe('shared chord fretboard', () => {
     expect(inspection.notes).toBe('C (R) → B (7) → E (3) → G (5)')
   })
 
+  it('renders direct single-form and combination CAGED metadata unchanged', () => {
+    const shapes = createMajorSeventhShapes(createMajorSeventh('C'))
+    expect(shapeInspection(shapes.find(shape => shape.templateId === 'drop2-top4-third')!, []).cagedLabel).toBe('E-shape')
+    expect(shapeInspection(shapes.find(shape => shape.templateId === 'drop2-top4-first')!, []).cagedLabel).toBe('C / A combination')
+  })
+
   it('renders triads and skipped-string Major 7 shapes together with all four interval labels', () => {
-    const triad = fromTriadShape(createTriadShapesOnStrings(createTriad('G', 'major'), [1, 2, 3])[0])
+    const triad = createTriadShapesFromTemplates(createTriad('G', 'major'), 'closed')[0]
     const markup = renderToStaticMarkup(createElement(ChordShapeFretboard, {
       allShapes: [triad, seventh], shapes: [triad, seventh], selected: [seventh],
       hovered: undefined, onHover: () => {}, onSelect: () => {}, fretCount: 22,

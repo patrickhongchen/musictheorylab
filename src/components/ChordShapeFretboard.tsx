@@ -4,12 +4,7 @@ import { chordIntervalLabel, displayNote } from '../presentation/notes'
 import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
 
 export function shapeCagedLabel(shape: PlayableChordShape): string {
-  const primary = shape.cagedForm ?? shape.cagedPosition?.form
-  const regions = [...new Set(shape.compatibleCagedRegions?.map(region => region.form))]
-  if (primary) return `${primary}-shape`
-  if (!regions.length) return ''
-  const complete = shape.compatibleCagedRegions?.some(region => region.matchedNotes.length === shape.notes.length)
-  return `${regions.join(' / ')}${regions.length === 1 ? '-shape' : complete ? ' shapes' : ' combination'}`
+  return `${shape.cagedForms.join(' / ')}${shape.cagedForms.length === 1 ? '-shape' : ' combination'}`
 }
 
 export const shapeColor = (shape: PlayableChordShape) => PROGRESSION_STEP_COLORS[(shape.colorIndex ?? 0) % PROGRESSION_STEP_COLORS.length]
@@ -26,7 +21,6 @@ export const shapeInspection = (shape: PlayableChordShape, repeats: readonly Pla
     title: `${displayNote(shape.chord.chordName)} · ${shape.inversion.name}`,
     location: `${stringName} (${bass.string}): ${frets.map(fretLabel).join(' / ')}`,
     cagedLabel: shapeCagedLabel(shape),
-    form: shape.cagedForm ?? shape.cagedPosition?.form,
     notes: [...shape.notes].reverse().map(note => `${displayNote(note.tone.pitchClass.name)}${shape.chord.quality === 'major7' ? ` (${chordIntervalLabel(note.tone.role, shape.chord.quality)})` : ''}`).join(' → '),
   }
 }

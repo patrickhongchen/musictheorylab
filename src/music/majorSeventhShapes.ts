@@ -1,8 +1,7 @@
-import { majorSeventhCagedRegions } from './majorSeventhCaged'
 import { Note } from 'tonal'
-import type { CagedForm } from './cagedPositions'
 import {
   soundingBass,
+  type CagedForm,
   type ChordShapeInversion,
   type MajorSeventhChord,
   type PlayableChordShape,
@@ -26,12 +25,9 @@ interface TemplateNote {
 
 export interface MajorSeventhShapeTemplate {
   readonly id: string
-  readonly name: string
   readonly rootString: number
   readonly notes: readonly TemplateNote[]
-  readonly mutedStrings: readonly number[]
-  readonly layout: 'drop2' | 'curated'
-  readonly cagedForm?: CagedForm
+  readonly cagedForms: readonly CagedForm[]
 }
 
 const note = (string: number, fretOffset: number, role: PlayableChordToneRole): TemplateNote => (
@@ -48,64 +44,64 @@ const note = (string: number, fretOffset: number, role: PlayableChordToneRole): 
  */
 export const MAJOR_SEVENTH_SHAPE_TEMPLATES: readonly MajorSeventhShapeTemplate[] = [
   {
-    id: 'drop2-top4-root', name: 'Top-four drop 2 · root position', rootString: 4,
+    id: 'drop2-top4-root', rootString: 4,
     notes: [note(1, 2, 'third'), note(2, 2, 'seventh'), note(3, 2, 'fifth'), note(4, 0, 'root')],
-    mutedStrings: [5, 6], layout: 'drop2', cagedForm: 'D',
+    cagedForms: ['D'],
   },
   {
-    id: 'drop2-top4-first', name: 'Top-four drop 2 · first inversion', rootString: 2,
+    id: 'drop2-top4-first', rootString: 2,
     notes: [note(1, 2, 'fifth'), note(2, 0, 'root'), note(3, 3, 'seventh'), note(4, 1, 'third')],
-    mutedStrings: [5, 6], layout: 'drop2',
+    cagedForms: ['C', 'A'],
   },
   {
-    id: 'drop2-top4-second', name: 'Top-four drop 2 · second inversion', rootString: 3,
+    id: 'drop2-top4-second', rootString: 3,
     notes: [note(1, 2, 'seventh'), note(2, 0, 'third'), note(3, 0, 'root'), note(4, 0, 'fifth')],
-    mutedStrings: [5, 6], layout: 'drop2',
+    cagedForms: ['G'],
   },
   {
-    id: 'drop2-top4-third', name: 'Top-four drop 2 · third inversion', rootString: 1,
+    id: 'drop2-top4-third', rootString: 1,
     notes: [note(1, 0, 'root'), note(2, 0, 'fifth'), note(3, 1, 'third'), note(4, 1, 'seventh')],
-    mutedStrings: [5, 6], layout: 'drop2',
+    cagedForms: ['E'],
   },
   {
-    id: 'a-root-r573', name: 'A-string root · R-5-7-3', rootString: 5,
+    id: 'a-root-r573', rootString: 5,
     notes: [note(2, 2, 'third'), note(3, 1, 'seventh'), note(4, 2, 'fifth'), note(5, 0, 'root')],
-    mutedStrings: [1, 6], layout: 'curated', cagedForm: 'A',
+    cagedForms: ['A'],
   },
   {
-    id: 'e-root-r735', name: 'E-string root · R-7-3-5', rootString: 6,
+    id: 'e-root-r735', rootString: 6,
     notes: [note(2, 0, 'fifth'), note(3, 1, 'third'), note(4, 1, 'seventh'), note(6, 0, 'root')],
-    mutedStrings: [1, 5], layout: 'curated', cagedForm: 'E',
+    cagedForms: ['E'],
   },
   {
-    id: 'a-first-37r5', name: 'A-string bass · first inversion', rootString: 3,
+    id: 'a-first-37r5', rootString: 3,
     notes: [note(2, 3, 'fifth'), note(3, 0, 'root'), note(4, 4, 'seventh'), note(5, 2, 'third')],
-    mutedStrings: [1, 6], layout: 'drop2',
+    cagedForms: ['G', 'E'],
   },
   {
-    id: 'a-second-5r37', name: 'A-string bass · second inversion', rootString: 4,
+    id: 'a-second-5r37', rootString: 4,
     notes: [note(2, 2, 'seventh'), note(3, -1, 'third'), note(4, 0, 'root'), note(5, 0, 'fifth')],
-    mutedStrings: [1, 6], layout: 'drop2',
+    cagedForms: ['D'],
   },
   {
-    id: 'a-third-735r', name: 'A-string bass · third inversion', rootString: 2,
+    id: 'a-third-735r', rootString: 2,
     notes: [note(2, 0, 'root'), note(3, -1, 'fifth'), note(4, 1, 'third'), note(5, 1, 'seventh')],
-    mutedStrings: [1, 6], layout: 'drop2',
+    cagedForms: ['C'],
   },
   {
-    id: 'e-first-3r57', name: 'E-string bass · first inversion', rootString: 4,
+    id: 'e-first-3r57', rootString: 4,
     notes: [note(2, 2, 'seventh'), note(3, 2, 'fifth'), note(4, 0, 'root'), note(6, 2, 'third')],
-    mutedStrings: [1, 5], layout: 'curated',
+    cagedForms: ['D'],
   },
   {
-    id: 'e-second-537r', name: 'E-string bass · second inversion', rootString: 2,
+    id: 'e-second-537r', rootString: 2,
     notes: [note(2, 0, 'root'), note(3, 3, 'seventh'), note(4, 1, 'third'), note(6, 2, 'fifth')],
-    mutedStrings: [1, 5], layout: 'curated',
+    cagedForms: ['C', 'A'],
   },
   {
-    id: 'e-third-75r3', name: 'E-string bass · third inversion', rootString: 3,
+    id: 'e-third-75r3', rootString: 3,
     notes: [note(2, 0, 'third'), note(3, 0, 'root'), note(4, 0, 'fifth'), note(6, 2, 'seventh')],
-    mutedStrings: [1, 5], layout: 'curated',
+    cagedForms: ['G'],
   },
 ] as const
 
@@ -134,7 +130,7 @@ export function createMajorSeventhShapes(
   if (!Number.isInteger(fretCount) || fretCount < 0) throw new Error('Fret count must be a non-negative integer')
   if (chord.quality !== 'major7' || chord.tones.length !== 4) throw new Error('Major 7 shapes require a complete Major 7 chord')
 
-  const unique = new Map<string, PlayableChordShape>()
+  const shapes: PlayableChordShape[] = []
   for (const template of MAJOR_SEVENTH_SHAPE_TEMPLATES) {
     for (let rootFret = firstRootFret(chord, template); rootFret <= fretCount; rootFret += 12) {
       const notes = template.notes.map(coordinate => ({
@@ -151,18 +147,14 @@ export function createMajorSeventhShapes(
 
       const shapeBase = {
         id: `${chord.id}:${template.id}:${rootFret}`,
-        chord, notes, compatibleCagedRegions: majorSeventhCagedRegions(chord, notes, fretCount), cagedForm: template.cagedForm, layout: template.layout,
-        templateId: template.id, templateName: template.name,
-        rootAnchor: { string: template.rootString, fret: rootFret },
-        mutedStrings: template.mutedStrings,
+        chord, notes, cagedForms: template.cagedForms, templateId: template.id,
       } as const
       const bass = soundingBass({ ...shapeBase, inversion: SEVENTH_INVERSIONS.root })
       const shape: PlayableChordShape = { ...shapeBase, inversion: SEVENTH_INVERSIONS[bass.tone.role] }
-      const physicalKey = notes.map(position => `${position.string}:${position.fret}`).join('|')
-      if (!unique.has(physicalKey)) unique.set(physicalKey, shape)
+      shapes.push(shape)
     }
   }
-  return [...unique.values()].sort((left, right) => (
+  return shapes.sort((left, right) => (
     Math.min(...left.notes.map(note => note.fret)) - Math.min(...right.notes.map(note => note.fret))
     || left.inversion.index - right.inversion.index
     || left.id.localeCompare(right.id)
