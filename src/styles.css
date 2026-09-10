@@ -535,33 +535,45 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-transpose-buttons button:hover { position: relative; border-color: var(--root); background: #edf3ef; color: var(--root); }
 .voice-transpose-buttons svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .voice-transpose-controls > span { align-self: center; color: var(--muted); font-size: 10px; line-height: 1.4; }
-.voice-progression-editor { padding-top: 24px; }
-.voice-progression-editor > h2 { margin-bottom: 13px; font-size: 24px; }
+.voice-progression-editor { padding-top: 22px; }
+.voice-progression-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.voice-progression-heading h2 { font-size: 24px; }
+.voice-progression-heading > span { color: var(--muted); font-size: 11px; }
 .voice-progression-editor summary, .voice-shape-catalog summary { cursor: pointer; }
-.voice-chord-fields { display: flex; flex-wrap: wrap; gap: 28px; margin: 0; padding: 0; list-style: none; }
-.voice-chord-item { position: relative; flex: 1 1 300px; min-width: 280px; max-width: 350px; }
-.voice-chord-card { height: 100%; padding: 14px; border: 1px solid #cdd1c8; border-radius: 7px; background: rgba(255, 255, 255, .23); transition: border-color 150ms, background 150ms, box-shadow 150ms, transform 150ms; }
-.voice-chord-card:hover { border-color: #aeb6ac; background: rgba(255, 255, 255, .52); }
-.voice-chord-card:focus-within { border-color: var(--root); background: rgba(255, 255, 255, .65); box-shadow: 0 8px 24px rgba(34, 104, 91, .08), inset 0 0 0 1px var(--root); transform: translateY(-1px); }
-.voice-chord-card > header { display: grid; grid-template-columns: 20px minmax(0, 1fr) 34px; align-items: center; gap: 8px; margin-bottom: 16px; }
-.voice-chord-number { color: var(--muted); font-size: 12px; }
-.voice-chord-card > header strong { min-width: 0; overflow: hidden; color: var(--ink); font: 20px/1.15 var(--font-display); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.voice-chord-rail { display: flex; gap: 7px; margin: 0; padding: 0 0 10px; overflow-x: auto; list-style: none; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
+.voice-chord-step { position: relative; flex: 1 1 0; min-width: 150px; max-width: 220px; border-radius: 6px; transition: opacity 140ms, transform 140ms; }
+.voice-chord-step::after { position: absolute; top: 50%; right: -6px; z-index: 1; width: 5px; height: 1px; background: #aeb4ab; content: ''; }
+.voice-chord-step[data-dragging="true"] { opacity: .36; transform: scale(.98); }
+.voice-chord-step[data-drop-target="true"]::before { position: absolute; z-index: 2; inset: -3px auto -3px -4px; width: 2px; border-radius: 2px; background: var(--root); content: ''; }
+.voice-chord-select { display: grid; grid-template-columns: 23px minmax(0, 1fr) 18px; width: 100%; min-height: 64px; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #cdd1c8; background: rgba(255, 255, 255, .26); color: var(--ink); text-align: left; }
+.voice-chord-select:hover { border-color: #9ca69d; background: rgba(255, 255, 255, .58); }
+.voice-chord-select[aria-pressed="true"] { border-color: var(--root); background: #edf3ef; box-shadow: inset 0 -2px 0 var(--root); }
+.voice-chord-number { display: grid; width: 23px; height: 23px; place-items: center; border: 1px solid #b8bdb5; border-radius: 50%; color: var(--muted); font-size: 10px; }
+.voice-chord-select[aria-pressed="true"] .voice-chord-number { border-color: var(--root); background: var(--root); color: white; }
+.voice-chord-summary { display: grid; min-width: 0; gap: 3px; }
+.voice-chord-summary strong { overflow: hidden; font: 17px/1.1 var(--font-display); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.voice-chord-summary small { overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.voice-chord-drag { display: grid; place-items: center; color: #8b9189; cursor: grab; }
+.voice-chord-drag svg { width: 16px; height: 22px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+.voice-add-step { flex: 0 0 124px; }
+.voice-add-chord { display: inline-flex; width: 100%; min-height: 64px; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border: 1px dashed #9fa79e; background: transparent; color: var(--root); font-size: 11px; font-weight: 650; }
+.voice-add-chord:hover:not(:disabled) { border-color: var(--root); background: #edf3ef; }
+.voice-add-chord svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.voice-chord-editor { display: grid; grid-template-columns: minmax(130px, .65fr) minmax(0, 2.35fr) auto; align-items: end; gap: 14px 18px; padding: 12px 14px; border: 1px solid #cdd1c8; border-radius: 7px; background: rgba(255, 255, 255, .38); animation: voice-editor-in 140ms ease-out; }
+.voice-chord-editor-title { display: grid; align-self: center; gap: 3px; min-width: 0; padding-right: 16px; border-right: 1px solid var(--line); }
+.voice-chord-editor-title small { color: var(--muted); font-size: 9px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.voice-chord-editor-title strong { overflow: hidden; font: 19px/1.15 var(--font-display); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .voice-chord-delete { width: 34px; min-height: 34px; padding: 0; border: 1px solid transparent; background: transparent; color: #777d75; opacity: .72; }
 .voice-chord-delete:hover:not(:disabled) { border-color: #d4bbb2; background: #f7efec; color: #8a3f2c; opacity: 1; }
 .voice-chord-delete svg, .voice-chord-actions svg, .voice-add-chord svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.voice-chord-inputs { display: grid; grid-template-columns: 64px minmax(100px, .9fr) minmax(126px, 1.1fr); gap: 9px; }
+.voice-chord-inputs { display: grid; grid-template-columns: 72px minmax(112px, .85fr) minmax(145px, 1.15fr); gap: 9px; }
 .voice-chord-inputs select { padding-right: 24px; padding-left: 10px; }
-.voice-chord-actions { display: flex; gap: 7px; margin-top: 12px; }
-.voice-chord-actions button { display: grid; width: 40px; min-height: 40px; place-items: center; padding: 0; border: 1px solid #c8ccc4; background: transparent; color: var(--ink); }
+.voice-chord-actions { display: grid; grid-template-columns: 34px 34px 1px 34px; align-items: center; gap: 5px; }
+.voice-chord-actions > span { width: 1px; height: 22px; margin: 0 2px; background: var(--line); }
+.voice-chord-actions button { display: grid; width: 34px; min-height: 34px; place-items: center; padding: 0; border: 1px solid #c8ccc4; background: transparent; color: var(--ink); }
 .voice-chord-actions button:hover:not(:disabled) { border-color: var(--root); background: #edf3ef; color: var(--root); }
 .voice-chord-actions button:disabled, .voice-chord-delete:disabled { opacity: .28; }
-.voice-sequence-arrow { position: absolute; z-index: 1; top: 50%; right: -23px; display: grid; width: 17px; height: 17px; place-items: center; color: #7b837b; transform: translateY(-50%); }
-.voice-sequence-arrow svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.voice-add-item { position: relative; flex: 0 1 148px; min-width: 134px; }
-.voice-add-chord { display: grid; width: 100%; height: 100%; min-height: 190px; place-content: center; gap: 10px; padding: 16px; border: 1px dashed #aeb5ab; background: transparent; color: var(--root); font-size: 12px; font-weight: 650; }
-.voice-add-chord > span { display: grid; width: 42px; height: 42px; margin: 0 auto; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
-.voice-add-chord:hover:not(:disabled) { border-color: var(--root); background: #edf3ef; }
-.voice-add-chord svg { width: 21px; height: 21px; }
+@keyframes voice-editor-in { from { opacity: .55; transform: translateY(3px); } }
 .voice-selection button { padding: 8px 12px; border: 1px solid var(--line); background: transparent; border-radius: 4px; cursor: pointer; }
 .voice-leading-map { margin-top: 28px; }
 .voice-chord-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0 14px; }
@@ -603,12 +615,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .voice-transpose-controls { grid-column: 1 / -1; padding: 17px 0 0; border-top: 1px solid var(--line); border-left: 0; }
 }
 @media (max-width: 1000px) {
-  .voice-chord-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .voice-chord-item, .voice-add-item { min-width: 0; max-width: none; }
-  .voice-sequence-arrow { display: none; }
-  .voice-add-chord { min-height: 86px; }
-  .voice-chord-inputs { grid-template-columns: 92px minmax(0, 1fr); }
-  .voice-chord-inputs label:last-child { grid-column: 1 / -1; }
+  .voice-chord-editor { grid-template-columns: minmax(130px, .6fr) minmax(0, 2fr); }
+  .voice-chord-actions { grid-column: 2; justify-content: end; }
 }
 @media (max-width: 700px) {
   .voice-settings-toolbar { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
@@ -616,12 +624,17 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .voice-transpose-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .voice-transpose-buttons button { width: 100%; }
   .voice-transpose-controls > span { margin-top: -1px; }
-  .voice-chord-fields { grid-template-columns: 1fr; }
-  .voice-chord-card { padding: 15px; }
+  .voice-progression-heading > span { display: none; }
+  .voice-chord-rail { margin-inline: -20px; padding-inline: 20px; }
+  .voice-chord-step { flex-basis: 164px; min-width: 164px; }
+  .voice-chord-editor { grid-template-columns: 1fr; padding: 13px; }
+  .voice-chord-editor-title { padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .voice-chord-inputs { grid-template-columns: 80px minmax(0, 1fr); }
+  .voice-chord-inputs label:last-child { grid-column: 1 / -1; }
+  .voice-chord-actions { grid-column: auto; justify-content: start; }
   .voice-leading-controls select { min-height: 46px; font-size: 16px; }
-  .voice-chord-actions button { width: 44px; min-height: 44px; }
-  .voice-add-chord { min-height: 82px; grid-auto-flow: column; gap: 11px; }
-  .voice-add-chord > span { width: 34px; height: 34px; }
+  .voice-chord-actions { grid-template-columns: 44px 44px 1px 44px; }
+  .voice-chord-actions button, .voice-chord-delete { width: 44px; min-height: 44px; }
   .voice-selection { align-items: start; flex-wrap: wrap; }
   .voice-inspection { flex-basis: 100%; }
   .voice-chord-strip { gap: 8px; }

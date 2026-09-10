@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type {
   ChordChoice,
   ChordChoiceUpdate,
@@ -38,7 +39,7 @@ interface Props {
   onUpdateChord: (id: string, update: ChordChoiceUpdate) => void
   onMoveChord: (index: number, nextIndex: number) => void
   onRemoveChord: (index: number) => void
-  onAddChord: () => void
+  onAddChord: () => string
 }
 
 export const voiceLeadingQualityLabel = (quality: VoiceLeadingChoiceQuality) => (
@@ -63,43 +64,8 @@ function PlusIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
 }
 
-interface ChordCardProps {
-  chord: ChordChoice
-  index: number
-  chordCount: number
-  onUpdate: (update: ChordChoiceUpdate) => void
-  onMove: (nextIndex: number) => void
-  onRemove: () => void
-}
-
-function ProgressionChordCard({ chord, index, chordCount, onUpdate, onMove, onRemove }: ChordCardProps) {
-  const chordName = `${displayNote(chord.root)} ${voiceLeadingQualityLabel(chord.quality)}`
-  return <li className="voice-chord-item">
-    <fieldset className="voice-chord-card">
-      <legend className="sr-only">Chord {index + 1}: {chordName}</legend>
-      <header>
-        <span className="voice-chord-number" aria-hidden="true">{index + 1}</span>
-        <strong>{chordName}</strong>
-        <button className="voice-chord-delete" type="button" title={`Remove chord ${index + 1}`} aria-label={`Remove chord ${index + 1}: ${chordName}`} disabled={chordCount <= 1} onClick={onRemove}><TrashIcon /></button>
-      </header>
-      <div className="voice-chord-inputs">
-        <label>Root<select value={chord.root} onChange={event => onUpdate({ root: event.target.value })}>
-          {ROOTS.map(root => <option key={root} value={root}>{displayNote(root)}</option>)}
-        </select></label>
-        <label>Type<select value={chord.quality} onChange={event => onUpdate({ quality: event.target.value as VoiceLeadingChoiceQuality })}>
-          {VOICE_LEADING_QUALITIES.map(quality => <option key={quality} value={quality}>{voiceLeadingQualityLabel(quality)}</option>)}
-        </select></label>
-        <label>Voicing<select value={chord.voicing} onChange={event => onUpdate({ voicing: event.target.value as VoiceLeadingVoicing })}>
-          {voicingOptionsForQuality(chord.quality).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select></label>
-      </div>
-      <div className="voice-chord-actions" aria-label={`Reorder chord ${index + 1}`}>
-        <button type="button" title="Move chord left" aria-label={`Move chord ${index + 1} left`} disabled={index === 0} onClick={() => onMove(index - 1)}><ArrowIcon direction="left" /></button>
-        <button type="button" title="Move chord right" aria-label={`Move chord ${index + 1} right`} disabled={index === chordCount - 1} onClick={() => onMove(index + 1)}><ArrowIcon direction="right" /></button>
-      </div>
-    </fieldset>
-    <span className="voice-sequence-arrow" aria-hidden="true"><ArrowIcon direction="right" /></span>
-  </li>
+function DragIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
 }
 
 export function VoiceLeadingProgressionControls({
@@ -117,9 +83,36 @@ export function VoiceLeadingProgressionControls({
   onRemoveChord,
   onAddChord,
 }: Props) {
+  const [selectedChordId, setSelectedChordId] = useState(chords[0]?.id ?? '')
+  const [draggedChordId, setDraggedChordId] = useState<string>()
+  const [dropTargetId, setDropTargetId] = useState<string>()
+  const selectedChord = chords.find(chord => chord.id === selectedChordId) ?? chords[0]
+  const selectedIndex = selectedChord ? chords.findIndex(chord => chord.id === selectedChord.id) : -1
+  const selectedChordName = selectedChord
+    ? `${displayNote(selectedChord.root)} ${voiceLeadingQualityLabel(selectedChord.quality)}`
+    : ''
+
+  function finishDrag() {
+    setDraggedChordId(undefined)
+    setDropTargetId(undefined)
+  }
+
+  function dropChord(targetId: string) {
+    if (!draggedChordId || draggedChordId === targetId) return finishDrag()
+    const currentIndex = chords.findIndex(chord => chord.id === draggedChordId)
+    const nextIndex = chords.findIndex(chord => chord.id === targetId)
+    if (currentIndex >= 0 && nextIndex >= 0) onMoveChord(currentIndex, nextIndex)
+    finishDrag()
+  }
+
   return <section className="voice-leading-controls" aria-label="Voice leading controls">
     <div className="voice-settings-toolbar">
-      <label>Progression<select value={presetIndex < 0 ? 'custom' : presetIndex} onChange={event => onSelectPreset(Number(event.target.value))}>
+      <label>Progression<select value={presetIndex < 0 ? 'custom' : presetIndex} onChange={event => {
+        const nextPresetIndex = Number(event.target.value)
+        onSelectPreset(nextPresetIndex)
+        const firstChord = presets[nextPresetIndex]?.chords[0]
+        if (firstChord) setSelectedChordId(firstChord.id)
+      }}>
         {presets.map((preset, index) => <option key={index} value={index}>{preset.label}</option>)}
         {presetIndex < 0 && <option value="custom">Custom progression</option>}
       </select></label>
@@ -138,23 +131,84 @@ export function VoiceLeadingProgressionControls({
       </div>
     </div>
     <div className="voice-progression-editor">
-      <h2>Progression</h2>
-      <ol className="voice-chord-fields">
-        {chords.map((chord, index) => <ProgressionChordCard
-          key={chord.id}
-          chord={chord}
-          index={index}
-          chordCount={chords.length}
-          onUpdate={update => onUpdateChord(chord.id, update)}
-          onMove={nextIndex => onMoveChord(index, nextIndex)}
-          onRemove={() => onRemoveChord(index)}
-        />)}
-        <li className="voice-add-item">
-          <button className="voice-add-chord" type="button" disabled={chords.length >= 8} onClick={onAddChord}>
-            <span><PlusIcon /></span>Add chord
+      <div className="voice-progression-heading">
+        <h2>Progression</h2>
+        <span>Choose a chord to edit · drag to reorder</span>
+      </div>
+      <ol className="voice-chord-rail" aria-label="Chord progression">
+        {chords.map((chord, index) => {
+          const chordName = `${displayNote(chord.root)} ${voiceLeadingQualityLabel(chord.quality)}`
+          const voicingName = voicingOptionsForQuality(chord.quality).find(option => option.value === chord.voicing)?.label
+          return <li
+            className="voice-chord-step"
+            data-active={chord.id === selectedChord?.id}
+            data-dragging={chord.id === draggedChordId}
+            data-drop-target={chord.id === dropTargetId}
+            key={chord.id}
+            onDragEnter={() => draggedChordId && setDropTargetId(chord.id)}
+            onDragOver={event => {
+              event.preventDefault()
+              event.dataTransfer.dropEffect = 'move'
+            }}
+            onDrop={event => {
+              event.preventDefault()
+              dropChord(chord.id)
+            }}
+          >
+            <button
+              className="voice-chord-select"
+              type="button"
+              draggable
+              aria-pressed={chord.id === selectedChord?.id}
+              aria-label={`Edit chord ${index + 1}: ${chordName}`}
+              onDragStart={event => {
+                setDraggedChordId(chord.id)
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/plain', chord.id)
+              }}
+              onDragEnd={finishDrag}
+              onClick={() => setSelectedChordId(chord.id)}
+            >
+              <span className="voice-chord-number" aria-hidden="true">{index + 1}</span>
+              <span className="voice-chord-summary"><strong>{chordName}</strong><small>{voicingName}</small></span>
+              <span className="voice-chord-drag" aria-hidden="true"><DragIcon /></span>
+            </button>
+          </li>
+        })}
+        <li className="voice-add-step">
+          <button className="voice-add-chord" type="button" disabled={chords.length >= 8} onClick={() => setSelectedChordId(onAddChord())}>
+            <PlusIcon />Add chord
           </button>
         </li>
       </ol>
+      {selectedChord && <fieldset className="voice-chord-editor" key={selectedChord.id}>
+        <legend className="sr-only">Edit chord {selectedIndex + 1}: {selectedChordName}</legend>
+        <div className="voice-chord-editor-title">
+          <small>Editing {selectedIndex + 1}</small>
+          <strong>{selectedChordName}</strong>
+        </div>
+        <div className="voice-chord-inputs">
+          <label>Root<select value={selectedChord.root} onChange={event => onUpdateChord(selectedChord.id, { root: event.target.value })}>
+            {ROOTS.map(root => <option key={root} value={root}>{displayNote(root)}</option>)}
+          </select></label>
+          <label>Type<select value={selectedChord.quality} onChange={event => onUpdateChord(selectedChord.id, { quality: event.target.value as VoiceLeadingChoiceQuality })}>
+            {VOICE_LEADING_QUALITIES.map(quality => <option key={quality} value={quality}>{voiceLeadingQualityLabel(quality)}</option>)}
+          </select></label>
+          <label>Voicing<select value={selectedChord.voicing} onChange={event => onUpdateChord(selectedChord.id, { voicing: event.target.value as VoiceLeadingVoicing })}>
+            {voicingOptionsForQuality(selectedChord.quality).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select></label>
+        </div>
+        <div className="voice-chord-actions" aria-label={`Reorder or remove chord ${selectedIndex + 1}`}>
+          <button type="button" title="Move chord earlier" aria-label={`Move chord ${selectedIndex + 1} earlier`} disabled={selectedIndex === 0} onClick={() => onMoveChord(selectedIndex, selectedIndex - 1)}><ArrowIcon direction="left" /></button>
+          <button type="button" title="Move chord later" aria-label={`Move chord ${selectedIndex + 1} later`} disabled={selectedIndex === chords.length - 1} onClick={() => onMoveChord(selectedIndex, selectedIndex + 1)}><ArrowIcon direction="right" /></button>
+          <span aria-hidden="true" />
+          <button className="voice-chord-delete" type="button" title={`Remove chord ${selectedIndex + 1}`} aria-label={`Remove chord ${selectedIndex + 1}: ${selectedChordName}`} disabled={chords.length <= 1} onClick={() => {
+            const nextSelected = chords[selectedIndex + 1] ?? chords[selectedIndex - 1]
+            if (nextSelected) setSelectedChordId(nextSelected.id)
+            onRemoveChord(selectedIndex)
+          }}><TrashIcon /></button>
+        </div>
+      </fieldset>}
     </div>
   </section>
 }

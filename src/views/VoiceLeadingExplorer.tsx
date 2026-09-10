@@ -178,7 +178,11 @@ export function VoiceLeadingExplorer() {
       onUpdateChord={updateProgressionChord}
       onMoveChord={moveChord}
       onRemoveChord={index => updateProgression(chords.filter((_, slot) => slot !== index))}
-      onAddChord={() => updateProgression([...chords, createChordChoice(`added-${nextChordId.current++}`, 'C', 'major')])}
+      onAddChord={() => {
+        const nextChord = createChordChoice(`added-${nextChordId.current++}`, 'C', 'major')
+        updateProgression([...chords, nextChord])
+        return nextChord.id
+      }}
     />
     <VoiceLeadingAvailableShapes
       allShapes={allShapes}
