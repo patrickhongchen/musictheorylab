@@ -522,7 +522,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
 /* Voice Leading: every candidate remains available, including overlapping shapes. */
 .voice-leading-controls { padding: 0 0 30px; border-bottom: 1px solid var(--line); }
-.voice-settings-toolbar { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(120px, .5fr) minmax(210px, .9fr) minmax(430px, 2fr); gap: 22px; align-items: end; padding: 18px 20px; border: 1px solid #cfd2ca; border-radius: 8px; background: rgba(255, 255, 255, .34); box-shadow: 0 8px 26px rgba(36, 43, 37, .035); }
+.voice-settings-toolbar { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(180px, .8fr) minmax(430px, 2fr); gap: 22px; align-items: end; padding: 18px 20px; border: 1px solid #cfd2ca; border-radius: 8px; background: rgba(255, 255, 255, .34); box-shadow: 0 8px 26px rgba(36, 43, 37, .035); }
 .voice-leading-controls label { display: grid; gap: 7px; min-width: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .01em; }
 .voice-leading-controls select { width: 100%; min-width: 0; min-height: 44px; padding: 0 36px 0 12px; border: 1px solid #bec3ba; border-radius: 5px; background-color: #faf9f6; color: var(--ink); font-size: 13px; }
 .voice-leading-controls select:hover { border-color: #8d978e; }
@@ -539,7 +539,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-progression-editor > h2 { margin-bottom: 13px; font-size: 24px; }
 .voice-progression-editor summary, .voice-shape-catalog summary { cursor: pointer; }
 .voice-chord-fields { display: flex; flex-wrap: wrap; gap: 28px; margin: 0; padding: 0; list-style: none; }
-.voice-chord-item { position: relative; flex: 1 1 210px; min-width: 200px; max-width: 245px; }
+.voice-chord-item { position: relative; flex: 1 1 300px; min-width: 280px; max-width: 350px; }
 .voice-chord-card { height: 100%; padding: 14px; border: 1px solid #cdd1c8; border-radius: 7px; background: rgba(255, 255, 255, .23); transition: border-color 150ms, background 150ms, box-shadow 150ms, transform 150ms; }
 .voice-chord-card:hover { border-color: #aeb6ac; background: rgba(255, 255, 255, .52); }
 .voice-chord-card:focus-within { border-color: var(--root); background: rgba(255, 255, 255, .65); box-shadow: 0 8px 24px rgba(34, 104, 91, .08), inset 0 0 0 1px var(--root); transform: translateY(-1px); }
@@ -549,7 +549,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-chord-delete { width: 34px; min-height: 34px; padding: 0; border: 1px solid transparent; background: transparent; color: #777d75; opacity: .72; }
 .voice-chord-delete:hover:not(:disabled) { border-color: #d4bbb2; background: #f7efec; color: #8a3f2c; opacity: 1; }
 .voice-chord-delete svg, .voice-chord-actions svg, .voice-add-chord svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.voice-chord-inputs { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 9px; }
+.voice-chord-inputs { display: grid; grid-template-columns: 64px minmax(100px, .9fr) minmax(126px, 1.1fr); gap: 9px; }
 .voice-chord-inputs select { padding-right: 24px; padding-left: 10px; }
 .voice-chord-actions { display: flex; gap: 7px; margin-top: 12px; }
 .voice-chord-actions button { display: grid; width: 40px; min-height: 40px; place-items: center; padding: 0; border: 1px solid #c8ccc4; background: transparent; color: var(--ink); }
@@ -600,7 +600,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-inversion-list button strong { font-size: 13px; }
 .voice-inversion-list button span, .voice-inversion-list button small { font-size: 11px; line-height: 1.4; }
 @media (max-width: 1150px) {
-  .voice-settings-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .voice-settings-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .voice-transpose-controls { grid-column: 1 / -1; padding: 17px 0 0; border-top: 1px solid var(--line); border-left: 0; }
 }
 @media (max-width: 1000px) {
@@ -608,6 +608,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .voice-chord-item, .voice-add-item { min-width: 0; max-width: none; }
   .voice-sequence-arrow { display: none; }
   .voice-add-chord { min-height: 86px; }
+  .voice-chord-inputs { grid-template-columns: 92px minmax(0, 1fr); }
+  .voice-chord-inputs label:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 700px) {
   .voice-settings-toolbar { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
@@ -617,7 +619,6 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .voice-transpose-controls > span { margin-top: -1px; }
   .voice-chord-fields { grid-template-columns: 1fr; }
   .voice-chord-card { padding: 15px; }
-  .voice-chord-inputs { grid-template-columns: 92px minmax(0, 1fr); }
   .voice-leading-controls select { min-height: 46px; font-size: 16px; }
   .voice-chord-actions button { width: 44px; min-height: 44px; }
   .voice-add-chord { min-height: 82px; grid-auto-flow: column; gap: 11px; }
@@ -632,4 +633,5 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 }
 @media (max-width: 360px) {
   .voice-chord-inputs { grid-template-columns: 1fr; }
+  .voice-chord-inputs label:last-child { grid-column: auto; }
 }
