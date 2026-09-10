@@ -1,6 +1,4 @@
-import { classifyCagedForm } from './cagedPositions'
 import {
-  fromTriadShape,
   soundingBass,
   type ChordShapeInversion,
   type PlayableChord,
@@ -8,8 +6,7 @@ import {
   type VoiceLeadingQuality,
 } from './chordShapes'
 import { createMajorSeventh, createMajorSeventhShapes } from './majorSeventhShapes'
-import { createSpreadTriadShapes } from './spreadTriadShapes'
-import { createTriadShapesOnStrings } from './triadShapes'
+import { createTriadShapesFromTemplates } from './triadShapeTemplates'
 import { createTriad } from './triads'
 
 export type VoiceLeadingChoiceQuality = Exclude<VoiceLeadingQuality, 'augmented'>
@@ -112,8 +109,7 @@ export function updateChordChoiceAt(
 }
 
 /**
- * Routes a progression choice to its existing shape generator, then adapts it
- * to the common rendering abstraction without changing generator output.
+ * Routes a progression choice to its explicit, deterministic shape library.
  */
 export function createPlayableShapesForChord(
   choice: ChordChoice,
@@ -124,16 +120,7 @@ export function createPlayableShapesForChord(
   }
 
   const triad = createTriad(choice.root, choice.quality)
-  const shapes = choice.voicing === 'closed'
-    ? [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]].flatMap(strings => (
-        createTriadShapesOnStrings(triad, strings, undefined, fretCount)
-      ))
-    : createSpreadTriadShapes(triad, { fretCount })
-
-  return shapes.map(shape => ({
-    ...fromTriadShape(shape),
-    cagedForm: shape.cagedPosition?.form ?? classifyCagedForm(triad, shape.notes),
-  }))
+  return createTriadShapesFromTemplates(triad, choice.voicing, { fretCount })
 }
 
 /** Global viewing filter applied only after a chord's voicings are generated. */

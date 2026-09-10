@@ -96,6 +96,7 @@ export function VoiceLeadingExplorer() {
     return shape ? [shape] : []
   })
   const visibleShapes = allShapes.filter(shape => !hiddenChords.includes(shape.chord.id))
+  const allChordsVisible = distinct.every(chord => !hiddenChords.includes(chord.id))
   const hovered = visibleShapes.find(shape => chordShapeFamilyId(shape) === hoveredId)
   const active = hovered ?? selected[selected.length - 1]
   const inspection = active ? shapeInspection(active, allShapes.filter(shape => chordShapeFamilyId(shape) === chordShapeFamilyId(active))) : undefined
@@ -198,7 +199,10 @@ export function VoiceLeadingExplorer() {
     <section className="voice-leading-map" aria-labelledby="voice-map-heading">
       <div className="section-heading"><h2 id="voice-map-heading">Available shapes</h2><span>{visibleShapes.length} fretboard positions · frets 0–22</span></div>
       <div className="voice-chord-strip" role="group" aria-label="Chord visibility">
-        <button type="button" aria-pressed={hiddenChords.length === 0} onClick={() => { setHiddenChords([]); setHoveredId(undefined) }}>All chords</button>
+        <button type="button" aria-pressed={allChordsVisible} onClick={() => {
+          setHiddenChords(allChordsVisible ? distinct.map(chord => chord.id) : [])
+          setHoveredId(undefined)
+        }}>All chords</button>
         {progressionChords.map((triad, index) => <Fragment key={chords[index].id}>
           {index > 0 && <span aria-hidden="true">→</span>}
           <button type="button" aria-pressed={!hiddenChords.includes(triad.id)} style={{ '--shape-color': PROGRESSION_STEP_COLORS[distinct.findIndex(chord => chord.id === triad.id) % PROGRESSION_STEP_COLORS.length] } as CSSProperties}

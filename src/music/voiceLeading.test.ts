@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { soundingBass } from './chordShapes'
+import { chordShapeFamilyId, soundingBass, type PlayableChordShape } from './chordShapes'
+import { classifyCagedForm } from './cagedPositions'
 import { createMajorSeventh, createMajorSeventhShapes } from './majorSeventhShapes'
 import { createSpreadTriadShapes } from './spreadTriadShapes'
 import { createTriadShapesOnStrings } from './triadShapes'
+import { createTriadShapesFromTemplates, TRIAD_SHAPE_TEMPLATES } from './triadShapeTemplates'
 import { createTriad } from './triads'
+import type { ChordQuality } from './types'
 import {
   collectAvailableInversions,
   createChordChoice,
@@ -65,24 +68,45 @@ describe('Voice Leading shape routing and filtering', () => {
     ])
   })
 
-  it('uses every existing adjacent-string closed-triad shape unchanged', () => {
+  it('routes closed triads to the canonical explicit template families', () => {
     const choice = createChordChoice('c-closed', 'C', 'major', 'closed')
     const actual = createPlayableShapesForChord(choice, { fretCount: 12 })
-    const triad = createTriad('C', 'major')
-    const existing = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
-      .flatMap(strings => createTriadShapesOnStrings(triad, strings, undefined, 12))
 
-    expect(actual.map(shape => shape.id)).toEqual(existing.map(shape => shape.id))
-    expect(actual.map(shape => shape.notes)).toEqual(existing.map(shape => shape.notes))
+    expect(actual.map(shape => [shape.templateId, shape.notes.map(note => `${note.string}:${note.fret}`).join('|')])).toEqual([
+      ['closed-123-second', '1:0|2:1|3:0'],
+      ['closed-123-root', '1:3|2:5|3:5'],
+      ['closed-123-first', '1:8|2:8|3:9'],
+      ['closed-234-first', '2:1|3:0|4:2'],
+      ['closed-234-second', '2:5|3:5|4:5'],
+      ['closed-234-root', '2:8|3:9|4:10'],
+      ['closed-345-root', '3:0|4:2|5:3'],
+      ['closed-345-first', '3:5|4:5|5:7'],
+      ['closed-345-second', '3:9|4:10|5:10'],
+      ['closed-456-second', '4:2|5:3|6:3'],
+      ['closed-456-root', '4:5|5:7|6:8'],
+      ['closed-456-first', '4:10|5:10|6:12'],
+    ])
   })
 
-  it('uses the existing spread-triad generator unchanged', () => {
+  it('routes spread triads to canonical explicit template families and repeats', () => {
     const choice = createChordChoice('f-spread', 'F', 'minor', 'spread')
     const actual = createPlayableShapesForChord(choice, { fretCount: 18 })
-    const existing = createSpreadTriadShapes(createTriad('F', 'minor'), { fretCount: 18 })
 
-    expect(actual.map(shape => shape.id)).toEqual(existing.map(shape => shape.id))
-    expect(actual.map(shape => shape.notes)).toEqual(existing.map(shape => shape.notes))
+    expect(actual.map(shape => [shape.templateId, shape.notes.map(note => `${note.string}:${note.fret}`).join('|')])).toEqual([
+      ['spread-356-root', '3:1|5:3|6:1'],
+      ['spread-135-second', '1:1|3:1|5:3'],
+      ['spread-134-root', '1:4|3:5|4:3'],
+      ['spread-346-first', '3:5|4:3|6:4'],
+      ['spread-245-root', '2:9|4:10|5:8'],
+      ['spread-124-first', '1:8|2:6|4:6'],
+      ['spread-246-second', '2:6|4:6|6:8'],
+      ['spread-356-root', '3:13|5:15|6:13'],
+      ['spread-235-first', '2:13|3:10|5:11'],
+      ['spread-135-second', '1:13|3:13|5:15'],
+      ['spread-134-second', '1:13|3:13|4:10'],
+      ['spread-134-root', '1:16|3:17|4:15'],
+      ['spread-346-first', '3:17|4:15|6:16'],
+    ])
   })
 
   it('combines all existing Major 7 families without changing their shapes', () => {
@@ -116,5 +140,114 @@ describe('Voice Leading shape routing and filtering', () => {
     ])
     expect(triads.some(shape => shape.inversion.index === 3)).toBe(false)
     expect(majorSevenths.some(shape => shape.inversion.index === 3)).toBe(true)
+  })
+})
+
+const roots = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
+const fretCounts = [22, 35] as const
+const qualities: readonly ChordQuality[] = ['major', 'minor', 'diminished', 'augmented']
+const physicalKey = (shape: { readonly notes: PlayableChordShape['notes'] }) => (
+  shape.notes.map(note => `${note.string}:${note.fret}:${note.tone.role}:${note.tone.pitchClass.chroma}`).join('|')
+)
+
+function normalizeShape(shape: PlayableChordShape) {
+  const position = shape.cagedPosition
+  return {
+    physical: physicalKey(shape),
+    inversion: [shape.inversion.index, shape.inversion.name, shape.inversion.figure],
+    layout: shape.layout ?? 'closed',
+    cagedForm: shape.cagedForm ?? shape.cagedPosition?.form,
+    cagedPosition: position && {
+      id: position.id,
+      form: position.form,
+      anchor: [position.anchorString, position.anchorFret],
+      range: [position.minFret, position.maxFret],
+      handCenter: position.handCenter,
+      fretCount: position.fretCount,
+      referenceGrip: position.referenceGrip.map(note => (
+        [note.string, note.fret, note.tone.role, note.tone.pitchClass.chroma]
+      )),
+    },
+  }
+}
+
+function normalizedFamilies(
+  shapes: readonly PlayableChordShape[],
+  familyId: (shape: PlayableChordShape) => string,
+) {
+  const families = new Map<string, string[]>()
+  for (const shape of shapes) {
+    const family = families.get(familyId(shape)) ?? []
+    family.push(physicalKey(shape))
+    families.set(familyId(shape), family)
+  }
+  return [...families.values()].map(family => family.sort()).sort((a, b) => a[0].localeCompare(b[0]))
+}
+
+describe('explicit triad shape templates', () => {
+  it('defines quality-specific closed and spread geometry with stable identities', () => {
+    const expectedCounts = {
+      major: { closed: 12, spread: 9 },
+      minor: { closed: 12, spread: 9 },
+      diminished: { closed: 12, spread: 8 },
+      augmented: { closed: 12, spread: 8 },
+    } as const
+
+    for (const quality of qualities) {
+      for (const voicing of ['closed', 'spread'] as const) {
+        const templates = TRIAD_SHAPE_TEMPLATES.filter(template => (
+          template.quality === quality && template.voicing === voicing
+        ))
+        expect(templates).toHaveLength(expectedCounts[quality][voicing])
+        expect(new Set(templates.map(template => template.id)).size).toBe(templates.length)
+        expect(templates.every(template => template.notes.length === 3)).toBe(true)
+        expect(templates.every(template => (
+          [...template.notes.map(note => note.role)].sort().join(',') === 'fifth,root,third'
+        ))).toBe(true)
+      }
+    }
+  })
+})
+
+describe('explicit triad-template migration equivalence', () => {
+  it.each(qualities)('matches closed %s oracle geometry, order, metadata, and repeat families', quality => {
+    for (const root of roots) {
+      for (const fretCount of fretCounts) {
+        const triad = createTriad(root, quality)
+        const oldShapes = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
+          .flatMap(strings => createTriadShapesOnStrings(triad, strings, undefined, fretCount))
+          .map(shape => ({ ...shape, chord: triad, cagedForm: classifyCagedForm(triad, shape.notes), layout: 'closed' as const }))
+        const newShapes = createTriadShapesFromTemplates(triad, 'closed', { fretCount })
+
+        expect(newShapes.map(normalizeShape)).toEqual(oldShapes.map(normalizeShape))
+        expect(normalizedFamilies(newShapes, chordShapeFamilyId)).toEqual(normalizedFamilies(
+          oldShapes,
+          shape => {
+            const octave = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
+            return `${shape.chord.id}:${shape.notes.map(note => `${note.string}:${note.fret - octave}`).join('|')}`
+          },
+        ))
+      }
+    }
+  })
+
+  it.each(qualities)('matches spread %s oracle geometry, order, metadata, and repeat families', quality => {
+    for (const root of roots) {
+      for (const fretCount of fretCounts) {
+        const triad = createTriad(root, quality)
+        const oldShapes = createSpreadTriadShapes(triad, { fretCount })
+          .map(shape => ({ ...shape, chord: triad }))
+        const newShapes = createTriadShapesFromTemplates(triad, 'spread', { fretCount })
+
+        expect(newShapes.map(normalizeShape)).toEqual(oldShapes.map(normalizeShape))
+        expect(normalizedFamilies(newShapes, chordShapeFamilyId)).toEqual(normalizedFamilies(
+          oldShapes,
+          shape => {
+            const octave = Math.floor(Math.min(...shape.notes.map(note => note.fret)) / 12) * 12
+            return `${shape.chord.id}:${shape.cagedPosition?.form}:${shape.notes.map(note => `${note.string}:${note.fret - octave}`).join('|')}`
+          },
+        ))
+      }
+    }
   })
 })

@@ -569,7 +569,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .voice-chord-strip button[aria-pressed="true"] { background: #eeeee5; outline: 1px solid var(--shape-color); }
 .voice-chord-strip strong { font-size: 20px; }
 .voice-chord-strip small { font-size: 12px; }
-.voice-map-help { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 850px; }
+.voice-map-help { color: var(--muted); font-size: 13px; line-height: 1.6; }
 .voice-selection { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 80px; margin-top: 12px; padding: 14px 0; }
 .voice-selection strong { font-size: 14px; font-weight: 500; }
 .voice-selection small { display: block; min-height: 18px; line-height: 18px; color: var(--muted); font-size: 12px; margin-top: 8px; }
