@@ -154,15 +154,9 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .path-legend-dot { border: 1px solid #8c9289; }
 .path-legend-dot::after { content: ''; position: absolute; width: 6px; height: 6px; left: 7px; top: -3px; border: 1px solid #faf9f6; border-radius: 50%; background: var(--root); }
 .progression-toolbar { min-height: 62px; margin-top: 10px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
-.fretboard-mode-switch > div { display: flex; }
-.fretboard-mode-switch legend, .string-window-picker legend, .label-mode-picker legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
-.fretboard-mode-switch label { min-height: 38px; padding: 0 13px; border: 1px solid #b9bdb3; display: inline-flex; align-items: center; color: var(--muted); font-size: 12px; cursor: pointer; }
-.fretboard-mode-switch label:first-of-type { border-radius: 5px 0 0 5px; }
-.fretboard-mode-switch label:last-of-type { border-radius: 0 5px 5px 0; margin-left: -1px; }
-.fretboard-mode-switch label:hover { color: var(--ink); background: #f0f1ea; }
-.fretboard-mode-switch label:has(input:checked) { position: relative; z-index: 1; color: white; border-color: var(--root); background: var(--root); }
-.fretboard-mode-switch label:has(input:focus-visible), .string-window-picker label:has(input:focus-visible), .label-mode-picker label:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; }
-.fretboard-mode-switch input, .string-window-picker input, .label-mode-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.top-note-string-picker legend, .label-mode-picker legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+.top-note-string-picker label:has(input:focus-visible), .label-mode-picker label:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; }
+.top-note-string-picker input, .label-mode-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .progression-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 14px 0 11px; }
 .progression-strip button { min-width: 0; padding: 7px 9px; border: 1px solid #b9bdb3; background: transparent; color: var(--ink); display: grid; grid-template-columns: 22px 1fr; grid-template-rows: auto auto; align-items: center; text-align: left; column-gap: 7px; }
 .progression-strip button:hover { background: #f0f1ea; }
@@ -175,14 +169,12 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .progression-strip.is-path button > strong { color: var(--step-color); }
 .progression-strip.is-path button:hover { background: color-mix(in srgb, var(--step-color) 7%, #faf9f6); }
 .progression-strip.is-path button.is-active { color: var(--ink); border-color: var(--step-color); background: color-mix(in srgb, var(--step-color) 11%, #faf9f6); box-shadow: inset 0 0 0 1px var(--step-color); }
-.active-step-summary { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
-.active-step-summary strong { color: var(--root); }
 .progression-map-status { min-height: 34px; max-width: 760px; margin: 2px 0 5px; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .progression-map-status strong { color: var(--root); }
-.string-window-picker > div, .label-mode-picker > div { display: flex; flex-wrap: wrap; gap: 5px; }
-.string-window-picker label, .label-mode-picker label { min-height: 38px; padding: 0 10px; border: 1px solid #b9bdb3; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; cursor: pointer; }
-.string-window-picker label:hover, .label-mode-picker label:hover { color: var(--ink); background: #f0f1ea; }
-.string-window-picker label:has(input:checked), .label-mode-picker label:has(input:checked) { color: var(--root); border-color: #91aa9c; background: #edf3ef; }
+.top-note-string-picker > div, .label-mode-picker > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.top-note-string-picker label, .label-mode-picker label { min-height: 38px; padding: 0 10px; border: 1px solid #b9bdb3; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; cursor: pointer; }
+.top-note-string-picker label:hover, .label-mode-picker label:hover { color: var(--ink); background: #f0f1ea; }
+.top-note-string-picker label:has(input:checked), .label-mode-picker label:has(input:checked) { color: var(--root); border-color: #91aa9c; background: #edf3ef; }
 .label-mode-picker > div { gap: 0; }
 .label-mode-picker label { min-width: 67px; border-radius: 0; }
 .label-mode-picker label:first-child { border-radius: 5px 0 0 5px; }
@@ -346,10 +338,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .progression-section-heading { gap: 4px; }
   .progression-fretboard-title { flex-direction: column; align-items: flex-start; gap: 10px; }
   .progression-toolbar { gap: 14px 24px; }
-  .fretboard-mode-switch label { min-height: 44px; }
   .progression-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
-  .active-step-summary { line-height: 1.45; margin: 12px 0 4px; }
-  .string-window-picker label, .label-mode-picker label { min-height: 44px; padding-inline: 7px; }
+  .top-note-string-picker label, .label-mode-picker label { min-height: 44px; padding-inline: 7px; }
   .scale-intro { align-items: stretch; }
   .scale-page-controls { margin-top: 23px; align-items: flex-end; }
   .scale-page-controls .key-control { margin-top: 0; }
@@ -374,10 +364,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .progression-choice-name { font-size: 14px; }
   .progression-choice-inversion { font-size: 11px; }
   .progression-toolbar { display: grid; gap: 12px; }
-  .fretboard-mode-switch, .label-mode-picker, .string-window-picker { display: block; width: 100%; }
-  .fretboard-mode-switch legend, .label-mode-picker legend, .string-window-picker legend { margin-bottom: 6px; }
-  .fretboard-mode-switch > div, .label-mode-picker > div, .string-window-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .fretboard-mode-switch label, .label-mode-picker label, .string-window-picker label { min-width: 0; justify-content: center; }
+  .label-mode-picker, .top-note-string-picker { display: block; width: 100%; }
+  .label-mode-picker legend, .top-note-string-picker legend { margin-bottom: 6px; }
+  .label-mode-picker > div, .top-note-string-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .label-mode-picker label, .top-note-string-picker label { min-width: 0; justify-content: center; }
   .scale-page-controls { display: grid; grid-template-columns: 76px minmax(0, 1fr); }
   .scale-type-picker label { font-size: 11px; }
   .scale-toolbar { display: grid; }

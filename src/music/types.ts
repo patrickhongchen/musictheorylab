@@ -104,12 +104,6 @@ export interface ProgressionVoicingFretboardModel {
   readonly strings: readonly number[]
   readonly shapes: readonly ProgressionVoicingShape[]
 }
-export interface ProgressionFretboardFrame {
-  readonly stepIndex: number
-  readonly topDegree: ScaleDegree
-  readonly triad: Triad
-  readonly model: FretboardModel
-}
 /** One chord-tone occurrence at a fret, retained separately for each progression step. */
 export interface ProgressionFretboardMarker {
   readonly stepIndex: number

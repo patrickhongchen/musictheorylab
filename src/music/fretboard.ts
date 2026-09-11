@@ -7,7 +7,6 @@ import type {
   PentatonicScale,
   PentatonicScaleFretboardModel,
   PentatonicScaleFretPosition,
-  ProgressionFretboardFrame,
   ProgressionFretboardMarker,
   ProgressionFretboardModel,
   ProgressionFretPosition,
@@ -206,16 +205,6 @@ export function createProgressionVoicingFretboard(
     : selected
 
   return { tuning, fretCount, strings: selectedStrings, shapes }
-}
-
-/** Keeps each chord in its own frame so shared pitches retain their role per step. */
-export function createProgressionFretboards(progression: HarmonizedProgression, tuning = STANDARD_TUNING, fretCount = 15): readonly ProgressionFretboardFrame[] {
-  return progression.steps.map(step => ({
-    stepIndex: step.index,
-    topDegree: step.topDegree,
-    triad: step.triad,
-    model: createFretboard(step.triad.tones, tuning, fretCount),
-  }))
 }
 
 /** Groups every progression occurrence by physical string/fret without losing step-specific roles or spelling. */

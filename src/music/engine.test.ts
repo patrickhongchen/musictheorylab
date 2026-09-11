@@ -3,7 +3,7 @@ import { createPentatonicScale, createScale, MAJOR_KEYS } from './scales'
 import { diatonicTriads } from './triads'
 import { ascendingPentatonicPitches, ascendingScaleSopranos, closePosition, harmonizeTopNote, sopranoPitch } from './voicings'
 import { pitch, pitchAtMidi, pitchClass, transposePitchClassName } from './pitches'
-import { createFretboard, createPentatonicScaleFretboard, createProgressionFretboard, createProgressionFretboards, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
+import { createFretboard, createPentatonicScaleFretboard, createProgressionFretboard, createProgressionVoicingFretboard, createScaleFretboard } from './fretboard'
 import { createProgression, DEFAULT_PROGRESSION_DEGREES, harmonizationChoices } from './progressions'
 import type { ProgressionChordDegrees } from './types'
 
@@ -315,14 +315,6 @@ describe('seven-step harmonized progressions', () => {
     const cb = createProgression(createScale({ tonic: 'Cb', mode: 'major' }), DEFAULT_PROGRESSION_DEGREES)
     expect(cb.steps.map(step => step.voicing.soprano.pitch.scientific))
       .toEqual(['Cb5', 'Db5', 'Eb5', 'Fb5', 'Gb5', 'Ab5', 'Bb5'])
-  })
-
-  it('keeps shared fretboard pitches and their chord-tone roles isolated by step', () => {
-    const frames = createProgressionFretboards(createProgression(cMajor, DEFAULT_PROGRESSION_DEGREES))
-    expect(frames).toHaveLength(7)
-    const cOnFifthString = frames.map(frame => frame.model.positions.find(position => position.string === 5 && position.fret === 3)?.tone.role)
-    expect(cOnFifthString[0]).toBe('root')
-    expect(cOnFifthString[5]).toBe('third')
   })
 
   describe('grouped progression fretboard', () => {
