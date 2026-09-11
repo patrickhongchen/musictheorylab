@@ -6,7 +6,6 @@ import type {
   HarmonizedProgression,
   PentatonicScale,
   PentatonicScaleFretboardModel,
-  PentatonicScaleFretPosition,
   ProgressionFretboardMarker,
   ProgressionFretboardModel,
   ProgressionFretPosition,
@@ -15,6 +14,9 @@ import type {
   Scale,
   ScaleFretboardModel,
   ScaleFretPosition,
+  ScaleTone,
+  ScaleToneFretboardModel,
+  ScaleToneFretPosition,
   VoicingFretPosition,
 } from './types'
 
@@ -53,13 +55,13 @@ export function createScaleFretboard(scale: Scale, tuning = STANDARD_TUNING, fre
   return { tuning, fretCount, positions }
 }
 
-/** Maps every occurrence of every pentatonic scale tone across the requested fret range. */
-export function createPentatonicScaleFretboard(
-  scale: PentatonicScale,
+/** Maps every occurrence of every supplied scale tone across the requested fret range. */
+export function createScaleToneFretboard<TTone extends ScaleTone>(
+  scale: { readonly tones: readonly TTone[] },
   tuning = STANDARD_TUNING,
   fretCount = 15,
-): PentatonicScaleFretboardModel {
-  const positions: PentatonicScaleFretPosition[] = []
+): ScaleToneFretboardModel<TTone> {
+  const positions: ScaleToneFretPosition<TTone>[] = []
 
   tuning.forEach((open, index) => {
     for (let fret = 0; fret <= fretCount; fret++) {
@@ -70,6 +72,15 @@ export function createPentatonicScaleFretboard(
 
   positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
   return { tuning, fretCount, positions }
+}
+
+/** Compatibility wrapper for callers that still use the pentatonic-specific name. */
+export function createPentatonicScaleFretboard(
+  scale: PentatonicScale,
+  tuning = STANDARD_TUNING,
+  fretCount = 15,
+): PentatonicScaleFretboardModel {
+  return createScaleToneFretboard(scale, tuning, fretCount)
 }
 
 interface ShapeCandidate {

@@ -2,7 +2,7 @@ import { ROLE_STYLE } from './notes'
 
 type ScaleToneRole = 'root' | 'third' | 'fifth' | 'color'
 
-/** Shared by the pentatonic overview, notation, and fretboard. */
+/** Shared by the scale overview, notation, and fretboard. */
 export const SCALE_TONE_STYLE: Record<ScaleToneRole, { label: string; color: string }> = {
   ...ROLE_STYLE,
   root: { ...ROLE_STYLE.root, label: 'Tonic' },

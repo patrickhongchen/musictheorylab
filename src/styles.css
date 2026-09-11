@@ -186,16 +186,19 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .scale-page-controls { display: flex; align-items: flex-end; gap: 14px; }
 .scale-tonic-control { flex-basis: 100px; }
 .scale-type-picker legend { padding: 0; margin-bottom: 7px; color: var(--ink); font-size: 13px; }
-.scale-type-picker > div { display: flex; }
+.scale-type-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .scale-type-picker label { min-height: 46px; padding: 0 13px; border: 1px solid #b9bdb3; display: inline-flex; align-items: center; color: var(--muted); font-size: 12px; cursor: pointer; }
-.scale-type-picker label:first-child { border-radius: 5px 0 0 5px; }
-.scale-type-picker label:last-child { margin-left: -1px; border-radius: 0 5px 5px 0; }
+.scale-type-picker label { margin: -1px 0 0 -1px; justify-content: center; text-align: center; }
+.scale-type-picker label:nth-child(1) { border-radius: 5px 0 0 0; }
+.scale-type-picker label:nth-child(2) { border-radius: 0 5px 0 0; }
+.scale-type-picker label:nth-last-child(2) { border-radius: 0 0 0 5px; }
+.scale-type-picker label:last-child { border-radius: 0 0 5px 0; }
 .scale-type-picker label:hover { color: var(--ink); background: #f0f1ea; }
 .scale-type-picker label:has(input:checked) { position: relative; z-index: 1; color: white; border-color: var(--root); background: var(--root); }
 .scale-type-picker label:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; }
 .scale-type-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .scale-tone-section { margin-top: 8px; }
-.scale-tone-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 0; padding: 13px 0 17px; border-top: 1px solid #b7bcb2; border-bottom: 1px solid #b7bcb2; }
+.scale-tone-strip { display: grid; grid-template-columns: repeat(var(--scale-tone-count), minmax(0, 1fr)); list-style: none; margin: 0; padding: 13px 0 17px; border-top: 1px solid #b7bcb2; border-bottom: 1px solid #b7bcb2; }
 .scale-tone { min-width: 0; padding: 5px 18px; border-left: 1px solid var(--line); display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 2px 13px; }
 .scale-tone:first-child { border-left: 0; }
 .scale-tone-degree { grid-row: 1 / 3; width: 32px; height: 32px; border: 1.5px solid currentColor; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
@@ -224,9 +227,26 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .scale-role-legend .scale-tone-color i { border-color: var(--muted); border-style: dotted; border-width: 2px; }
 .scale-tone-legend .scale-role-color .role-number { border-style: dotted; border-width: 2px; }
 .scale-toolbar { align-items: center; }
+.caged-position-picker legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+.caged-position-picker > div { display: flex; gap: 0; }
+.caged-position-picker label { min-width: 42px; min-height: 38px; margin-left: -1px; border: 1px solid #b9bdb3; display: grid; place-items: center; color: var(--muted); font-size: 11px; cursor: pointer; }
+.caged-position-picker label:first-child { min-width: 55px; margin-left: 0; border-radius: 5px 0 0 5px; }
+.caged-position-picker label:last-child { border-radius: 0 5px 5px 0; }
+.caged-position-picker label:hover { color: var(--ink); background: #f0f1ea; }
+.caged-position-picker label:has(input:checked) { position: relative; z-index: 1; color: var(--root); border-color: #91aa9c; background: #edf3ef; }
+.caged-position-picker label:has(input:focus-visible) { outline: 3px solid var(--root); outline-offset: 3px; z-index: 2; }
+.caged-position-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.scale-map-copy { flex: 1 1 300px; }
 .scale-map-status { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.caged-explanation { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .scale-fretboard .fret-note { font-size: 11.5px; }
 .scale-fretboard .scale-tone-label-degrees { font-size: 10.5px; font-weight: 700; }
+.scale-fretboard .caged-region { fill: color-mix(in srgb, var(--root) 13%, transparent); }
+.scale-fretboard .caged-region.is-active { fill: color-mix(in srgb, var(--root) 32%, transparent); }
+.scale-fretboard .caged-ruler-title { fill: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .7px; }
+.scale-fretboard .caged-region-label { fill: var(--muted); font-size: 8px; font-weight: 700; }
+.scale-fretboard .caged-region-label.is-active { fill: var(--root); }
+.scale-fret-position { transition: opacity 150ms; }
 .blues-staff-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
 .blues-scale-staff { min-width: 600px; min-height: 210px; }
 .blues-scale-staff svg { display: block; }
@@ -346,12 +366,13 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .scale-type-picker { flex: 1; }
   .scale-type-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scale-type-picker label { justify-content: center; min-height: 44px; padding-inline: 8px; text-align: center; }
-  .scale-tone-strip { grid-template-columns: repeat(5, minmax(92px, 1fr)); overflow-x: auto; }
+  .scale-tone-strip { grid-template-columns: repeat(var(--scale-tone-count), minmax(92px, 1fr)); overflow-x: auto; }
   .scale-tone { padding-inline: 10px; grid-template-columns: 30px minmax(0, 1fr); gap: 2px 9px; }
   .scale-tone-degree { width: 29px; height: 29px; }
   .scale-tone strong { font-size: 24px; }
   .scale-fretboard-heading > div { align-items: flex-start; flex-direction: column; gap: 10px; }
   .scale-toolbar { gap: 13px; }
+  .scale-map-copy { flex-basis: 100%; }
 }
 @media (max-width: 480px) {
   .site-header { align-items: flex-start; }
@@ -371,6 +392,8 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   .scale-page-controls { display: grid; grid-template-columns: 76px minmax(0, 1fr); }
   .scale-type-picker label { font-size: 11px; }
   .scale-toolbar { display: grid; }
+  .caged-position-picker > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .caged-position-picker label, .caged-position-picker label:first-child { min-width: 0; }
 }
 @media (max-width: 820px) {
   .site-header { align-items: flex-start; }

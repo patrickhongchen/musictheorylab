@@ -1,5 +1,5 @@
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import type { Inversion, PentatonicScale, Pitch, Scale, Triad, TriadResult, Voicing } from './types'
+import type { Inversion, PentatonicScale, Pitch, Scale, ScaleTone, Triad, TriadResult, Voicing } from './types'
 
 const INVERSIONS: readonly Inversion[] = [
   { index: 0, name: 'Root position', figure: '' },
@@ -50,8 +50,9 @@ export function ascendingScaleSopranos(scale: Scale): readonly Pitch[] {
   }, [first])
 }
 
-/** Places the five pentatonic tones in one ascending octave and repeats the tonic at the top. */
-export function ascendingPentatonicPitches(scale: PentatonicScale): readonly Pitch[] {
+/** Places any ordered scale-tone collection in one ascending octave and repeats the tonic at the top. */
+export function ascendingScalePitches(scale: { readonly tones: readonly ScaleTone[] }): readonly Pitch[] {
+  if (scale.tones.length === 0) throw new Error('An ascending scale requires at least one tone')
   const first = pitch(`${scale.tones[0].pitchClass.name}4`)
   const pitches = scale.tones.slice(1).reduce<Pitch[]>((notes, tone) => {
     const previous = notes[notes.length - 1]
@@ -61,4 +62,9 @@ export function ascendingPentatonicPitches(scale: PentatonicScale): readonly Pit
   }, [first])
 
   return [...pitches, pitchAtMidi(scale.tones[0].pitchClass, first.midi + 12)]
+}
+
+/** Compatibility wrapper for the original pentatonic-only API. */
+export function ascendingPentatonicPitches(scale: PentatonicScale): readonly Pitch[] {
+  return ascendingScalePitches(scale)
 }

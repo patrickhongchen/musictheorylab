@@ -19,10 +19,27 @@ export interface Key { readonly tonic: string; readonly mode: 'major' }
 export interface Scale { readonly key: Key; readonly name: string; readonly notes: readonly PitchClass[] }
 export type PentatonicScaleType = 'major' | 'minor'
 export type PentatonicScaleToneLabel = '1' | '2' | 'b3' | '3' | '4' | '5' | '6' | 'b7'
-/** A pitch in a pentatonic scale, with both Tonal's interval and a UI-ready degree label. */
-export interface PentatonicScaleTone {
+export type ScaleExplorerScaleType = 'majorPentatonic' | 'minorPentatonic' | 'ionian' | 'aeolian'
+export type ScaleToneLabel = PentatonicScaleToneLabel | 'b6' | '7'
+export interface ScaleTone {
   readonly pitchClass: PitchClass
   readonly interval: string
+  readonly label: ScaleToneLabel
+}
+/** A UI-ready scale definition shared by the staff and fretboard views. */
+export interface ExplorerScale {
+  readonly tonic: string
+  readonly type: ScaleExplorerScaleType
+  /** Tonal's conventional scale name, including the tonic. */
+  readonly name: string
+  /** User-facing scale-family label without the tonic. */
+  readonly displayName: string
+  /** Major/minor quality of the tonic chord that anchors its CAGED positions. */
+  readonly tonicChordQuality: 'major' | 'minor'
+  readonly tones: readonly ScaleTone[]
+}
+/** A pitch in a pentatonic scale, with both Tonal's interval and a UI-ready degree label. */
+export interface PentatonicScaleTone extends ScaleTone {
   readonly label: PentatonicScaleToneLabel
 }
 export interface PentatonicScale {
@@ -75,16 +92,18 @@ export interface ScaleFretboardModel {
   readonly fretCount: number
   readonly positions: readonly ScaleFretPosition[]
 }
-export interface PentatonicScaleFretPosition {
+export interface ScaleToneFretPosition<TTone extends ScaleTone = ScaleTone> {
   readonly string: number
   readonly fret: number
-  readonly tone: PentatonicScaleTone
+  readonly tone: TTone
 }
-export interface PentatonicScaleFretboardModel {
+export interface ScaleToneFretboardModel<TTone extends ScaleTone = ScaleTone> {
   readonly tuning: readonly Pitch[]
   readonly fretCount: number
-  readonly positions: readonly PentatonicScaleFretPosition[]
+  readonly positions: readonly ScaleToneFretPosition<TTone>[]
 }
+export type PentatonicScaleFretPosition = ScaleToneFretPosition<PentatonicScaleTone>
+export type PentatonicScaleFretboardModel = ScaleToneFretboardModel<PentatonicScaleTone>
 /** One note from a selected close-position inversion, placed on a guitar string. */
 export interface VoicingFretPosition {
   readonly string: number

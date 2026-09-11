@@ -1,11 +1,11 @@
 import { useCallback, useRef } from 'react'
 import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow/bravura'
-import type { PentatonicScale, Pitch } from '../music/types'
+import type { ExplorerScale, Pitch } from '../music/types'
 import { displayNote } from '../presentation/notes'
 import { scaleToneRole, SCALE_TONE_STYLE } from '../presentation/scales'
 import { SVG_BODY_FONT, SVG_DISPLAY_FONT, appendSvgText, prepareNotationSvg, useNotationRenderer, vexKey } from './notation'
 
-export default function ScaleStaffView({ scale, pitches }: { scale: PentatonicScale; pitches: readonly Pitch[] }) {
+export default function ScaleStaffView({ scale, pitches }: { scale: ExplorerScale; pitches: readonly Pitch[] }) {
   const hostRef = useRef<HTMLDivElement>(null)
   const draw = useCallback((host: HTMLDivElement) => {
     const width = Math.max(620, host.clientWidth)

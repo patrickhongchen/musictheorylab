@@ -1,27 +1,40 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react'
 import { ScaleFretboardView, type ScaleFretboardLabelMode } from '../components/ScaleFretboardView'
-import { createPentatonicScaleFretboard } from '../music/fretboard'
-import { createPentatonicScale, MAJOR_KEYS } from '../music/scales'
-import type { PentatonicScaleType } from '../music/types'
-import { ascendingPentatonicPitches } from '../music/voicings'
+import { CAGED_FORMS, createCagedScalePositions } from '../music/cagedScalePositions'
+import type { CagedForm } from '../music/chordShapes'
+import { createScaleToneFretboard } from '../music/fretboard'
+import {
+  createExplorerScale,
+  MAJOR_KEYS,
+  SCALE_EXPLORER_SCALE_LABELS,
+  SCALE_EXPLORER_SCALE_TYPES,
+} from '../music/scales'
+import type { ScaleExplorerScaleType } from '../music/types'
+import { ascendingScalePitches } from '../music/voicings'
 import { displayNote } from '../presentation/notes'
 import { scaleToneRole, SCALE_TONE_STYLE } from '../presentation/scales'
 
 const ScaleStaffView = lazy(() => import('../components/ScaleStaffView'))
+type CagedSelection = 'all' | CagedForm
 
 export function ScaleExplorer() {
   const [tonic, setTonic] = useState('C')
-  const [scaleType, setScaleType] = useState<PentatonicScaleType>('major')
+  const [scaleType, setScaleType] = useState<ScaleExplorerScaleType>('majorPentatonic')
   const [labelMode, setLabelMode] = useState<ScaleFretboardLabelMode>('notes')
-  const scale = useMemo(() => createPentatonicScale(tonic, scaleType), [tonic, scaleType])
-  const scalePitches = useMemo(() => ascendingPentatonicPitches(scale), [scale])
-  const board = useMemo(() => createPentatonicScaleFretboard(scale, undefined, 22), [scale])
+  const [cagedSelection, setCagedSelection] = useState<CagedSelection>('all')
+  const scale = useMemo(() => createExplorerScale(tonic, scaleType), [tonic, scaleType])
+  const scalePitches = useMemo(() => ascendingScalePitches(scale), [scale])
+  const board = useMemo(() => createScaleToneFretboard(scale, undefined, 22), [scale])
+  const cagedPositions = useMemo(() => (
+    createCagedScalePositions(tonic, scale.tonicChordQuality, 22)
+  ), [scale.tonicChordQuality, tonic])
+  const scaleSummary = `${displayNote(scale.tonic)} ${scale.displayName.toLowerCase()} · ${scale.tones.length === 5 ? 'five' : 'seven'} notes`
 
   return <>
     <div className="intro scale-intro">
       <div>
         <h1>See the scale. Find the pattern.</h1>
-        <p>Trace every tone of a pentatonic scale across the guitar neck.</p>
+        <p>Trace a scale across the neck and see how it overlaps the CAGED system.</p>
       </div>
       <div className="scale-page-controls">
         <label className="key-control scale-tonic-control">
@@ -33,14 +46,14 @@ export function ScaleExplorer() {
         <fieldset className="scale-type-picker">
           <legend>Scale</legend>
           <div>
-            {(['major', 'minor'] as const).map(type => <label key={type}>
+            {SCALE_EXPLORER_SCALE_TYPES.map(type => <label key={type}>
               <input
                 type="radio"
-                name="pentatonic-type"
+                name="scale-type"
                 checked={scaleType === type}
                 onChange={() => setScaleType(type)}
               />
-              <span>{type === 'major' ? 'Major pentatonic' : 'Minor pentatonic'}</span>
+              <span>{SCALE_EXPLORER_SCALE_LABELS[type]}</span>
             </label>)}
           </div>
         </fieldset>
@@ -50,9 +63,12 @@ export function ScaleExplorer() {
     <section className="scale-tone-section" aria-labelledby="scale-tone-heading">
       <div className="section-heading progression-section-heading">
         <h2 id="scale-tone-heading">Scale tones</h2>
-        <span>{displayNote(scale.name)} · five notes</span>
+        <span>{scaleSummary}</span>
       </div>
-      <ol className="scale-tone-strip">
+      <ol
+        className="scale-tone-strip"
+        style={{ '--scale-tone-count': scale.tones.length } as CSSProperties}
+      >
         {scale.tones.map(tone => {
           const role = scaleToneRole(tone.label)
           return <li className={`scale-tone scale-tone-${role}`} key={tone.pitchClass.name}>
@@ -100,17 +116,42 @@ export function ScaleExplorer() {
             </label>
           </div>
         </fieldset>
-        <p className="scale-map-status" role="status">
-          Chord tones are color-coded; the remaining notes complete the {scaleType} pentatonic sound.
-        </p>
+        <fieldset className="caged-position-picker">
+          <legend>CAGED positions</legend>
+          <div>
+            {(['all', ...CAGED_FORMS] as const).map(form => <label key={form}>
+              <input
+                type="radio"
+                name="caged-position"
+                checked={cagedSelection === form}
+                onChange={() => setCagedSelection(form)}
+              />
+              <span>{form === 'all' ? 'All' : form}</span>
+            </label>)}
+          </div>
+        </fieldset>
+        <div className="scale-map-copy">
+          <p className="scale-map-status" role="status">
+            {cagedSelection === 'all'
+              ? 'Full-neck scale map · all five CAGED positions shown'
+              : `${cagedSelection} shape · tones inside this position are emphasized`}
+          </p>
+          <p className="caged-explanation">CAGED positions show five overlapping areas of the neck built around movable chord shapes.</p>
+        </div>
       </div>
-      <ScaleFretboardView model={board} scaleName={scale.name} labelMode={labelMode} />
+      <ScaleFretboardView
+        model={board}
+        scaleName={scale.name}
+        labelMode={labelMode}
+        cagedPositions={cagedPositions}
+        activeCagedForm={cagedSelection}
+      />
       <div className="fretboard-caption">
         <p>Scale tones repeat toward the nut and fret 22</p>
         <p>Standard tuning: E A D G B E</p>
       </div>
     </section>
 
-    <footer className="page-footer">Pentatonic Scale Map<span>Choose a sound. See the whole neck.</span></footer>
+    <footer className="page-footer">Scale Explorer<span>Choose a sound. See the whole neck.</span></footer>
   </>
 }
