@@ -22,7 +22,12 @@ describe('canonical CAGED reference system', () => {
       { string: 6, fretOffset: 0, role: 'root' },
       { string: 4, fretOffset: 0, role: 'root' },
     ])
-    for (const definition of CAGED_FORM_DEFINITIONS) expect(() => validateCagedDefinition(definition)).not.toThrow()
+    for (const definition of CAGED_FORM_DEFINITIONS) {
+      expect(() => validateCagedDefinition(definition)).not.toThrow()
+      for (const quality of ['major', 'minor'] as const) {
+        expect(definition.chordTones[quality].length).toBeGreaterThanOrEqual(4)
+      }
+    }
   })
 
   it.each([
@@ -133,5 +138,42 @@ describe('canonical CAGED reference system', () => {
     for (const anchor of [-1, 1, 0.5, 24]) {
       expect(() => placeCagedForm('C', 'major', 'C', anchor, 22)).toThrow('Invalid CAGED anchor')
     }
+  })
+})
+
+describe('CAGED scale-position references', () => {
+  it('cycles C-A-G-E-D for C and repeats the same positions 12 frets higher', () => {
+    const positions = createCagedPositions('C', 'major')
+    expect(positions.filter(position => position.anchorFret < 12).map(position => [position.form, position.anchorFret]))
+      .toEqual([['C', 0], ['A', 3], ['G', 5], ['E', 8], ['D', 10]])
+    for (const position of positions.filter(candidate => candidate.anchorFret <= 10)) {
+      expect(positions.some(candidate => (
+        candidate.form === position.form && candidate.anchorFret === position.anchorFret + 12
+      ))).toBe(true)
+    }
+  })
+
+  it('transposes every form by the tonic interval and clips regions to frets 0 through 22', () => {
+    const c = createCagedPositions('C', 'major')
+    const d = createCagedPositions('D', 'major')
+    for (const form of CAGED_FORMS) {
+      const cAnchor = c.find(position => position.form === form)!.anchorFret
+      expect(d.some(position => position.form === form && position.anchorFret === cAnchor + 2)).toBe(true)
+    }
+    expect(d.every(position => position.startFret >= 0 && position.endFret <= 22)).toBe(true)
+  })
+
+  it('uses the requested tonic quality and exposes valid chord-tone coordinates', () => {
+    const major = createCagedPositions('C', 'major')
+    const minor = createCagedPositions('C', 'minor')
+    expect(new Set(major.map(position => position.quality))).toEqual(new Set(['major']))
+    expect(new Set(minor.map(position => position.quality))).toEqual(new Set(['minor']))
+
+    const majorThird = major.find(position => position.form === 'E' && position.anchorFret === 8)!.chordTones
+      .find(tone => tone.role === 'third')!
+    const minorThird = minor.find(position => position.form === 'E' && position.anchorFret === 8)!.chordTones
+      .find(tone => tone.role === 'third')!
+    expect([majorThird.pitchClass.name, minorThird.pitchClass.name]).toEqual(['E', 'Eb'])
+    expect(minorThird.fret).toBe(majorThird.fret - 1)
   })
 })

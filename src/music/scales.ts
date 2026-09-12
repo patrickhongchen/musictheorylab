@@ -4,8 +4,6 @@ import { pitchClass } from './pitches'
 import type {
   ExplorerScale,
   Key,
-  PentatonicScale,
-  PentatonicScaleType,
   Scale,
   ScaleExplorerScaleType,
 } from './types'
@@ -47,10 +45,4 @@ export function createExplorerScale(tonic: string, type: ScaleExplorerScaleType)
     displayName: SCALE_EXPLORER_SCALE_LABELS[type],
     tonicChordQuality: EXPLORER_TONIC_CHORD_QUALITIES[type],
   }
-}
-
-/** Pentatonic feature model retains its major/minor IDs and narrower labels. */
-export function createPentatonicScale(tonic: string, type: PentatonicScaleType): PentatonicScale {
-  const scale = createScaleTones(tonic, SCALE_CATALOG[type === 'major' ? 'majorPentatonic' : 'minorPentatonic'])
-  return { ...scale, tonic: pitchClass(tonic).name, type }
 }

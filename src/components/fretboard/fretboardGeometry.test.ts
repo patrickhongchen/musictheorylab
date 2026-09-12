@@ -69,12 +69,12 @@ describe('physical fretboard geometry', () => {
   })
 
   it('supports a fret range without shifting its physical coordinates', () => {
-    const range = createFretboardGeometry({ fretStart: 5, fretCount: 9, stringCount: 4, stringStartX: 50, rightPadding: 30 })
+    const range = createFretboardGeometry({ fretStart: 5, fretCount: 9, stringCount: 4 })
     expect(range.frets).toEqual([5, 6, 7, 8, 9])
     expect(range.markers.map(marker => marker.fret)).toEqual([5, 7, 9])
     expect(range.fretX(5)).toBe(geometry.fretX(5))
-    expect(range.fretStartX(0)).toBe(50)
+    expect(range.fretStartX(0)).toBe(55)
     expect(range.boardBottom).toBe(145)
-    expect(range.width).toBe(762)
+    expect(range.width).toBe(756)
   })
 })

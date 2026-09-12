@@ -14,7 +14,7 @@ export function RoleLegend() {
 export function FretboardView({ model, chordName }: { model: FretboardModel; chordName: string }) {
   const titleId = useId()
   const descriptionId = useId()
-  const geometry = createFretboardGeometry({ fretCount: model.fretCount, stringCount: model.tuning.length, boardHeight: 175 })
+  const geometry = createFretboardGeometry({ fretCount: model.fretCount, stringCount: model.tuning.length })
   const { fretX, stringY } = geometry
   return <FretboardCanvas
     geometry={geometry}

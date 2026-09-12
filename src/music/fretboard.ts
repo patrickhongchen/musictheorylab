@@ -4,16 +4,8 @@ import type {
   FretboardModel,
   FretPosition,
   HarmonizedProgression,
-  PentatonicScale,
-  PentatonicScaleFretboardModel,
-  ProgressionFretboardMarker,
-  ProgressionFretboardModel,
-  ProgressionFretPosition,
   ProgressionVoicingFretboardModel,
   ProgressionVoicingShape,
-  Scale,
-  ScaleFretboardModel,
-  ScaleFretPosition,
   ScaleTone,
   ScaleToneFretboardModel,
   ScaleToneFretPosition,
@@ -33,35 +25,13 @@ export function createFretboard(tones: readonly ChordTone[], tuning = STANDARD_T
   return { tuning, fretCount, positions }
 }
 
-/** Maps every diatonic pitch-class occurrence, independent of selection and presentation state. */
-export function createScaleFretboard(scale: Scale, tuning = STANDARD_TUNING, fretCount = 15): ScaleFretboardModel {
-  const positions: ScaleFretPosition[] = []
-
-  tuning.forEach((open, index) => {
-    for (let fret = 0; fret <= fretCount; fret++) {
-      const noteIndex = scale.notes.findIndex(note => note.chroma === (open.midi + fret) % 12)
-      if (noteIndex >= 0) {
-        positions.push({
-          string: tuning.length - index,
-          fret,
-          degree: (noteIndex + 1) as ScaleFretPosition['degree'],
-          pitchClass: scale.notes[noteIndex],
-        })
-      }
-    }
-  })
-
-  positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
-  return { tuning, fretCount, positions }
-}
-
 /** Maps every occurrence of every supplied scale tone across the requested fret range. */
-export function createScaleToneFretboard<TTone extends ScaleTone>(
-  scale: { readonly tones: readonly TTone[] },
+export function createScaleToneFretboard(
+  scale: { readonly tones: readonly ScaleTone[] },
   tuning = STANDARD_TUNING,
   fretCount = 15,
-): ScaleToneFretboardModel<TTone> {
-  const positions: ScaleToneFretPosition<TTone>[] = []
+): ScaleToneFretboardModel {
+  const positions: ScaleToneFretPosition[] = []
 
   tuning.forEach((open, index) => {
     for (let fret = 0; fret <= fretCount; fret++) {
@@ -72,15 +42,6 @@ export function createScaleToneFretboard<TTone extends ScaleTone>(
 
   positions.sort((left, right) => left.string - right.string || left.fret - right.fret)
   return { tuning, fretCount, positions }
-}
-
-/** Compatibility wrapper for callers that still use the pentatonic-specific name. */
-export function createPentatonicScaleFretboard(
-  scale: PentatonicScale,
-  tuning = STANDARD_TUNING,
-  fretCount = 15,
-): PentatonicScaleFretboardModel {
-  return createScaleToneFretboard(scale, tuning, fretCount)
 }
 
 interface ShapeCandidate {
@@ -216,27 +177,4 @@ export function createProgressionVoicingFretboard(
     : selected
 
   return { tuning, fretCount, strings: selectedStrings, shapes }
-}
-
-/** Groups every progression occurrence by physical string/fret without losing step-specific roles or spelling. */
-export function createProgressionFretboard(progression: HarmonizedProgression, tuning = STANDARD_TUNING, fretCount = 15): ProgressionFretboardModel {
-  const grouped = new Map<string, { string: number; fret: number; markers: ProgressionFretboardMarker[] }>()
-
-  progression.steps.forEach(step => {
-    createFretboard(step.triad.tones, tuning, fretCount).positions.forEach(({ string, fret, tone }) => {
-      const key = `${string}-${fret}`
-      const position = grouped.get(key) ?? { string, fret, markers: [] }
-      position.markers.push({ stepIndex: step.index, topDegree: step.topDegree, triad: step.triad, tone })
-      grouped.set(key, position)
-    })
-  })
-
-  const positions: ProgressionFretPosition[] = [...grouped.values()]
-    .sort((left, right) => left.string - right.string || left.fret - right.fret)
-    .map(position => ({
-      ...position,
-      markers: position.markers.sort((left, right) => left.stepIndex - right.stepIndex),
-    }))
-
-  return { tuning, fretCount, positions }
 }

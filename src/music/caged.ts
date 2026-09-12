@@ -121,7 +121,8 @@ export function validateCagedDefinition(definition: CagedFormDefinition): void {
   if (!Number.isInteger(start) || !Number.isInteger(end) || start > 0 || end < 0) invalid('invalid neck region')
   for (const quality of ['major', 'minor'] as const) {
     const coordinates = definition.chordTones[quality]
-    if (!coordinates || !['root', 'third', 'fifth'].every(role => coordinates.some(tone => tone.role === role))) {
+    const theory = CHORD_CATALOG[quality]
+    if (!coordinates || !theory.roles.every(role => coordinates.some(tone => tone.role === role))) {
       invalid(`${quality} requires root, third, and fifth references`)
     }
     if (new Set(coordinates.map(tone => tone.string)).size !== coordinates.length) invalid(`${quality} repeats a string`)
@@ -131,7 +132,6 @@ export function validateCagedDefinition(definition: CagedFormDefinition): void {
         invalid(`${quality} has an invalid reference coordinate`)
       }
       const open = STANDARD_TUNING[STANDARD_TUNING.length - tone.string]
-      const theory = CHORD_CATALOG[quality]
       const roleIndex = theory.roles.indexOf(tone.role)
       const interval = roleIndex < 0 ? undefined : Interval.semitones(theory.intervals[roleIndex]) ?? undefined
       if (interval === undefined || modulo12(open.chroma + tone.fretOffset) !== modulo12(definition.openRootChroma + interval)) {

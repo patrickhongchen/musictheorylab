@@ -1,5 +1,5 @@
 import { pitch, pitchAtMidi, pitchClass } from './pitches'
-import type { Inversion, PentatonicScale, Pitch, Scale, ScaleTone, Triad, TriadResult, Voicing } from './types'
+import type { Inversion, Pitch, Scale, ScaleTone, Triad, TriadResult, Voicing } from './types'
 
 const INVERSIONS: readonly Inversion[] = [
   { index: 0, name: 'Root position', figure: '' },
@@ -62,9 +62,4 @@ export function ascendingScalePitches(scale: { readonly tones: readonly ScaleTon
   }, [first])
 
   return [...pitches, pitchAtMidi(scale.tones[0].pitchClass, first.midi + 12)]
-}
-
-/** Compatibility wrapper for the original pentatonic-only API. */
-export function ascendingPentatonicPitches(scale: PentatonicScale): readonly Pitch[] {
-  return ascendingScalePitches(scale)
 }

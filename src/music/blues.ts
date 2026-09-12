@@ -67,8 +67,6 @@ export interface BluesFretboardModel {
   readonly positions: readonly BluesFretPosition[]
 }
 
-export const COMMON_BLUES_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
-
 const FORM: readonly BluesDegree[] = [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5]
 
 function createDominantChord(rootName: string, degree: BluesDegree): BluesChord {
@@ -139,12 +137,6 @@ export function connectGuideTones(from: BluesChord, to: BluesChord): readonly Gu
   }))
   const cost = (connections: readonly GuideToneConnection[]) => connections.reduce((sum, connection) => sum + Math.abs(connection.semitones), 0)
   return cost(crossed) < cost(direct) ? crossed : direct
-}
-
-export function nearestScaleApproach(scale: BluesScale, target: PitchClass): BluesScaleTone {
-  return scale.tones.reduce((nearest, tone) => (
-    Math.abs(signedDistance(tone.pitchClass, target)) < Math.abs(signedDistance(nearest.pitchClass, target)) ? tone : nearest
-  ))
 }
 
 /** Places the six blues colors plus the octave tonic in a readable treble register. */

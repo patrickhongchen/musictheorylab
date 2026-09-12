@@ -1,6 +1,6 @@
 # Music Theory Lab
 
-A client-side music workbook for exploring harmony, scales, notation, and guitar fretboard patterns. Four labs share a pure TypeScript music engine and a responsive workbook design.
+A client-side music workbook for exploring harmony, scales, notation, and guitar fretboard patterns. Five labs share a pure TypeScript music engine and a responsive workbook design.
 
 ## Run locally
 
@@ -36,7 +36,8 @@ The only Sites configuration is `.openai/hosting.json`: `project_id` identifies 
 | --- | --- | --- |
 | Diatonic Triad Explorer | `?lab=explorer` (default) | Choose one of 15 major key signatures and a top note; compare its three diatonic harmonizations, inversions, notation, and chord or arpeggio playback. |
 | Progression Builder | `?lab=progression` | Harmonize seven ascending top notes, inspect the complete staff, and explore chord detail or repeated voicing paths across three-string windows. |
-| Pentatonic Scale Map | `?lab=scales` | Explore major/minor pentatonics, ascending notation, and a 22-fret map with note-name or degree labels. |
+| Voice Leading | `?lab=voice-leading` | Build chord choices and compare playable triad and major-seventh shapes, inversions, and CAGED associations. |
+| Scale Explorer | `?lab=scales` | Explore major/minor pentatonics, Ionian, and Aeolian with ascending notation, CAGED regions, and a 22-fret map with note-name or degree labels. |
 | Soloing | `?lab=blues` | Add, duplicate, reorder, delete, and transpose progression steps; pair each chord with a scale and compare their tones on the staff and fretboard, including the next chord. |
 
 Soloing retains the original blues URL for existing bookmarks. It supports major, minor, diminished, major-seventh, minor-seventh, and dominant-seventh chords; Ionian, Dorian, Mixolydian, Aeolian, major/minor pentatonic, and blues scales. The Both/Chord/Scale filters and next-chord overlay synchronize notation, fretboard markers, and legends. Playback is currently available in the Triad Explorer.
@@ -52,6 +53,9 @@ The chord-detail fretboard shows available chord tones, not a single playable gu
 | `src/navigation.ts` | Lab identifiers, navigation labels, page titles, and unknown-URL fallback |
 | `src/App.tsx`, `src/components/AppShell.tsx` | Select a lab and render shared navigation |
 | `src/views/` | Selection state and derived models for each lab |
+| `src/music/chordCatalog.ts`, `src/music/scaleCatalog.ts` | Canonical chord formulas and scale families; feature menus and display labels stay with their consumers |
+| `src/music/caged.ts` | Canonical CAGED reference geometry and placement, separate from playable guitar shapes |
+| `src/components/fretboard/` | Shared physical geometry, canvas/grid rendering, and CAGED region overlay |
 | `src/music/` | Pure TypeScript + Tonal: pitches, scales, triads, voicings, progression shapes, and chord/scale memberships |
 | `src/presentation/` | Display-only accidental glyphs, tone roles, and shared scale colors |
 | `src/components/` | Controls, legends, SVG fretboards, and lazy-loaded VexFlow notation adapters |
@@ -77,7 +81,7 @@ For C major with G on top:
 
 Unit tests cover all 15 keys, scale-degree memberships, chord qualities, voicings, inversion, enharmonic octave boundaries, progression shapes, fretboard mapping, blues guide tones, soloing scale/chord classification, and transposition.
 
-For rendering or style changes, also check all four labs at desktop and narrow mobile widths. Exercise key/scale changes, progression editing, display filters, and audio controls. Confirm that each staff contains only one SVG after selection or resize, keyboard focus is visible, and wide fretboards scroll inside their own regions.
+For rendering or style changes, also check all five labs at desktop and narrow mobile widths. Exercise key/scale changes, progression editing, display filters, and audio controls. Confirm that each staff contains only one SVG after selection or resize, keyboard focus is visible, and wide fretboards scroll inside their own regions.
 
 The VexFlow Bravura chunk includes embedded notation fonts and exceeds Vite's advisory 500 kB chunk threshold. The production build succeeds; notation and audio remain lazy-loaded. Package versions and the resolved dependency tree are pinned in `package.json` and `package-lock.json`.
 

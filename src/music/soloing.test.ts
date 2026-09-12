@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { pitch } from './pitches'
+import { CHROMATIC_PITCH_CLASS_NAMES, pitch } from './pitches'
 import {
   CHORD_QUALITY_LABELS,
-  NOTE_ROOTS,
   SCALE_TYPE_LABELS,
   SEED_SOLOING_PROGRESSION,
   SOLOING_CHORD_QUALITIES,
@@ -23,8 +22,8 @@ import {
 
 describe('soloing chord-scale domain', () => {
   it('exports complete, labeled editor options', () => {
-    expect(NOTE_ROOTS).toHaveLength(12)
-    expect(new Set(NOTE_ROOTS)).toHaveProperty('size', 12)
+    expect(CHROMATIC_PITCH_CLASS_NAMES).toHaveLength(12)
+    expect(new Set(CHROMATIC_PITCH_CLASS_NAMES)).toHaveProperty('size', 12)
     expect(SOLOING_CHORD_QUALITIES).toEqual(['major', 'minor', 'diminished', 'major7', 'minor7', 'dominant7'])
     expect(SOLOING_SCALE_TYPES).toEqual(['ionian', 'dorian', 'mixolydian', 'aeolian', 'majorPentatonic', 'minorPentatonic', 'blues'])
     expect(Object.keys(CHORD_QUALITY_LABELS)).toEqual(SOLOING_CHORD_QUALITIES)

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { createCagedScalePositions } from './cagedScalePositions'
+import { createCagedPositions } from './caged'
 import { STANDARD_TUNING } from './fretboard'
 import { createTriadShapesFromTemplates } from './triadShapeTemplates'
 import { createTriad } from './triads'
@@ -16,7 +16,7 @@ function fingerprint(value: unknown): string {
 describe('CAGED behavior regression', () => {
   it('preserves scale-position order and clipped teaching regions', () => {
     const matrix = roots.flatMap(root => qualities.flatMap(quality => fretCounts.map(fretCount => {
-      const positions = createCagedScalePositions(root, quality, fretCount)
+      const positions = createCagedPositions(root, quality, fretCount)
       const placement = positions.map(position => (
         `${position.form}${position.anchorFret}[${position.startFret}-${position.endFret}]`
       )).join(' ')
@@ -67,7 +67,7 @@ A/minor/35: A0[0-2] G2[1-5] E5[4-7] D7[6-10] C9[8-12] A12[11-14] G14[13-17] E17[
 
   it('preserves exact scale-position chord tones across roots, qualities, and boundaries', () => {
     const matrix = roots.flatMap(root => qualities.flatMap(quality => fretCounts.map(fretCount => {
-      const positions = createCagedScalePositions(root, quality, fretCount)
+      const positions = createCagedPositions(root, quality, fretCount)
       for (const position of positions) {
         for (const tone of position.chordTones) {
           const open = STANDARD_TUNING[STANDARD_TUNING.length - tone.string]

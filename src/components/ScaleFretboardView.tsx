@@ -27,7 +27,7 @@ export function ScaleFretboardView({
 }: ScaleFretboardViewProps) {
   const titleId = useId()
   const descriptionId = useId()
-  const geometry = createFretboardGeometry({ fretCount: model.fretCount, stringCount: model.tuning.length, boardTop: 76, boardHeight: 175 })
+  const geometry = createFretboardGeometry({ fretCount: model.fretCount, stringCount: model.tuning.length, boardTop: 76 })
   const { fretX, stringY } = geometry
   const positionIsActive = (fret: number) => activeCagedForm === 'all' || cagedPositions.some(position => (
     position.form === activeCagedForm && fret >= position.startFret && fret <= position.endFret
@@ -35,7 +35,6 @@ export function ScaleFretboardView({
 
   return <FretboardCanvas
     geometry={geometry}
-    scrollClassName="fretboard-scroll scale-fretboard-scroll"
     scrollLabel="Guitar scale fretboard, scroll horizontally on small screens"
     svgProps={{ className: 'fretboard scale-fretboard', 'aria-labelledby': `${titleId} ${descriptionId}` }}
   >

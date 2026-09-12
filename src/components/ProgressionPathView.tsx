@@ -87,7 +87,6 @@ export function ProgressionPathView({
     stringSpacing: 46,
     fretLabelOffset: 47,
     nutOverhang: 2,
-    octaveDots: 'double',
     doubleDotInset: 52.5,
   })
   const selectedChordName = displayNote(selectedStep.triad.chordName)
@@ -130,7 +129,6 @@ export function ProgressionPathView({
   return <FretboardCanvas
     geometry={geometry}
     scrollLabel="Connected progression inversion shapes, scroll horizontally on small screens"
-    scrollClassName="fretboard-scroll progression-path-scroll"
     svgProps={{
       className: 'fretboard progression-path-view',
       'aria-labelledby': `${titleId} ${descriptionId}`,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { CHROMATIC_PITCH_CLASS_NAMES } from '../music/pitches'
 import {
-  NOTE_ROOTS,
   SOLOING_CHORD_QUALITIES,
   SOLOING_SCALE_TYPES,
   chordQualityLabel,
@@ -63,8 +63,8 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
         }
       : {
           id: createSoloingStepId(),
-          chord: { root: NOTE_ROOTS[0], quality: SOLOING_CHORD_QUALITIES[0] },
-          scale: { root: NOTE_ROOTS[0], type: SOLOING_SCALE_TYPES[0] },
+          chord: { root: CHROMATIC_PITCH_CLASS_NAMES[0], quality: SOLOING_CHORD_QUALITIES[0] },
+          scale: { root: CHROMATIC_PITCH_CLASS_NAMES[0], type: SOLOING_SCALE_TYPES[0] },
         }
     const nextSteps = [...progression]
     nextSteps.splice(selectedStep ? effectiveSelectedIndex + 1 : 0, 0, nextStep)
@@ -162,7 +162,7 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
               chord: { ...step.chord, root: event.target.value as SoloingStep['chord']['root'] },
             }))}
           >
-            {NOTE_ROOTS.map(root => <option value={root} key={root}>{displayNote(root)}</option>)}
+            {CHROMATIC_PITCH_CLASS_NAMES.map(root => <option value={root} key={root}>{displayNote(root)}</option>)}
           </select>
         </label>
         <label>
@@ -186,7 +186,7 @@ export function SoloingProgressionEditor({ progression, selectedStepId, onChange
               scale: { ...step.scale, root: event.target.value as SoloingStep['scale']['root'] },
             }))}
           >
-            {NOTE_ROOTS.map(root => <option value={root} key={root}>{displayNote(root)}</option>)}
+            {CHROMATIC_PITCH_CLASS_NAMES.map(root => <option value={root} key={root}>{displayNote(root)}</option>)}
           </select>
         </label>
         <label>

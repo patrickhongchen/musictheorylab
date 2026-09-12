@@ -97,7 +97,7 @@ export function ChordShapeFretboard({ allShapes, shapes, selected, hovered, onHo
     geometry={geometry}
     scrollLabel="Chord shape fretboard, scroll horizontally to fret 22"
     svgProps={{
-      className: 'fretboard triad-shape-board',
+      className: 'fretboard',
       'aria-label': 'All visible chord shapes. Colors identify chords. High E is at the top. Select a shape to reveal its notes and intervals.',
     }}
   >

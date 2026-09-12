@@ -102,7 +102,6 @@ export function SoloingFretboardView({
     stringCount: model.tuning.length,
     boardTop: 46,
     stringSpacing: 36,
-    boardHeight: 180,
     fretLabelOffset: 34,
     bottomPadding: 26,
     nutOverhang: 2,
@@ -131,12 +130,8 @@ export function SoloingFretboardView({
       <FretboardGrid
         geometry={geometry}
         tuning={model.tuning}
-        neckClassName="transition-neck"
-        fretClassName="transition-fret-wire"
-        stringClassName="transition-string"
         fretStroke="#bfc2b8"
         stringStroke="#8f948b"
-        stringStrokeWidth={0.8}
         stringStrokeIncrement={0.18}
       />
 

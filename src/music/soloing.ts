@@ -2,10 +2,8 @@ import { Interval, Note } from 'tonal'
 import { CHORD_CATALOG, createChordTones, type ChordQuality, type ChordToneRole } from './chordCatalog'
 import { SCALE_CATALOG, createScaleTones, type ScaleType, type ScaleLabel } from './scaleCatalog'
 import { STANDARD_TUNING } from './fretboard'
-import { pitchAtMidi, pitchClass } from './pitches'
+import { pitchAtMidi, pitchClass, transposePitchClassName } from './pitches'
 import type { Pitch, PitchClass } from './types'
-
-export const NOTE_ROOTS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
 
 export const SOLOING_CHORD_QUALITIES = [
   'major',
@@ -207,15 +205,10 @@ export function transposeSoloingProgression(
     throw new Error('Transpose interval must be an integer number of semitones')
   }
 
-  const transposeRoot = (root: string) => {
-    const chroma = pitchClass(root).chroma
-    return NOTE_ROOTS[(chroma + semitones % 12 + 12) % 12]
-  }
-
   return steps.map(step => ({
     ...step,
-    chord: { ...step.chord, root: transposeRoot(step.chord.root) },
-    scale: { ...step.scale, root: transposeRoot(step.scale.root) },
+    chord: { ...step.chord, root: transposePitchClassName(step.chord.root, semitones) },
+    scale: { ...step.scale, root: transposePitchClassName(step.scale.root, semitones) },
   }))
 }
 

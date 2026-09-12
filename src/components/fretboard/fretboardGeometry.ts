@@ -1,4 +1,4 @@
-export interface FretboardGeometryOptions {
+interface FretboardGeometryOptions {
   readonly fretCount: number
   readonly stringCount: number
   /** First numbered/drawn fret. Coordinates remain relative to the physical nut. */
@@ -6,13 +6,10 @@ export interface FretboardGeometryOptions {
   readonly fretStep?: number
   readonly nutX?: number
   readonly openX?: number
-  readonly stringStartX?: number
   readonly boardTop?: number
   readonly stringSpacing?: number
-  readonly boardHeight?: number
   readonly fretLabelOffset?: number
   readonly bottomPadding?: number
-  readonly rightPadding?: number
   readonly nutOverhang?: number
   readonly octaveDots?: 'single' | 'double'
   readonly doubleDotInset?: number
@@ -21,11 +18,12 @@ export interface FretboardGeometryOptions {
 /** Physical drawing coordinates only; tuning and musical positions belong to the model. */
 export function createFretboardGeometry({
   fretCount, stringCount, fretStart = 0, fretStep = 70, nutX = 102, openX = 73,
-  stringStartX = 55, boardTop = 40, stringSpacing = 35,
-  boardHeight = Math.max(0, stringCount - 1) * stringSpacing,
-  fretLabelOffset = 32, bottomPadding = 13, rightPadding = 24,
+  boardTop = 40, stringSpacing = 35, fretLabelOffset = 32, bottomPadding = 13,
   nutOverhang = 1, octaveDots = 'double', doubleDotInset = stringSpacing * 1.5,
 }: FretboardGeometryOptions) {
+  const stringStartX = 55
+  const rightPadding = 24
+  const boardHeight = Math.max(0, stringCount - 1) * stringSpacing
   const boardBottom = boardTop + boardHeight
   const boardWidth = fretCount * fretStep
   const endX = nutX + boardWidth
@@ -44,7 +42,7 @@ export function createFretboardGeometry({
       : [(boardTop + boardBottom) / 2],
   }))
   return {
-    fretCount, fretStart, fretStep, stringCount, stringSpacing, nutX, openX, stringStartX,
+    fretCount, fretStart, nutX, stringStartX,
     boardTop, boardBottom, boardHeight, boardWidth, endX, fretLabelY, nutOverhang,
     width: endX + rightPadding, height: fretLabelY + bottomPadding,
     frets, markers, fretX, stringY, fretStartX, fretEndX,

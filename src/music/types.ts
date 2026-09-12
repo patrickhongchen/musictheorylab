@@ -21,8 +21,6 @@ export type ChordToneRole = typeof CHORD_CATALOG.major.roles[number]
 export type RomanNumeral = string
 export interface Key { readonly tonic: string; readonly mode: 'major' }
 export interface Scale { readonly key: Key; readonly name: string; readonly notes: readonly PitchClass[] }
-export type PentatonicScaleType = 'major' | 'minor'
-export type PentatonicScaleToneLabel = ScaleLabel<'majorPentatonic' | 'minorPentatonic'>
 export type ScaleExplorerScaleType = typeof SCALE_EXPLORER_SCALE_TYPES[number]
 export type ScaleToneLabel = ScaleLabel<ScaleExplorerScaleType>
 export interface ScaleTone {
@@ -41,16 +39,6 @@ export interface ExplorerScale {
   /** Major/minor quality of the tonic chord that anchors its CAGED positions. */
   readonly tonicChordQuality: 'major' | 'minor'
   readonly tones: readonly ScaleTone[]
-}
-/** A pitch in a pentatonic scale, with both Tonal's interval and a UI-ready degree label. */
-export interface PentatonicScaleTone extends ScaleTone {
-  readonly label: PentatonicScaleToneLabel
-}
-export interface PentatonicScale {
-  readonly tonic: string
-  readonly type: PentatonicScaleType
-  readonly name: string
-  readonly tones: readonly PentatonicScaleTone[]
 }
 export interface ChordTone { readonly pitchClass: PitchClass; readonly role: ChordToneRole; readonly interval: string }
 export interface IndependentTriad {
@@ -84,30 +72,16 @@ export interface ProgressionStep {
 export interface HarmonizedProgression { readonly scale: Scale; readonly steps: readonly ProgressionStep[] }
 export interface FretPosition { readonly string: number; readonly fret: number; readonly tone: ChordTone }
 export interface FretboardModel { readonly tuning: readonly Pitch[]; readonly fretCount: number; readonly positions: readonly FretPosition[] }
-/** A scale-note occurrence that can act as a top-note anchor on the fretboard. */
-export interface ScaleFretPosition {
+export interface ScaleToneFretPosition {
   readonly string: number
   readonly fret: number
-  readonly degree: ScaleDegree
-  readonly pitchClass: PitchClass
+  readonly tone: ScaleTone
 }
-export interface ScaleFretboardModel {
+export interface ScaleToneFretboardModel {
   readonly tuning: readonly Pitch[]
   readonly fretCount: number
-  readonly positions: readonly ScaleFretPosition[]
+  readonly positions: readonly ScaleToneFretPosition[]
 }
-export interface ScaleToneFretPosition<TTone extends ScaleTone = ScaleTone> {
-  readonly string: number
-  readonly fret: number
-  readonly tone: TTone
-}
-export interface ScaleToneFretboardModel<TTone extends ScaleTone = ScaleTone> {
-  readonly tuning: readonly Pitch[]
-  readonly fretCount: number
-  readonly positions: readonly ScaleToneFretPosition<TTone>[]
-}
-export type PentatonicScaleFretPosition = ScaleToneFretPosition<PentatonicScaleTone>
-export type PentatonicScaleFretboardModel = ScaleToneFretboardModel<PentatonicScaleTone>
 /** One note from a selected close-position inversion, placed on a guitar string. */
 export interface VoicingFretPosition {
   readonly string: number
@@ -126,22 +100,4 @@ export interface ProgressionVoicingFretboardModel {
   readonly fretCount: number
   readonly strings: readonly number[]
   readonly shapes: readonly ProgressionVoicingShape[]
-}
-/** One chord-tone occurrence at a fret, retained separately for each progression step. */
-export interface ProgressionFretboardMarker {
-  readonly stepIndex: number
-  readonly topDegree: ScaleDegree
-  readonly triad: Triad
-  readonly tone: ChordTone
-}
-/** A physical fretboard coordinate shared by one or more progression markers. */
-export interface ProgressionFretPosition {
-  readonly string: number
-  readonly fret: number
-  readonly markers: readonly ProgressionFretboardMarker[]
-}
-export interface ProgressionFretboardModel {
-  readonly tuning: readonly Pitch[]
-  readonly fretCount: number
-  readonly positions: readonly ProgressionFretPosition[]
 }
