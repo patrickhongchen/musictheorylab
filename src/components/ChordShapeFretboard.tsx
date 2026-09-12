@@ -1,6 +1,8 @@
 import { STANDARD_TUNING } from '../music/fretboard'
 import { chordShapeFamilyId, soundingBass, type PlayableChordShape } from '../music/chordShapes'
 import { chordIntervalLabel, displayNote } from '../presentation/notes'
+import { FretboardCanvas, FretboardGrid } from './fretboard/FretboardCanvas'
+import { createFretboardGeometry } from './fretboard/fretboardGeometry'
 import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
 
 export function shapeCagedLabel(shape: PlayableChordShape): string {
@@ -39,11 +41,15 @@ interface Props {
 }
 
 export function ChordShapeFretboard({ allShapes, shapes, selected, hovered, onHover, onSelect, fretCount }: Props) {
-  const nut = 102
-  const step = 70
-  const end = nut + fretCount * step
-  const fretX = (fret: number) => fret === 0 ? 73 : nut + (fret - 0.5) * step
-  const stringY = (string: number) => 48 + (string - 1) * 46
+  const geometry = createFretboardGeometry({
+    fretCount,
+    stringCount: STANDARD_TUNING.length,
+    boardTop: 48,
+    stringSpacing: 46,
+    bottomPadding: 12,
+    nutOverhang: 2,
+    octaveDots: 'single',
+  })
   const selectedFamilyIds = new Set(selected.map(chordShapeFamilyId))
   const selectedRepeats = allShapes.filter(shape => selectedFamilyIds.has(chordShapeFamilyId(shape)))
   const hoveredRepeats = hovered ? shapes.filter(shape => chordShapeFamilyId(shape) === chordShapeFamilyId(hovered)) : []
@@ -62,7 +68,7 @@ export function ChordShapeFretboard({ allShapes, shapes, selected, hovered, onHo
   const renderShape = (shape: PlayableChordShape, overlay = false, showDetails = overlay) => {
     const emphasized = overlay
     const color = shapeColor(shape)
-    const points = shape.notes.map(note => `${fretX(note.fret)},${stringY(note.string)}`).join(' ')
+    const points = shape.notes.map(note => `${geometry.fretX(note.fret)},${geometry.stringY(note.string)}`).join(' ')
     return <g key={`${shape.id}-${overlay}`} className="triad-map-shape"
       opacity={emphasized ? 1 : active ? 0.6 : 0.8}
       pointerEvents={overlay ? 'none' : undefined}
@@ -74,7 +80,7 @@ export function ChordShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       {!overlay && <polyline points={points} fill="none" stroke="transparent" strokeWidth="14" />}
       {shape.notes.map(note => {
         const shared = [...(selectedPositions.get(positionKey(note)) ?? [])].some(chordId => chordId !== shape.chord.id)
-        return <g key={note.string} transform={`translate(${fretX(note.fret)}, ${stringY(note.string)})`}>
+        return <g key={note.string} transform={`translate(${geometry.fretX(note.fret)}, ${geometry.stringY(note.string)})`}>
           {shared && <circle r="20" fill="none" stroke="#252925" strokeWidth="2" strokeDasharray="3 3" />}
           <circle r={emphasized ? 16 : 9} fill={emphasized ? color : '#faf9f6'} stroke={color} strokeWidth="2" />
           {showDetails && <>
@@ -87,22 +93,17 @@ export function ChordShapeFretboard({ allShapes, shapes, selected, hovered, onHo
       })}
     </g>
   }
-  return <div className="fretboard-scroll" tabIndex={0} role="region" aria-label="Chord shape fretboard, scroll horizontally to fret 22">
-    <svg className="fretboard triad-shape-board" style={{ minWidth: end + 24 }} viewBox={`0 0 ${end + 24} 322`} role="img" aria-label="All visible chord shapes. Colors identify chords. High E is at the top. Select a shape to reveal its notes and intervals.">
-      <rect x={nut} y="48" width={end - nut} height="230" fill="#f3f1eb" />
-      {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret <= fretCount).map(fret => <circle key={fret} cx={fretX(fret)} cy="163" r="4" fill="#d3d1c7" />)}
-      {Array.from({ length: fretCount + 1 }, (_, fret) => <g key={fret}>
-        {fret > 0 && <line x1={nut + fret * step} x2={nut + fret * step} y1="48" y2="278" stroke="#c6c7bd" />}
-        <text x={fretX(fret)} y="310" textAnchor="middle" className="fret-label">{fret}</text>
-      </g>)}
-      {[...STANDARD_TUNING].reverse().map((note, index) => <g key={note.scientific}>
-        <line x1="55" x2={end} y1={stringY(index + 1)} y2={stringY(index + 1)} stroke="#a6a99f" strokeWidth={0.8 + index * 0.2} />
-        <text x="9" y={stringY(index + 1) + 5} className="string-label">{displayNote(note.name)}<tspan dx="5" className="string-number">({index + 1})</tspan></text>
-      </g>)}
-      <line x1={nut} x2={nut} y1="46" y2="280" stroke="#464c42" strokeWidth="5" />
+  return <FretboardCanvas
+    geometry={geometry}
+    scrollLabel="Chord shape fretboard, scroll horizontally to fret 22"
+    svgProps={{
+      className: 'fretboard triad-shape-board',
+      'aria-label': 'All visible chord shapes. Colors identify chords. High E is at the top. Select a shape to reveal its notes and intervals.',
+    }}
+  >
+      <FretboardGrid geometry={geometry} tuning={STANDARD_TUNING} />
       {visible.map(shape => renderShape(shape))}
       {selectedRepeats.map(shape => renderShape(shape, true, !hoveredFamilyId || hoveredFamilyId === chordShapeFamilyId(shape)))}
       {hoveredRepeats.filter(shape => !selectedRepeats.some(repeat => repeat.id === shape.id)).map(shape => renderShape(shape, true))}
-    </svg>
-  </div>
+  </FretboardCanvas>
 }

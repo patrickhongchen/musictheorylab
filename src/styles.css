@@ -241,11 +241,11 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .caged-explanation { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .scale-fretboard .fret-note { font-size: 11.5px; }
 .scale-fretboard .scale-tone-label-degrees { font-size: 10.5px; font-weight: 700; }
-.scale-fretboard .caged-region { fill: color-mix(in srgb, var(--root) 13%, transparent); }
-.scale-fretboard .caged-region.is-active { fill: color-mix(in srgb, var(--root) 32%, transparent); }
-.scale-fretboard .caged-ruler-title { fill: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .7px; }
-.scale-fretboard .caged-region-label { fill: var(--muted); font-size: 8px; font-weight: 700; }
-.scale-fretboard .caged-region-label.is-active { fill: var(--root); }
+.caged-ruler .caged-region { fill: color-mix(in srgb, var(--root) 13%, transparent); }
+.caged-ruler .caged-region.is-active { fill: color-mix(in srgb, var(--root) 32%, transparent); }
+.caged-ruler .caged-ruler-title { fill: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .7px; }
+.caged-ruler .caged-region-label { fill: var(--muted); font-size: 8px; font-weight: 700; }
+.caged-ruler .caged-region-label.is-active { fill: var(--root); }
 .scale-fret-position { transition: opacity 150ms; }
 .blues-staff-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b9bdb3 transparent; }
 .blues-scale-staff { min-width: 600px; min-height: 210px; }

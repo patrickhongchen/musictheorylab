@@ -1,6 +1,8 @@
 import { useId } from 'react'
 import type { SoloingChord, SoloingFretboardModel, SoloingFretPosition, SoloingScale } from '../music/soloing'
 import { displayNote } from '../presentation/notes'
+import { FretboardCanvas, FretboardGrid } from './fretboard/FretboardCanvas'
+import { createFretboardGeometry } from './fretboard/fretboardGeometry'
 import { SOLOING_VISUAL_COLORS, type SoloingNoteFilter } from './soloingVisualTypes'
 
 export type SoloingLabelMode = 'notes' | 'degrees'
@@ -91,55 +93,52 @@ export function SoloingFretboardView({
 }: SoloingFretboardViewProps) {
   const titleId = useId()
   const descriptionId = useId()
-  const step = 62
-  const nut = 110
-  const openX = 76
-  const end = nut + model.fretEnd * step
-  const viewWidth = end + 24
-  const fretX = (fret: number) => fret === 0 ? openX : nut + (fret - 0.5) * step
-  const stringY = (string: number) => 46 + (string - 1) * 36
+  const geometry = createFretboardGeometry({
+    fretCount: model.fretEnd,
+    fretStart: model.fretStart,
+    fretStep: 62,
+    nutX: 110,
+    openX: 76,
+    stringCount: model.tuning.length,
+    boardTop: 46,
+    stringSpacing: 36,
+    boardHeight: 180,
+    fretLabelOffset: 34,
+    bottomPadding: 26,
+    nutOverhang: 2,
+  })
   const visiblePositions = model.positions.filter(position => isVisible(position, showNextChord, noteFilter))
-  const fretNumbers = Array.from({ length: model.fretEnd - model.fretStart + 1 }, (_, index) => model.fretStart + index)
   const markerDescription = noteFilter === 'scale'
     ? 'Paper circles with ink borders are selected-scale tones.'
     : noteFilter === 'chord'
       ? 'Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale.'
       : 'Paper circles with ink borders are selected-scale tones outside the current chord. Mint circles with heavy green borders are current-chord tones. An amber diamond marks a chord tone outside the selected scale.'
 
-  return <div className="transition-fretboard-scroll fretboard-scroll" tabIndex={0} role="region" aria-label="Full guitar fretboard, scroll horizontally to explore frets zero through twenty-two">
-    <svg
-      className="transition-fretboard fretboard"
-      style={{ minWidth: viewWidth }}
-      viewBox={`0 0 ${viewWidth} 286`}
-      role="img"
-      aria-labelledby={`${titleId} ${descriptionId}`}
-    >
+  return <FretboardCanvas
+    geometry={geometry}
+    scrollLabel="Full guitar fretboard, scroll horizontally to explore frets zero through twenty-two"
+    scrollClassName="transition-fretboard-scroll fretboard-scroll"
+    svgProps={{
+      className: 'transition-fretboard fretboard',
+      'aria-labelledby': `${titleId} ${descriptionId}`,
+    }}
+  >
       <title id={titleId}>{noteFilter === 'scale' ? displayNote(scale.name) : noteFilter === 'chord' ? `${displayNote(currentChord.name)} chord tones` : `${displayNote(currentChord.name)} chord tones over ${displayNote(scale.name)}`} on guitar</title>
       <desc id={descriptionId}>
         High E is at the top and low E is at the bottom. Frets {model.fretStart} through {model.fretEnd}. The view is filtered to {noteFilter === 'both' ? 'scale and chord tones' : noteFilter === 'chord' ? 'chord tones' : 'scale tones'}. All note markers are the same size. {markerDescription} {showNextChord && nextChord ? `Blue dashed halos show tones in the next chord, ${displayNote(nextChord.name)}.` : noteFilter === 'scale' ? 'Chord overlays are hidden in Scale view.' : 'The next-chord overlay is off.'} Labels show {labelMode === 'notes' ? 'note names' : 'scale-relative degrees'}. {visiblePositions.map(position => `String ${position.string} fret ${position.fret}: ${displayNote(position.pitchClass.name)}, ${spokenRole(position, currentChord, nextChord, showNextChord, noteFilter)}`).join('; ')}.
       </desc>
 
-      <rect x={nut} y="46" width={end - nut} height="180" className="transition-neck" fill="#f3f1eb" />
-      {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret >= model.fretStart && fret <= model.fretEnd).map(fret => <g key={fret} fill="#d3d1c7" aria-hidden="true">
-        {fret === 12
-          ? <><circle cx={fretX(fret)} cy="100" r="4" /><circle cx={fretX(fret)} cy="172" r="4" /></>
-          : <circle cx={fretX(fret)} cy="136" r="4" />}
-      </g>)}
-      {fretNumbers.filter(fret => fret > 0).map(fret => <line
-        key={fret}
-        x1={nut + fret * step}
-        x2={nut + fret * step}
-        y1="46"
-        y2="226"
-        className="transition-fret-wire"
-        stroke="#bfc2b8"
-      />)}
-      {[...model.tuning].reverse().map((note, index) => <g key={note.scientific}>
-        <line x1="55" x2={end} y1={stringY(index + 1)} y2={stringY(index + 1)} className="transition-string" stroke="#8f948b" strokeWidth={0.8 + index * 0.18} />
-        <text x="9" y={stringY(index + 1) + 5} className="string-label">{displayNote(note.name)}<tspan dx="5" className="string-number">({index + 1})</tspan></text>
-      </g>)}
-      <line x1={nut} x2={nut} y1="44" y2="228" stroke="#464c42" strokeWidth="5" />
-      {fretNumbers.map(fret => <text key={fret} x={fretX(fret)} y="260" textAnchor="middle" className="fret-label">{fret}</text>)}
+      <FretboardGrid
+        geometry={geometry}
+        tuning={model.tuning}
+        neckClassName="transition-neck"
+        fretClassName="transition-fret-wire"
+        stringClassName="transition-string"
+        fretStroke="#bfc2b8"
+        stringStroke="#8f948b"
+        stringStrokeWidth={0.8}
+        stringStrokeIncrement={0.18}
+      />
 
       {visiblePositions.map(position => {
         const isCurrent = noteFilter !== 'scale' && Boolean(position.currentChordTone)
@@ -147,8 +146,8 @@ export function SoloingFretboardView({
         const isScale = Boolean(position.scaleTone)
         const isOutsideScale = noteFilter !== 'scale' && !isScale
         const label = markerLabel(position, labelMode)
-        const x = fretX(position.fret)
-        const y = stringY(position.string)
+        const x = geometry.fretX(position.fret)
+        const y = geometry.stringY(position.string)
 
         return <g key={`${position.string}-${position.fret}`} className="transition-position" transform={`translate(${x}, ${y})`}>
           <circle
@@ -180,6 +179,5 @@ export function SoloingFretboardView({
           >{label}</text>
         </g>
       })}
-    </svg>
-  </div>
+  </FretboardCanvas>
 }

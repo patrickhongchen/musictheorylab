@@ -1,10 +1,12 @@
-import { useId } from 'react'
+import { useId, type SVGProps } from 'react'
 import type {
   ProgressionStep,
   ProgressionVoicingFretboardModel,
   VoicingFretPosition,
 } from '../music/types'
 import { chordIntervalLabel, displayNote } from '../presentation/notes'
+import { FretboardCanvas, FretboardGrid } from './fretboard/FretboardCanvas'
+import { createFretboardGeometry } from './fretboard/fretboardGeometry'
 
 export type ProgressionLabelMode = 'key' | 'chord'
 
@@ -76,18 +78,18 @@ export function ProgressionPathView({
 }: ProgressionPathViewProps) {
   const titleId = useId()
   const descriptionId = useId()
-  const fretStep = 70
-  const nut = 102
-  const end = nut + model.fretCount * fretStep
-  const boardTop = 42
-  const stringGap = 46
   const allStrings = Array.from({ length: model.tuning.length }, (_, index) => index + 1)
   const selectedStringSet = new Set(model.strings)
-  const boardBottom = boardTop + Math.max(0, allStrings.length - 1) * stringGap
-  const fretLabelY = boardBottom + 47
-  const viewHeight = fretLabelY + 13
-  const fretX = (fret: number) => fret === 0 ? 73 : nut + (fret - 0.5) * fretStep
-  const stringY = new Map(allStrings.map((string, index) => [string, boardTop + index * stringGap]))
+  const geometry = createFretboardGeometry({
+    fretCount: model.fretCount,
+    stringCount: model.tuning.length,
+    boardTop: 42,
+    stringSpacing: 46,
+    fretLabelOffset: 47,
+    nutOverhang: 2,
+    octaveDots: 'double',
+    doubleDotInset: 52.5,
+  })
   const selectedChordName = displayNote(selectedStep.triad.chordName)
   const selectedColor = stepColor(selectedStep.index)
   const orderedShapes = [...model.shapes].sort((left, right) => (
@@ -102,20 +104,40 @@ export function ProgressionPathView({
     coordinates.set(key, coordinate)
   }))
 
-  return <div
-    className="fretboard-scroll progression-path-scroll"
-    tabIndex={0}
-    role="region"
-    aria-label="Connected progression inversion shapes, scroll horizontally on small screens"
+  const details = <details className="sr-only">
+    <summary>Detailed connected progression shapes</summary>
+    <table>
+      <caption>One selected inversion shape per progression step</caption>
+      <thead><tr><th>Step</th><th>Chord</th><th>Inversion</th><th>String</th><th>Fret</th><th>Note</th><th>Scale degree</th><th>Chord interval</th><th>Chord role</th><th>Top note</th></tr></thead>
+      <tbody>{model.shapes.flatMap(shape => {
+        const step = steps[shape.stepIndex]
+        return shape.notes.map(note => <tr key={`${shape.stepIndex}-${shape.fretOffset}-${note.string}`}>
+          <td>{shape.stepIndex + 1}</td>
+          <td>{displayNote(step.triad.chordName)}</td>
+          <td>{step.voicing.inversion.name}</td>
+          <td>{note.string}</td>
+          <td>{note.fret}</td>
+          <td>{displayNote(note.tone.pitch.name)}</td>
+          <td>{note.degree}</td>
+          <td>{chordIntervalLabel(note.tone.role, step.triad.quality)}</td>
+          <td>{note.tone.role}</td>
+          <td>{note.isTopNote ? 'Yes' : 'No'}</td>
+        </tr>)
+      })}</tbody>
+    </table>
+  </details>
+
+  return <FretboardCanvas
+    geometry={geometry}
+    scrollLabel="Connected progression inversion shapes, scroll horizontally on small screens"
+    scrollClassName="fretboard-scroll progression-path-scroll"
+    svgProps={{
+      className: 'fretboard progression-path-view',
+      'aria-labelledby': `${titleId} ${descriptionId}`,
+      'data-label-mode': labelMode,
+    } as SVGProps<SVGSVGElement>}
+    afterSvg={details}
   >
-    <svg
-      className="fretboard progression-path-view"
-      style={{ minWidth: end + 24 }}
-      viewBox={`0 0 ${end + 24} ${viewHeight}`}
-      role="img"
-      aria-labelledby={`${titleId} ${descriptionId}`}
-      data-label-mode={labelMode}
-    >
       <title id={titleId}>{displayNote(progressionName)}, seven connected chord-inversion shapes</title>
       <desc id={descriptionId}>
         All {allStrings.length} guitar strings are shown. Each progression step is a colored line connecting
@@ -125,43 +147,17 @@ export function ProgressionPathView({
           ? 'Small badges show each note degree relative to the major key.'
           : 'Small badges appear only on the selected chord and show root, third, and fifth relative to that chord.'}
       </desc>
-
-      <rect x={nut} y={boardTop} width={end - nut} height={Math.max(1, boardBottom - boardTop)} fill="#f3f1eb" />
-
-      {[3, 5, 7, 9, 12, 15, 17, 19, 21].filter(fret => fret <= model.fretCount).map(fret => <g key={`marker-${fret}`} fill="#d3d1c7">
-        {fret === 12
-          ? <><circle cx={fretX(fret)} cy={boardTop + 52.5} r="4" /><circle cx={fretX(fret)} cy={boardBottom - 52.5} r="4" /></>
-          : <circle cx={fretX(fret)} cy={(boardTop + boardBottom) / 2} r="4" />}
-      </g>)}
-
-      {Array.from({ length: model.fretCount + 1 }, (_, fret) => <g key={fret}>
-        {fret > 0 && <line
-          x1={nut + fret * fretStep}
-          x2={nut + fret * fretStep}
-          y1={boardTop}
-          y2={boardBottom}
-          stroke="#c6c7bd"
-        />}
-        <text x={fretX(fret)} y={fretLabelY} textAnchor="middle" className="fret-label">{fret}</text>
-      </g>)}
-
-      {allStrings.map(string => {
-        const note = model.tuning[model.tuning.length - string]
-        const y = stringY.get(string) ?? boardTop
-        const isSelected = selectedStringSet.has(string)
-        return <g key={string} opacity={isSelected ? 1 : 0.48}>
-          <line x1="55" x2={end} y1={y} y2={y} stroke="#a6a99f" strokeWidth={0.75 + (string - 1) * 0.2} />
-          <text x="9" y={y + 5} className="string-label">
-            {displayNote(note.name)}<tspan dx="5" className="string-number">({string})</tspan>
-          </text>
-        </g>
-      })}
-      <line x1={nut} x2={nut} y1={boardTop - 2} y2={boardBottom + 2} stroke="#464c42" strokeWidth="5" />
+      <FretboardGrid
+        geometry={geometry}
+        tuning={model.tuning}
+        stringOpacity={string => selectedStringSet.has(string) ? 1 : 0.48}
+        stringStrokeWidth={0.75}
+      />
 
       {orderedShapes.map(shape => {
         const color = stepColor(shape.stepIndex)
         const isSelected = shape.stepIndex === selectedStep.index
-        const points = shape.notes.map(note => `${fretX(note.fret)},${stringY.get(note.string) ?? boardTop}`).join(' ')
+        const points = shape.notes.map(note => `${geometry.fretX(note.fret)},${geometry.stringY(note.string)}`).join(' ')
         return <g key={`${shape.stepIndex}-${shape.fretOffset}`}>
           <polyline
             points={points}
@@ -189,8 +185,8 @@ export function ProgressionPathView({
         const labelEntry = selectedEntry ?? coordinate.entries[0]
         const noteName = noteNameParts(labelEntry.note.tone.pitch.name)
         const topNoteEntry = coordinate.entries.find(entry => entry.note.isTopNote)
-        const x = fretX(coordinate.fret)
-        const y = stringY.get(coordinate.string) ?? boardTop
+        const x = geometry.fretX(coordinate.fret)
+        const y = geometry.stringY(coordinate.string)
         const secondaryLabel = labelMode === 'key'
           ? `${labelEntry.note.degree}`
           : selectedEntry ? chordIntervalLabel(selectedEntry.note.tone.role, selectedStep.triad.quality) : null
@@ -232,29 +228,5 @@ export function ProgressionPathView({
           </>}
         </g>
       })}
-    </svg>
-
-    <details className="sr-only">
-      <summary>Detailed connected progression shapes</summary>
-      <table>
-        <caption>One selected inversion shape per progression step</caption>
-        <thead><tr><th>Step</th><th>Chord</th><th>Inversion</th><th>String</th><th>Fret</th><th>Note</th><th>Scale degree</th><th>Chord interval</th><th>Chord role</th><th>Top note</th></tr></thead>
-        <tbody>{model.shapes.flatMap(shape => {
-          const step = steps[shape.stepIndex]
-          return shape.notes.map(note => <tr key={`${shape.stepIndex}-${shape.fretOffset}-${note.string}`}>
-            <td>{shape.stepIndex + 1}</td>
-            <td>{displayNote(step.triad.chordName)}</td>
-            <td>{step.voicing.inversion.name}</td>
-            <td>{note.string}</td>
-            <td>{note.fret}</td>
-            <td>{displayNote(note.tone.pitch.name)}</td>
-            <td>{note.degree}</td>
-            <td>{chordIntervalLabel(note.tone.role, step.triad.quality)}</td>
-            <td>{note.tone.role}</td>
-            <td>{note.isTopNote ? 'Yes' : 'No'}</td>
-          </tr>)
-        })}</tbody>
-      </table>
-    </details>
-  </div>
+  </FretboardCanvas>
 }
