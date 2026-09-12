@@ -1,3 +1,7 @@
+import type { CHORD_CATALOG, TRIAD_QUALITIES } from './chordCatalog'
+import type { ScaleLabel } from './scaleCatalog'
+import type { SCALE_EXPLORER_SCALE_TYPES } from './scales'
+
 /** Spelling is retained separately from acoustic pitch class (chroma). */
 export interface PitchClass {
   readonly name: string
@@ -12,15 +16,15 @@ export interface Pitch extends PitchClass {
   readonly frequency: number
 }
 export type ScaleDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7
-export type ChordQuality = 'major' | 'minor' | 'diminished' | 'augmented'
-export type ChordToneRole = 'root' | 'third' | 'fifth'
+export type ChordQuality = typeof TRIAD_QUALITIES[number]
+export type ChordToneRole = typeof CHORD_CATALOG.major.roles[number]
 export type RomanNumeral = string
 export interface Key { readonly tonic: string; readonly mode: 'major' }
 export interface Scale { readonly key: Key; readonly name: string; readonly notes: readonly PitchClass[] }
 export type PentatonicScaleType = 'major' | 'minor'
-export type PentatonicScaleToneLabel = '1' | '2' | 'b3' | '3' | '4' | '5' | '6' | 'b7'
-export type ScaleExplorerScaleType = 'majorPentatonic' | 'minorPentatonic' | 'ionian' | 'aeolian'
-export type ScaleToneLabel = PentatonicScaleToneLabel | 'b6' | '7'
+export type PentatonicScaleToneLabel = ScaleLabel<'majorPentatonic' | 'minorPentatonic'>
+export type ScaleExplorerScaleType = typeof SCALE_EXPLORER_SCALE_TYPES[number]
+export type ScaleToneLabel = ScaleLabel<ScaleExplorerScaleType>
 export interface ScaleTone {
   readonly pitchClass: PitchClass
   readonly interval: string

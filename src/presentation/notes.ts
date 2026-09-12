@@ -1,3 +1,4 @@
+import { CHORD_CATALOG } from '../music/chordCatalog'
 import type { ChordQuality, ChordToneRole } from '../music/types'
 
 /** Typography only. Never changes the domain spelling or acoustic pitch. */
@@ -11,9 +12,8 @@ export const ROLE_STYLE: Record<ChordToneRole, { label: string; number: string; 
 
 /** Labels a chord tone relative to its own chord rather than the parent key. */
 export function chordIntervalLabel(role: ChordToneRole | 'seventh', quality: ChordQuality | 'major7') {
-  if (role === 'seventh') return '7'
   if (role === 'root') return 'R'
-  if (role === 'third') return quality === 'minor' || quality === 'diminished' ? '♭3' : '3'
-  if (quality === 'diminished') return '♭5'
-  return quality === 'augmented' ? '♯5' : '5'
+  const definition = CHORD_CATALOG[quality]
+  const index = definition.roles.findIndex(candidate => candidate === role)
+  return index < 0 ? '' : displayNote(definition.labels[index])
 }

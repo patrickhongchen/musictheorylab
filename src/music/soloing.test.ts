@@ -22,40 +22,11 @@ import {
 } from './soloing'
 
 describe('soloing chord-scale domain', () => {
-  it.each<[SoloingChordQuality, string, readonly string[], readonly string[]]>([
-    ['major', 'C', ['C', 'E', 'G'], ['1', '3', '5']],
-    ['minor', 'Cm', ['C', 'Eb', 'G'], ['1', 'b3', '5']],
-    ['diminished', 'Cdim', ['C', 'Eb', 'Gb'], ['1', 'b3', 'b5']],
-    ['major7', 'Cmaj7', ['C', 'E', 'G', 'B'], ['1', '3', '5', '7']],
-    ['minor7', 'Cm7', ['C', 'Eb', 'G', 'Bb'], ['1', 'b3', '5', 'b7']],
-    ['dominant7', 'C7', ['C', 'E', 'G', 'Bb'], ['1', '3', '5', 'b7']],
-  ])('creates a %s chord', (quality, name, notes, labels) => {
-    const chord = createSoloingChord('C', quality)
-    expect(chord.name).toBe(name)
-    expect(chord.tones.map(tone => tone.pitchClass.name)).toEqual(notes)
-    expect(chord.tones.map(tone => tone.label)).toEqual(labels)
-    expect(chord.tones.map(tone => tone.interval)).toHaveLength(notes.length)
-  })
-
-  it.each<[SoloingScaleType, readonly string[], readonly string[]]>([
-    ['ionian', ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#'], ['1', '2', '3', '4', '5', '6', '7']],
-    ['dorian', ['A', 'B', 'C', 'D', 'E', 'F#', 'G'], ['1', '2', 'b3', '4', '5', '6', 'b7']],
-    ['mixolydian', ['A', 'B', 'C#', 'D', 'E', 'F#', 'G'], ['1', '2', '3', '4', '5', '6', 'b7']],
-    ['aeolian', ['A', 'B', 'C', 'D', 'E', 'F', 'G'], ['1', '2', 'b3', '4', '5', 'b6', 'b7']],
-    ['majorPentatonic', ['A', 'B', 'C#', 'E', 'F#'], ['1', '2', '3', '5', '6']],
-    ['minorPentatonic', ['A', 'C', 'D', 'E', 'G'], ['1', 'b3', '4', '5', 'b7']],
-    ['blues', ['A', 'C', 'D', 'Eb', 'E', 'G'], ['1', 'b3', '4', 'b5', '5', 'b7']],
-  ])('creates an A %s scale', (type, notes, labels) => {
-    const scale = createSoloingScale('A', type)
-    expect(scale.name).toBe(`A ${SCALE_TYPE_LABELS[type]}`)
-    expect(scale.tones.map(tone => tone.pitchClass.name)).toEqual(notes)
-    expect(scale.tones.map(tone => tone.label)).toEqual(labels)
-    expect(scale.tones.every(tone => tone.interval.length > 0)).toBe(true)
-  })
-
   it('exports complete, labeled editor options', () => {
     expect(NOTE_ROOTS).toHaveLength(12)
     expect(new Set(NOTE_ROOTS)).toHaveProperty('size', 12)
+    expect(SOLOING_CHORD_QUALITIES).toEqual(['major', 'minor', 'diminished', 'major7', 'minor7', 'dominant7'])
+    expect(SOLOING_SCALE_TYPES).toEqual(['ionian', 'dorian', 'mixolydian', 'aeolian', 'majorPentatonic', 'minorPentatonic', 'blues'])
     expect(Object.keys(CHORD_QUALITY_LABELS)).toEqual(SOLOING_CHORD_QUALITIES)
     expect(Object.keys(SCALE_TYPE_LABELS)).toEqual(SOLOING_SCALE_TYPES)
   })

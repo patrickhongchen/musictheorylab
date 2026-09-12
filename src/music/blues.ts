@@ -1,16 +1,17 @@
-import { Note, Scale as TonalScale } from 'tonal'
+import { Note } from 'tonal'
+import { CHORD_CATALOG, createChordTones, type ChordToneRole } from './chordCatalog'
+import { SCALE_CATALOG, createScaleTones, type ScaleLabel } from './scaleCatalog'
 import { STANDARD_TUNING } from './fretboard'
 import { pitchAtMidi, pitchClass } from './pitches'
 import type { Pitch, PitchClass } from './types'
 
 export type BluesDegree = 1 | 4 | 5
-export type BluesChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
-export type BluesScaleDegree = '1' | 'b3' | '4' | 'b5' | '5' | 'b7'
+export type BluesScaleDegree = ScaleLabel<'blues'>
 
 export interface BluesChordTone {
   readonly pitchClass: PitchClass
-  readonly role: BluesChordToneRole
-  readonly label: '1' | '3' | '5' | 'b7'
+  readonly role: ChordToneRole
+  readonly label: typeof CHORD_CATALOG.dominant7.labels[number]
 }
 
 export interface BluesChord {
@@ -68,10 +69,6 @@ export interface BluesFretboardModel {
 
 export const COMMON_BLUES_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const
 
-const CHORD_INTERVALS = ['1P', '3M', '5P', '7m'] as const
-const CHORD_ROLES = ['root', 'third', 'fifth', 'seventh'] as const
-const CHORD_LABELS = ['1', '3', '5', 'b7'] as const
-const SCALE_LABELS = ['1', 'b3', '4', 'b5', '5', 'b7'] as const
 const FORM: readonly BluesDegree[] = [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5]
 
 function createDominantChord(rootName: string, degree: BluesDegree): BluesChord {
@@ -80,29 +77,22 @@ function createDominantChord(rootName: string, degree: BluesDegree): BluesChord 
   return {
     degree,
     root,
-    name: `${root.name}7`,
+    name: `${root.name}${CHORD_CATALOG.dominant7.suffix}`,
     romanNumeral: numeral,
-    tones: CHORD_INTERVALS.map((interval, index) => ({
-      pitchClass: pitchClass(Note.transpose(root.name, interval)),
-      role: CHORD_ROLES[index],
-      label: CHORD_LABELS[index],
-    })),
+    tones: createChordTones(root, CHORD_CATALOG.dominant7),
   }
 }
 
 /** Builds the common turnaround form: I I I I / IV IV I I / V IV I V. */
 export function createTwelveBarBlues(tonicName: string): TwelveBarBlues {
   const tonic = pitchClass(tonicName)
-  const major = TonalScale.get(`${tonic.name} major`)
-  const blues = TonalScale.get(`${tonic.name} blues`)
-  if (major.empty || major.notes.length !== 7 || blues.empty || blues.notes.length !== 6) {
-    throw new Error(`Unsupported blues key: ${tonicName}`)
-  }
+  const major = createScaleTones(tonic.name, SCALE_CATALOG.ionian)
+  const blues = createScaleTones(tonic.name, SCALE_CATALOG.blues)
 
   const chords = [
-    createDominantChord(major.notes[0], 1),
-    createDominantChord(major.notes[3], 4),
-    createDominantChord(major.notes[4], 5),
+    createDominantChord(major.tones[0].pitchClass.name, 1),
+    createDominantChord(major.tones[3].pitchClass.name, 4),
+    createDominantChord(major.tones[4].pitchClass.name, 5),
   ] as const
   const byDegree = new Map(chords.map(chord => [chord.degree, chord]))
   const bars = FORM.map((degree, index): BluesBar => {
@@ -124,7 +114,7 @@ export function createTwelveBarBlues(tonicName: string): TwelveBarBlues {
       name: `${tonic.name} minor blues`,
       // Blues-scale colors favor practical fretboard names (E rather than Fb in Bb blues).
       // Dominant chord spellings remain functional and unsimplified above.
-      tones: blues.notes.map((note, index) => ({ pitchClass: pitchClass(Note.simplify(note)), label: SCALE_LABELS[index] })),
+      tones: blues.tones.map(tone => ({ ...tone, pitchClass: pitchClass(Note.simplify(tone.pitchClass.name)) })),
     },
   }
 }

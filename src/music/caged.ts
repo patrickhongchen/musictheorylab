@@ -1,4 +1,5 @@
-import { Note } from 'tonal'
+import { Interval, Note } from 'tonal'
+import { CHORD_CATALOG } from './chordCatalog'
 import { STANDARD_TUNING } from './fretboard'
 import { pitchClass } from './pitches'
 import type { ChordToneRole, PitchClass } from './types'
@@ -101,14 +102,6 @@ export const CAGED_FORM_DEFINITIONS: readonly CagedFormDefinition[] = [
   },
 ]
 
-const ROLE_SEMITONES: Readonly<Record<CagedChordQuality, Readonly<Record<ChordToneRole, number>>>> = {
-  major: { root: 0, third: 4, fifth: 7 },
-  minor: { root: 0, third: 3, fifth: 7 },
-}
-const ROLE_INTERVALS: Readonly<Record<CagedChordQuality, Readonly<Record<ChordToneRole, string>>>> = {
-  major: { root: '1P', third: '3M', fifth: '5P' },
-  minor: { root: '1P', third: '3m', fifth: '5P' },
-}
 const modulo12 = (value: number) => ((value % 12) + 12) % 12
 
 export function getCagedForm(form: CagedForm): CagedFormDefinition {
@@ -138,7 +131,9 @@ export function validateCagedDefinition(definition: CagedFormDefinition): void {
         invalid(`${quality} has an invalid reference coordinate`)
       }
       const open = STANDARD_TUNING[STANDARD_TUNING.length - tone.string]
-      const interval = ROLE_SEMITONES[quality][tone.role]
+      const theory = CHORD_CATALOG[quality]
+      const roleIndex = theory.roles.indexOf(tone.role)
+      const interval = roleIndex < 0 ? undefined : Interval.semitones(theory.intervals[roleIndex]) ?? undefined
       if (interval === undefined || modulo12(open.chroma + tone.fretOffset) !== modulo12(definition.openRootChroma + interval)) {
         invalid(`${quality} string ${tone.string} does not sound its ${tone.role}`)
       }
@@ -211,7 +206,7 @@ export function placeCagedForm(
       if (fret < 0 || fret > fretCount) return []
       return [{
         string: coordinate.string, fret, role: coordinate.role,
-        pitchClass: pitchClass(Note.transpose(root.name, ROLE_INTERVALS[quality][coordinate.role])),
+        pitchClass: pitchClass(Note.transpose(root.name, CHORD_CATALOG[quality].intervals[CHORD_CATALOG[quality].roles.indexOf(coordinate.role)])),
       }]
     }),
   }

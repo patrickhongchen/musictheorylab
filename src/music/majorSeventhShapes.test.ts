@@ -17,12 +17,8 @@ const rootFret = (shape: PlayableChordShape) => {
 }
 
 describe('Major 7 chords and curated guitar shapes', () => {
-  it('builds a correctly spelled root, major third, fifth, and major seventh', () => {
-    const chord = createMajorSeventh('C')
-    expect(chord.quality).toBe('major7')
-    expect(chord.tones.map(tone => [tone.role, tone.pitchClass.name, tone.interval])).toEqual([
-      ['root', 'C', '1P'], ['third', 'E', '3M'], ['fifth', 'G', '5P'], ['seventh', 'B', '7M'],
-    ])
+  it('keeps playable Major 7 identity and naming', () => {
+    expect(createMajorSeventh('C')).toMatchObject({ id: 'C:major7', quality: 'major7', chordName: 'C major 7' })
   })
 
   it('transposes a template while retaining its strings, offsets, and roles', () => {

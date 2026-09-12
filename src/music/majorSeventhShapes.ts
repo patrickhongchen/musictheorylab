@@ -1,16 +1,15 @@
-import { Note } from 'tonal'
+import { CHORD_CATALOG, createChordTones, type ChordToneRole } from './chordCatalog'
 import { validateCagedAssociations, type CagedAssociations } from './caged'
 import {
   soundingBass,
   type ChordShapeInversion,
   type MajorSeventhChord,
   type PlayableChordShape,
-  type PlayableChordToneRole,
 } from './chordShapes'
 import { STANDARD_TUNING } from './fretboard'
 import { pitchClass } from './pitches'
 
-export const SEVENTH_INVERSIONS: Readonly<Record<PlayableChordToneRole, ChordShapeInversion>> = {
+export const SEVENTH_INVERSIONS: Readonly<Record<ChordToneRole, ChordShapeInversion>> = {
   root: { index: 0, name: 'Root position', figure: '7' },
   third: { index: 1, name: 'First inversion', figure: '6/5' },
   fifth: { index: 2, name: 'Second inversion', figure: '4/3' },
@@ -20,7 +19,7 @@ export const SEVENTH_INVERSIONS: Readonly<Record<PlayableChordToneRole, ChordSha
 interface TemplateNote {
   readonly string: number
   readonly fretOffset: number
-  readonly role: PlayableChordToneRole
+  readonly role: ChordToneRole
 }
 
 export interface MajorSeventhShapeTemplate {
@@ -33,7 +32,7 @@ export interface MajorSeventhShapeTemplate {
   readonly cagedForms: CagedAssociations
 }
 
-const note = (string: number, fretOffset: number, role: PlayableChordToneRole): TemplateNote => (
+const note = (string: number, fretOffset: number, role: ChordToneRole): TemplateNote => (
   { string, fretOffset, role }
 )
 
@@ -114,14 +113,9 @@ for (const template of MAJOR_SEVENTH_SHAPE_TEMPLATES) validateCagedAssociations(
 
 export function createMajorSeventh(rootName: string): MajorSeventhChord {
   const root = pitchClass(rootName)
-  const definitions = [
-    ['root', '1P'], ['third', '3M'], ['fifth', '5P'], ['seventh', '7M'],
-  ] as const
   return {
     id: `${root.name}:major7`, root, quality: 'major7', chordName: `${root.name} major 7`,
-    tones: definitions.map(([role, interval]) => ({
-      role, interval, pitchClass: pitchClass(Note.transpose(root.name, interval)),
-    })),
+    tones: createChordTones(root, CHORD_CATALOG.major7),
   }
 }
 

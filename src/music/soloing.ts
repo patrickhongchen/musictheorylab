@@ -1,4 +1,6 @@
-import { Interval, Note, Scale as TonalScale } from 'tonal'
+import { Interval, Note } from 'tonal'
+import { CHORD_CATALOG, createChordTones, type ChordQuality, type ChordToneRole } from './chordCatalog'
+import { SCALE_CATALOG, createScaleTones, type ScaleType, type ScaleLabel } from './scaleCatalog'
 import { STANDARD_TUNING } from './fretboard'
 import { pitchAtMidi, pitchClass } from './pitches'
 import type { Pitch, PitchClass } from './types'
@@ -12,7 +14,7 @@ export const SOLOING_CHORD_QUALITIES = [
   'major7',
   'minor7',
   'dominant7',
-] as const
+] as const satisfies readonly ChordQuality[]
 
 export const SOLOING_SCALE_TYPES = [
   'ionian',
@@ -22,11 +24,10 @@ export const SOLOING_SCALE_TYPES = [
   'majorPentatonic',
   'minorPentatonic',
   'blues',
-] as const
+] as const satisfies readonly ScaleType[]
 
 export type SoloingChordQuality = typeof SOLOING_CHORD_QUALITIES[number]
 export type SoloingScaleType = typeof SOLOING_SCALE_TYPES[number]
-export type SoloingChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
 
 export const CHORD_QUALITY_LABELS: Readonly<Record<SoloingChordQuality, string>> = {
   major: 'Maj',
@@ -57,9 +58,9 @@ export function scaleTypeLabel(type: SoloingScaleType) {
 
 export interface SoloingChordTone {
   readonly pitchClass: PitchClass
-  readonly role: SoloingChordToneRole
+  readonly role: ChordToneRole
   readonly interval: string
-  readonly label: string
+  readonly label: typeof CHORD_CATALOG[SoloingChordQuality]['labels'][number]
 }
 
 export interface SoloingChord {
@@ -72,7 +73,7 @@ export interface SoloingChord {
 export interface SoloingScaleTone {
   readonly pitchClass: PitchClass
   readonly interval: string
-  readonly label: string
+  readonly label: ScaleLabel<SoloingScaleType>
 }
 
 export interface SoloingScale {
@@ -136,77 +137,34 @@ export interface SoloingFretboardModel {
   readonly positions: readonly SoloingFretPosition[]
 }
 
-interface ChordDefinition {
-  readonly intervals: readonly string[]
-  readonly labels: readonly string[]
-  readonly roles: readonly SoloingChordToneRole[]
-  readonly suffix: string
-}
-
-const TRIAD_ROLES = ['root', 'third', 'fifth'] as const
-const SEVENTH_ROLES = ['root', 'third', 'fifth', 'seventh'] as const
-
-const CHORD_DEFINITIONS: Readonly<Record<SoloingChordQuality, ChordDefinition>> = {
-  major: { intervals: ['1P', '3M', '5P'], labels: ['1', '3', '5'], roles: TRIAD_ROLES, suffix: '' },
-  minor: { intervals: ['1P', '3m', '5P'], labels: ['1', 'b3', '5'], roles: TRIAD_ROLES, suffix: 'm' },
-  diminished: { intervals: ['1P', '3m', '5d'], labels: ['1', 'b3', 'b5'], roles: TRIAD_ROLES, suffix: 'dim' },
-  major7: { intervals: ['1P', '3M', '5P', '7M'], labels: ['1', '3', '5', '7'], roles: SEVENTH_ROLES, suffix: 'maj7' },
-  minor7: { intervals: ['1P', '3m', '5P', '7m'], labels: ['1', 'b3', '5', 'b7'], roles: SEVENTH_ROLES, suffix: 'm7' },
-  dominant7: { intervals: ['1P', '3M', '5P', '7m'], labels: ['1', '3', '5', 'b7'], roles: SEVENTH_ROLES, suffix: '7' },
-}
-
-interface ScaleDefinition {
-  readonly tonalName: string
-  readonly labels: readonly string[]
-}
-
-const SCALE_DEFINITIONS: Readonly<Record<SoloingScaleType, ScaleDefinition>> = {
-  ionian: { tonalName: 'ionian', labels: ['1', '2', '3', '4', '5', '6', '7'] },
-  dorian: { tonalName: 'dorian', labels: ['1', '2', 'b3', '4', '5', '6', 'b7'] },
-  mixolydian: { tonalName: 'mixolydian', labels: ['1', '2', '3', '4', '5', '6', 'b7'] },
-  aeolian: { tonalName: 'aeolian', labels: ['1', '2', 'b3', '4', '5', 'b6', 'b7'] },
-  majorPentatonic: { tonalName: 'major pentatonic', labels: ['1', '2', '3', '5', '6'] },
-  minorPentatonic: { tonalName: 'minor pentatonic', labels: ['1', 'b3', '4', '5', 'b7'] },
-  blues: { tonalName: 'blues', labels: ['1', 'b3', '4', 'b5', '5', 'b7'] },
-}
-
 /** Creates a functionally spelled chord from the selected root and quality. */
 export function createSoloingChord(rootName: string, quality: SoloingChordQuality): SoloingChord {
   const root = pitchClass(rootName)
-  const definition = CHORD_DEFINITIONS[quality]
-  if (!definition) throw new Error(`Unsupported chord quality: ${quality}`)
+  const definition = CHORD_CATALOG[quality]
+  if (!SOLOING_CHORD_QUALITIES.includes(quality)) throw new Error(`Unsupported chord quality: ${quality}`)
 
   return {
     root,
     quality,
     name: `${root.name}${definition.suffix}`,
-    tones: definition.intervals.map((interval, index) => ({
-      pitchClass: pitchClass(Note.transpose(root.name, interval)),
-      interval,
-      label: definition.labels[index],
-      role: definition.roles[index],
-    })),
+    tones: createChordTones(root, definition),
   }
 }
 
 /** Creates a scale whose note names favor simple, fretboard-friendly enharmonics. */
 export function createSoloingScale(rootName: string, type: SoloingScaleType): SoloingScale {
   const root = pitchClass(rootName)
-  const definition = SCALE_DEFINITIONS[type]
-  if (!definition) throw new Error(`Unsupported scale type: ${type}`)
-  const data = TonalScale.get(`${root.name} ${definition.tonalName}`)
-  if (data.empty || data.notes.length !== definition.labels.length) {
-    throw new Error(`Unsupported ${SCALE_TYPE_LABELS[type]} scale root: ${rootName}`)
-  }
+  const definition = SCALE_CATALOG[type]
+  if (!SOLOING_SCALE_TYPES.includes(type)) throw new Error(`Unsupported scale type: ${type}`)
+  const scale = createScaleTones(root.name, definition)
 
   return {
     root,
     type,
     name: `${root.name} ${SCALE_TYPE_LABELS[type]}`,
-    tones: data.notes.map((note, index) => ({
-      pitchClass: pitchClass(Note.simplify(note)),
-      interval: data.intervals[index],
-      label: definition.labels[index],
+    tones: scale.tones.map(tone => ({
+      ...tone,
+      pitchClass: pitchClass(Note.simplify(tone.pitchClass.name)),
     })),
   }
 }

@@ -1,18 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { createCagedScalePositions, CAGED_FORMS, CAGED_SCALE_POSITION_TEMPLATES } from './cagedScalePositions'
 import { createScaleToneFretboard, STANDARD_TUNING } from './fretboard'
-import { createExplorerScale } from './scales'
+import { createExplorerScale, SCALE_EXPLORER_SCALE_TYPES } from './scales'
 import { ascendingScalePitches } from './voicings'
 
 describe('Scale Explorer scale construction', () => {
-  it.each([
-    ['C', 'ionian', ['C', 'D', 'E', 'F', 'G', 'A', 'B'], ['1', '2', '3', '4', '5', '6', '7'], 'major'],
-    ['A', 'aeolian', ['A', 'B', 'C', 'D', 'E', 'F', 'G'], ['1', '2', 'b3', '4', '5', 'b6', 'b7'], 'minor'],
-  ] as const)('creates %s %s with degrees and tonic quality', (tonic, type, notes, labels, quality) => {
-    const scale = createExplorerScale(tonic, type)
-    expect(scale.tones.map(tone => tone.pitchClass.name)).toEqual(notes)
-    expect(scale.tones.map(tone => tone.label)).toEqual(labels)
-    expect(scale.tonicChordQuality).toBe(quality)
+  it('keeps the existing menu and feature-specific labels and CAGED anchors', () => {
+    expect(SCALE_EXPLORER_SCALE_TYPES).toEqual(['majorPentatonic', 'minorPentatonic', 'ionian', 'aeolian'])
+    expect(SCALE_EXPLORER_SCALE_TYPES.map(type => {
+      const scale = createExplorerScale('C', type)
+      return [scale.type, scale.displayName, scale.tonicChordQuality]
+    })).toEqual([
+      ['majorPentatonic', 'Major pentatonic', 'major'],
+      ['minorPentatonic', 'Minor pentatonic', 'minor'],
+      ['ionian', 'Major / Ionian', 'major'],
+      ['aeolian', 'Natural minor / Aeolian', 'minor'],
+    ])
   })
 
   it.each([

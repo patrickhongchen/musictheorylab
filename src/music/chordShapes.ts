@@ -1,14 +1,14 @@
+import type { ChordToneRole } from './chordCatalog'
 import type { CagedAssociations } from './caged'
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordQuality, IndependentTriad, PitchClass } from './types'
 
 export type VoiceLeadingQuality = ChordQuality | 'major7'
-export type PlayableChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
 export type { CagedForm } from './caged'
 
 export interface MajorSeventhChordTone {
   readonly pitchClass: PitchClass
-  readonly role: PlayableChordToneRole
+  readonly role: ChordToneRole
   readonly interval: string
 }
 
@@ -27,7 +27,7 @@ export interface PlayableChordNote {
   readonly fret: number
   readonly tone: {
     readonly pitchClass: PitchClass
-    readonly role: PlayableChordToneRole
+    readonly role: ChordToneRole
     readonly interval: string
   }
 }
