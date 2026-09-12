@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { cagedAnchorFromRoot, firstCagedAnchor, getCagedRootReference } from './caged'
 import { chordShapeFamilyId, groupChordShapeRepeats, soundingBass } from './chordShapes'
 import { STANDARD_TUNING } from './fretboard'
 import { createMajorSeventh, createMajorSeventhShapes } from './majorSeventhShapes'
-import { createTriadShapesFromTemplates, TRIAD_SHAPE_TEMPLATES } from './triadShapeTemplates'
+import { createTriadShapesFromTemplates, TRIAD_SHAPE_TEMPLATES, validateTriadCagedAssociation } from './triadShapeTemplates'
 import { createTriad } from './triads'
 import type { ChordQuality } from './types'
 import {
@@ -189,6 +190,32 @@ describe('explicit triad shape templates', () => {
               === note.tone.pitchClass.chroma
             ))).toBe(true)
             expect(shape.inversion.index).toBe({ root: 0, third: 1, fifth: 2, seventh: 3 }[soundingBass(shape).tone.role])
+          }
+        }
+      }
+    }
+  })
+
+  it('validates template root relationships independently of grip geometry', () => {
+    const template = TRIAD_SHAPE_TEMPLATES.find(candidate => candidate.id === 'closed-345-root')!
+    expect(() => validateTriadCagedAssociation({ ...template, cagedForm: 'D' })).toThrow('no root reference')
+    expect(() => validateTriadCagedAssociation({
+      ...template, notes: template.notes.filter(note => note.role !== 'root'),
+    })).toThrow('missing its template root')
+    for (const candidate of TRIAD_SHAPE_TEMPLATES) expect(() => validateTriadCagedAssociation(candidate)).not.toThrow()
+  })
+
+  it('locates curated triad associations in the same reference system as scale positions', () => {
+    for (const root of ['C', 'F#', 'Bb', 'A']) {
+      for (const quality of qualities) {
+        for (const voicing of ['closed', 'spread'] as const) {
+          for (const shape of createTriadShapesFromTemplates(createTriad(root, quality), voicing)) {
+            const template = TRIAD_SHAPE_TEMPLATES.find(candidate => candidate.quality === quality && candidate.id === shape.templateId)!
+            const rootNote = shape.notes.find(note => note.string === template.rootString && note.tone.role === 'root')!
+            const anchor = cagedAnchorFromRoot(template.cagedForm, rootNote.string, rootNote.fret)
+            expect(((anchor % 12) + 12) % 12).toBe(firstCagedAnchor(root, template.cagedForm))
+            const principalRootFret = anchor + getCagedRootReference(template.cagedForm).fretOffset
+            if (voicing === 'spread') expect(principalRootFret).toBeLessThanOrEqual(22)
           }
         }
       }

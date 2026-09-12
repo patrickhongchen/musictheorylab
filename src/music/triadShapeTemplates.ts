@@ -1,4 +1,7 @@
-import { soundingBass, type CagedForm, type PlayableChordShape } from './chordShapes'
+import {
+  cagedAnchorFromRoot, getCagedRootReference, validateCagedAssociations, type CagedForm,
+} from './caged'
+import { soundingBass, type PlayableChordShape } from './chordShapes'
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordQuality, ChordToneRole, IndependentTriad } from './types'
 import { TRIAD_INVERSIONS, type VoicingLayout } from './voicingPatterns'
@@ -16,14 +19,15 @@ export interface TriadShapeTemplate {
   /** The fret occupied by the root on this string is the template's zero point. */
   readonly rootString: number
   readonly notes: readonly TriadTemplateNote[]
+  /** Curated family reference, not a claim that these notes form a full CAGED grip.
+   * Altered qualities keep their own geometry but share the form's root reference.
+   */
   readonly cagedForm: CagedForm
-  /** Spread metadata: CAGED anchor fret relative to the root zero point. */
-  readonly cagedAnchorOffset?: number
 }
 
 type Coordinate = readonly [string: number, fretOffset: number, role: ChordToneRole]
 type ClosedDefinition = readonly [id: string, rootString: number, cagedForm: CagedForm, notes: readonly Coordinate[]]
-type SpreadDefinition = readonly [id: string, rootString: number, cagedForm: CagedForm, cagedAnchorOffset: number, notes: readonly Coordinate[]]
+type SpreadDefinition = readonly [id: string, rootString: number, cagedForm: CagedForm, notes: readonly Coordinate[]]
 
 const coordinates = (values: readonly Coordinate[]): readonly TriadTemplateNote[] => (
   values.map(([string, fretOffset, role]) => ({ string, fretOffset, role }))
@@ -36,8 +40,8 @@ const closed = (quality: ChordQuality, definitions: readonly ClosedDefinition[])
 )
 
 const spread = (quality: ChordQuality, definitions: readonly SpreadDefinition[]): readonly TriadShapeTemplate[] => (
-  definitions.map(([id, rootString, cagedForm, cagedAnchorOffset, notes]) => ({
-    id, quality, voicing: 'spread', rootString, cagedForm, cagedAnchorOffset, notes: coordinates(notes),
+  definitions.map(([id, rootString, cagedForm, notes]) => ({
+    id, quality, voicing: 'spread', rootString, cagedForm, notes: coordinates(notes),
   }))
 )
 
@@ -62,15 +66,15 @@ export const TRIAD_SHAPE_TEMPLATES: readonly TriadShapeTemplate[] = [
     ['closed-456-first', 4, 'E', [[4, 0, 'root'], [5, 0, 'fifth'], [6, 2, 'third']]],
   ]),
   ...spread('major', [
-    ['spread-245-root', 5, 'A', 0, [[2, 2, 'third'], [4, 2, 'fifth'], [5, 0, 'root']]],
-    ['spread-124-first', 2, 'C', 2, [[1, 2, 'fifth'], [2, 0, 'root'], [4, 1, 'third']]],
-    ['spread-246-second', 2, 'C', 2, [[2, 0, 'root'], [4, 1, 'third'], [6, 2, 'fifth']]],
-    ['spread-356-root', 6, 'E', 0, [[3, 1, 'third'], [5, 2, 'fifth'], [6, 0, 'root']]],
-    ['spread-235-first', 3, 'G', 3, [[2, 3, 'fifth'], [3, 0, 'root'], [5, 2, 'third']]],
-    ['spread-135-second', 1, 'E', 0, [[1, 0, 'root'], [3, 1, 'third'], [5, 2, 'fifth']]],
-    ['spread-124-second', 1, 'G', 0, [[1, 0, 'root'], [2, -3, 'third'], [4, -3, 'fifth']]],
-    ['spread-134-root', 4, 'D', 0, [[1, 2, 'third'], [3, 2, 'fifth'], [4, 0, 'root']]],
-    ['spread-346-first', 4, 'D', 0, [[3, 2, 'fifth'], [4, 0, 'root'], [6, 2, 'third']]],
+    ['spread-245-root', 5, 'A', [[2, 2, 'third'], [4, 2, 'fifth'], [5, 0, 'root']]],
+    ['spread-124-first', 2, 'C', [[1, 2, 'fifth'], [2, 0, 'root'], [4, 1, 'third']]],
+    ['spread-246-second', 2, 'C', [[2, 0, 'root'], [4, 1, 'third'], [6, 2, 'fifth']]],
+    ['spread-356-root', 6, 'E', [[3, 1, 'third'], [5, 2, 'fifth'], [6, 0, 'root']]],
+    ['spread-235-first', 3, 'G', [[2, 3, 'fifth'], [3, 0, 'root'], [5, 2, 'third']]],
+    ['spread-135-second', 1, 'E', [[1, 0, 'root'], [3, 1, 'third'], [5, 2, 'fifth']]],
+    ['spread-124-second', 1, 'G', [[1, 0, 'root'], [2, -3, 'third'], [4, -3, 'fifth']]],
+    ['spread-134-root', 4, 'D', [[1, 2, 'third'], [3, 2, 'fifth'], [4, 0, 'root']]],
+    ['spread-346-first', 4, 'D', [[3, 2, 'fifth'], [4, 0, 'root'], [6, 2, 'third']]],
   ]),
   ...closed('minor', [
     ['closed-123-root', 3, 'A', [[1, -2, 'fifth'], [2, -1, 'third'], [3, 0, 'root']]],
@@ -87,15 +91,15 @@ export const TRIAD_SHAPE_TEMPLATES: readonly TriadShapeTemplate[] = [
     ['closed-456-first', 4, 'E', [[4, 0, 'root'], [5, 0, 'fifth'], [6, 1, 'third']]],
   ]),
   ...spread('minor', [
-    ['spread-245-root', 5, 'A', 0, [[2, 1, 'third'], [4, 2, 'fifth'], [5, 0, 'root']]],
-    ['spread-124-first', 2, 'C', 2, [[1, 2, 'fifth'], [2, 0, 'root'], [4, 0, 'third']]],
-    ['spread-246-second', 2, 'C', 2, [[2, 0, 'root'], [4, 0, 'third'], [6, 2, 'fifth']]],
-    ['spread-356-root', 6, 'E', 0, [[3, 0, 'third'], [5, 2, 'fifth'], [6, 0, 'root']]],
-    ['spread-235-first', 3, 'G', 3, [[2, 3, 'fifth'], [3, 0, 'root'], [5, 1, 'third']]],
-    ['spread-135-second', 1, 'E', 0, [[1, 0, 'root'], [3, 0, 'third'], [5, 2, 'fifth']]],
-    ['spread-134-second', 1, 'G', 0, [[1, 0, 'root'], [3, 0, 'third'], [4, -3, 'fifth']]],
-    ['spread-134-root', 4, 'D', 0, [[1, 1, 'third'], [3, 2, 'fifth'], [4, 0, 'root']]],
-    ['spread-346-first', 4, 'D', 0, [[3, 2, 'fifth'], [4, 0, 'root'], [6, 1, 'third']]],
+    ['spread-245-root', 5, 'A', [[2, 1, 'third'], [4, 2, 'fifth'], [5, 0, 'root']]],
+    ['spread-124-first', 2, 'C', [[1, 2, 'fifth'], [2, 0, 'root'], [4, 0, 'third']]],
+    ['spread-246-second', 2, 'C', [[2, 0, 'root'], [4, 0, 'third'], [6, 2, 'fifth']]],
+    ['spread-356-root', 6, 'E', [[3, 0, 'third'], [5, 2, 'fifth'], [6, 0, 'root']]],
+    ['spread-235-first', 3, 'G', [[2, 3, 'fifth'], [3, 0, 'root'], [5, 1, 'third']]],
+    ['spread-135-second', 1, 'E', [[1, 0, 'root'], [3, 0, 'third'], [5, 2, 'fifth']]],
+    ['spread-134-second', 1, 'G', [[1, 0, 'root'], [3, 0, 'third'], [4, -3, 'fifth']]],
+    ['spread-134-root', 4, 'D', [[1, 1, 'third'], [3, 2, 'fifth'], [4, 0, 'root']]],
+    ['spread-346-first', 4, 'D', [[3, 2, 'fifth'], [4, 0, 'root'], [6, 1, 'third']]],
   ]),
   ...closed('diminished', [
     ['closed-123-root', 3, 'A', [[1, -3, 'fifth'], [2, -1, 'third'], [3, 0, 'root']]],
@@ -112,14 +116,14 @@ export const TRIAD_SHAPE_TEMPLATES: readonly TriadShapeTemplate[] = [
     ['closed-456-first', 4, 'E', [[4, 0, 'root'], [5, -1, 'fifth'], [6, 1, 'third']]],
   ]),
   ...spread('diminished', [
-    ['spread-245-root', 5, 'A', 0, [[2, 1, 'third'], [4, 1, 'fifth'], [5, 0, 'root']]],
-    ['spread-124-first', 2, 'C', 2, [[1, 1, 'fifth'], [2, 0, 'root'], [4, 0, 'third']]],
-    ['spread-246-second', 2, 'C', 2, [[2, 0, 'root'], [4, 0, 'third'], [6, 1, 'fifth']]],
-    ['spread-356-root', 6, 'E', 0, [[3, 0, 'third'], [5, 1, 'fifth'], [6, 0, 'root']]],
-    ['spread-235-first', 3, 'G', 3, [[2, 2, 'fifth'], [3, 0, 'root'], [5, 1, 'third']]],
-    ['spread-135-second', 1, 'E', 0, [[1, 0, 'root'], [3, 0, 'third'], [5, 1, 'fifth']]],
-    ['spread-134-root', 4, 'D', 0, [[1, 1, 'third'], [3, 1, 'fifth'], [4, 0, 'root']]],
-    ['spread-346-first', 4, 'D', 0, [[3, 1, 'fifth'], [4, 0, 'root'], [6, 1, 'third']]],
+    ['spread-245-root', 5, 'A', [[2, 1, 'third'], [4, 1, 'fifth'], [5, 0, 'root']]],
+    ['spread-124-first', 2, 'C', [[1, 1, 'fifth'], [2, 0, 'root'], [4, 0, 'third']]],
+    ['spread-246-second', 2, 'C', [[2, 0, 'root'], [4, 0, 'third'], [6, 1, 'fifth']]],
+    ['spread-356-root', 6, 'E', [[3, 0, 'third'], [5, 1, 'fifth'], [6, 0, 'root']]],
+    ['spread-235-first', 3, 'G', [[2, 2, 'fifth'], [3, 0, 'root'], [5, 1, 'third']]],
+    ['spread-135-second', 1, 'E', [[1, 0, 'root'], [3, 0, 'third'], [5, 1, 'fifth']]],
+    ['spread-134-root', 4, 'D', [[1, 1, 'third'], [3, 1, 'fifth'], [4, 0, 'root']]],
+    ['spread-346-first', 4, 'D', [[3, 1, 'fifth'], [4, 0, 'root'], [6, 1, 'third']]],
   ]),
   ...closed('augmented', [
     ['closed-123-second', 2, 'C', [[1, -1, 'third'], [2, 0, 'root'], [3, 0, 'fifth']]],
@@ -136,16 +140,27 @@ export const TRIAD_SHAPE_TEMPLATES: readonly TriadShapeTemplate[] = [
     ['closed-456-first', 4, 'E', [[4, 0, 'root'], [5, 1, 'fifth'], [6, 2, 'third']]],
   ]),
   ...spread('augmented', [
-    ['spread-135-root', 5, 'C', 0, [[1, -3, 'third'], [3, -2, 'fifth'], [5, 0, 'root']]],
-    ['spread-124-first', 2, 'C', 2, [[1, 3, 'fifth'], [2, 0, 'root'], [4, 1, 'third']]],
-    ['spread-246-second', 2, 'C', 2, [[2, 0, 'root'], [4, 1, 'third'], [6, 3, 'fifth']]],
-    ['spread-356-root', 6, 'E', 0, [[3, 1, 'third'], [5, 3, 'fifth'], [6, 0, 'root']]],
-    ['spread-135-second', 1, 'E', 0, [[1, 0, 'root'], [3, 1, 'third'], [5, 3, 'fifth']]],
-    ['spread-124-second', 1, 'G', 0, [[1, 0, 'root'], [2, -3, 'third'], [4, -2, 'fifth']]],
-    ['spread-134-root', 4, 'D', 0, [[1, 2, 'third'], [3, 3, 'fifth'], [4, 0, 'root']]],
-    ['spread-346-first', 4, 'D', 0, [[3, 3, 'fifth'], [4, 0, 'root'], [6, 2, 'third']]],
+    ['spread-135-root', 5, 'C', [[1, -3, 'third'], [3, -2, 'fifth'], [5, 0, 'root']]],
+    ['spread-124-first', 2, 'C', [[1, 3, 'fifth'], [2, 0, 'root'], [4, 1, 'third']]],
+    ['spread-246-second', 2, 'C', [[2, 0, 'root'], [4, 1, 'third'], [6, 3, 'fifth']]],
+    ['spread-356-root', 6, 'E', [[3, 1, 'third'], [5, 3, 'fifth'], [6, 0, 'root']]],
+    ['spread-135-second', 1, 'E', [[1, 0, 'root'], [3, 1, 'third'], [5, 3, 'fifth']]],
+    ['spread-124-second', 1, 'G', [[1, 0, 'root'], [2, -3, 'third'], [4, -2, 'fifth']]],
+    ['spread-134-root', 4, 'D', [[1, 2, 'third'], [3, 3, 'fifth'], [4, 0, 'root']]],
+    ['spread-346-first', 4, 'D', [[3, 3, 'fifth'], [4, 0, 'root'], [6, 2, 'third']]],
   ]),
 ] as const
+
+/** Validate the association's root reference independently of the playable geometry. */
+export function validateTriadCagedAssociation(template: TriadShapeTemplate): void {
+  validateCagedAssociations([template.cagedForm])
+  getCagedRootReference(template.cagedForm, template.rootString)
+  if (!template.notes.some(note => note.string === template.rootString && note.fretOffset === 0 && note.role === 'root')) {
+    throw new Error(`Invalid CAGED association: ${template.id} is missing its template root`)
+  }
+}
+
+for (const template of TRIAD_SHAPE_TEMPLATES) validateTriadCagedAssociation(template)
 
 function firstRootFret(triad: IndependentTriad, template: TriadShapeTemplate): number {
   const open = STANDARD_TUNING[STANDARD_TUNING.length - template.rootString]
@@ -188,10 +203,11 @@ export function createTriadShapesFromTemplates(
         !== note.tone.pitchClass.chroma
       ))) throw new Error(`Invalid triad geometry: ${triad.quality}/${template.id}`)
 
-      const cagedAnchorFret = rootFret + (template.cagedAnchorOffset ?? 0)
-      // A spread grip belongs to a root-anchored teaching region, so omit it
-      // when that region's anchor falls beyond the final fret.
-      if (voicing === 'spread' && cagedAnchorFret > fretCount) continue
+      const anchorFret = cagedAnchorFromRoot(template.cagedForm, template.rootString, rootFret)
+      // Preserve the spread catalog's principal-root ordering/cutoff. This root
+      // reference is distinct from the CAGED virtual nut used by scale regions.
+      const regionRootFret = anchorFret + getCagedRootReference(template.cagedForm).fretOffset
+      if (voicing === 'spread' && regionRootFret > fretCount) continue
       const base = {
         id: `${triad.id}:${template.id}:${rootFret}`,
         chord: triad,
@@ -200,7 +216,7 @@ export function createTriadShapesFromTemplates(
         cagedForms: [template.cagedForm],
         templateId: template.id,
       } as const
-      shapes.push({ shape: { ...base, inversion: inversionForShape(base) }, sortAnchor: cagedAnchorFret })
+      shapes.push({ shape: { ...base, inversion: inversionForShape(base) }, sortAnchor: regionRootFret })
     }
   }
 

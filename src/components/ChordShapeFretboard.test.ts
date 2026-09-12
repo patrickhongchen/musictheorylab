@@ -23,6 +23,10 @@ describe('shared chord fretboard', () => {
     expect(shapeInspection(shapes.find(shape => shape.templateId === 'drop2-top4-first')!, []).cagedLabel).toBe('C / A combination')
   })
 
+  it('leaves unassociated voicings unlabeled so callers can use their existing fallback', () => {
+    expect(shapeInspection({ ...seventh, cagedForms: [] }, []).cagedLabel).toBe('')
+  })
+
   it('renders triads and skipped-string Major 7 shapes together with all four interval labels', () => {
     const triad = createTriadShapesFromTemplates(createTriad('G', 'major'), 'closed')[0]
     const markup = renderToStaticMarkup(createElement(ChordShapeFretboard, {

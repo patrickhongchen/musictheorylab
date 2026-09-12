@@ -1,7 +1,7 @@
 import { Note } from 'tonal'
+import { validateCagedAssociations, type CagedAssociations } from './caged'
 import {
   soundingBass,
-  type CagedForm,
   type ChordShapeInversion,
   type MajorSeventhChord,
   type PlayableChordShape,
@@ -27,7 +27,10 @@ export interface MajorSeventhShapeTemplate {
   readonly id: string
   readonly rootString: number
   readonly notes: readonly TemplateNote[]
-  readonly cagedForms: readonly CagedForm[]
+  /** Curated regional/family associations, which may be empty or span forms.
+   * They do not assert exact containment in major-triad reference geometry.
+   */
+  readonly cagedForms: CagedAssociations
 }
 
 const note = (string: number, fretOffset: number, role: PlayableChordToneRole): TemplateNote => (
@@ -104,6 +107,10 @@ export const MAJOR_SEVENTH_SHAPE_TEMPLATES: readonly MajorSeventhShapeTemplate[]
     cagedForms: ['G'],
   },
 ] as const
+
+// Validate reference identities, not subset geometry: seventh voicings are
+// independently curated and may cross more than one CAGED region.
+for (const template of MAJOR_SEVENTH_SHAPE_TEMPLATES) validateCagedAssociations(template.cagedForms)
 
 export function createMajorSeventh(rootName: string): MajorSeventhChord {
   const root = pitchClass(rootName)

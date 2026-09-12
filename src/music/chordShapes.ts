@@ -1,9 +1,10 @@
+import type { CagedAssociations } from './caged'
 import { STANDARD_TUNING } from './fretboard'
 import type { ChordQuality, IndependentTriad, PitchClass } from './types'
 
 export type VoiceLeadingQuality = ChordQuality | 'major7'
 export type PlayableChordToneRole = 'root' | 'third' | 'fifth' | 'seventh'
-export type CagedForm = 'C' | 'A' | 'G' | 'E' | 'D'
+export type { CagedForm } from './caged'
 
 export interface MajorSeventhChordTone {
   readonly pitchClass: PitchClass
@@ -42,7 +43,8 @@ export interface PlayableChordShape {
   readonly chord: PlayableChord
   readonly notes: readonly PlayableChordNote[]
   readonly inversion: ChordShapeInversion
-  readonly cagedForms: readonly CagedForm[]
+  /** Curated reference relationships; an empty list means no CAGED association. */
+  readonly cagedForms: CagedAssociations
   readonly colorIndex?: number
   readonly templateId: string
 }

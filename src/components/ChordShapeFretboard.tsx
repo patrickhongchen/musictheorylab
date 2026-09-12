@@ -4,6 +4,7 @@ import { chordIntervalLabel, displayNote } from '../presentation/notes'
 import { PROGRESSION_STEP_COLORS } from './ProgressionPathView'
 
 export function shapeCagedLabel(shape: PlayableChordShape): string {
+  if (shape.cagedForms.length === 0) return ''
   return `${shape.cagedForms.join(' / ')}${shape.cagedForms.length === 1 ? '-shape' : ' combination'}`
 }
 

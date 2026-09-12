@@ -1,7 +1,6 @@
 import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react'
 import { ScaleFretboardView, type ScaleFretboardLabelMode } from '../components/ScaleFretboardView'
-import { CAGED_FORMS, createCagedScalePositions } from '../music/cagedScalePositions'
-import type { CagedForm } from '../music/chordShapes'
+import { CAGED_FORMS, createCagedPositions, type CagedForm } from '../music/caged'
 import { createScaleToneFretboard } from '../music/fretboard'
 import {
   createExplorerScale,
@@ -26,7 +25,7 @@ export function ScaleExplorer() {
   const scalePitches = useMemo(() => ascendingScalePitches(scale), [scale])
   const board = useMemo(() => createScaleToneFretboard(scale, undefined, 22), [scale])
   const cagedPositions = useMemo(() => (
-    createCagedScalePositions(tonic, scale.tonicChordQuality, 22)
+    createCagedPositions(tonic, scale.tonicChordQuality, 22)
   ), [scale.tonicChordQuality, tonic])
   const scaleSummary = `${displayNote(scale.tonic)} ${scale.displayName.toLowerCase()} · ${scale.tones.length === 5 ? 'five' : 'seven'} notes`
 

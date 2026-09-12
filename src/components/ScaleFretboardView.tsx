@@ -1,6 +1,5 @@
 import { useId } from 'react'
-import { CAGED_FORMS, type CagedScalePosition } from '../music/cagedScalePositions'
-import type { CagedForm } from '../music/chordShapes'
+import { CAGED_FORMS, type CagedPosition, type CagedForm } from '../music/caged'
 import type { ScaleToneFretboardModel } from '../music/types'
 import { displayNote } from '../presentation/notes'
 import { scaleToneRole, SCALE_TONE_STYLE } from '../presentation/scales'
@@ -11,7 +10,7 @@ export interface ScaleFretboardViewProps {
   readonly model: ScaleToneFretboardModel
   readonly scaleName: string
   readonly labelMode: ScaleFretboardLabelMode
-  readonly cagedPositions: readonly CagedScalePosition[]
+  readonly cagedPositions: readonly CagedPosition[]
   readonly activeCagedForm: 'all' | CagedForm
 }
 
